@@ -27,6 +27,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import LanguageIcon from '@mui/icons-material/Language';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -169,6 +170,19 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             >
               <XIcon />
             </IconButton>
+            <IconButton
+              component="a"
+              href="https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+              }}
+            >
+              <YouTubeIcon />
+            </IconButton>
           </Box>
 
           <IconButton
@@ -265,6 +279,19 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
               }}
             >
               <XIcon />
+            </IconButton>
+            <IconButton
+              component="a"
+              href="https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
+              }}
+            >
+              <YouTubeIcon />
             </IconButton>
           </Box>
         </Box>
