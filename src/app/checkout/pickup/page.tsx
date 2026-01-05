@@ -31,6 +31,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Layout } from '@/components/common';
+import { useCart } from '@/contexts/CartContext';
 
 interface PickupForm {
   name: string;
@@ -38,7 +39,7 @@ interface PickupForm {
   phone: string;
   pickupDate: string;
   pickupTime: string;
-  paymentMethod: 'SQUARE' | 'CASH';
+  paymentMethod: 'SQUARE' | 'PAY_AT_PICKUP';
   notes: string;
 }
 
@@ -80,6 +81,7 @@ const pickupTimes = [
 
 export default function PickupCheckoutPage() {
   const router = useRouter();
+  const { items, subtotal, clearCart } = useCart();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +96,10 @@ export default function PickupCheckoutPage() {
   });
 
   const availableDates = getAvailableDates();
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('ja-JP').format(price);
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -140,12 +146,19 @@ export default function PickupCheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          pickupAt: `${form.pickupDate}T${form.pickupTime}:00`,
+          customer: {
+            name: form.name,
+            phone: form.phone,
+            email: form.email,
+          },
+          items: items.map((item) => ({
+            productId: item.product.id,
+            qty: item.qty,
+          })),
           paymentMethod: form.paymentMethod,
-          notes: form.notes,
+          pickupDate: form.pickupDate,
+          pickupTime: form.pickupTime,
+          agreementAccepted: true,
         }),
       });
 
@@ -155,10 +168,16 @@ export default function PickupCheckoutPage() {
         throw new Error(data.error || '予約の作成に失敗しました');
       }
 
-      if (form.paymentMethod === 'SQUARE' && data.paymentUrl) {
-        window.location.href = data.paymentUrl;
+      // Square決済の場合
+      if (form.paymentMethod === 'SQUARE' && data.data?.checkoutUrl) {
+        clearCart();
+        window.location.href = data.data.checkoutUrl;
+      } else if (data.data?.orderNo) {
+        // 店頭払いの場合
+        clearCart();
+        router.push(`/complete?orderNo=${data.data.orderNo}`);
       } else {
-        router.push(`/complete?orderNo=${data.orderNo}&type=pickup`);
+        throw new Error('注文処理に失敗しました');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '予期しないエラーが発生しました');
@@ -166,16 +185,36 @@ export default function PickupCheckoutPage() {
     }
   };
 
+  if (items.length === 0) {
+    return (
+      <Layout>
+        <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+          <Typography variant="h4" sx={{ mb: 2 }}>
+            カートが空です
+          </Typography>
+          <Button
+            component={Link}
+            href="/shop"
+            variant="contained"
+            startIcon={<ArrowBackIcon />}
+          >
+            商品一覧に戻る
+          </Button>
+        </Container>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Button
           component={Link}
-          href="/pickup"
+          href="/cart"
           startIcon={<ArrowBackIcon />}
           sx={{ mb: 3 }}
         >
-          受取予約に戻る
+          カートに戻る
         </Button>
 
         <Typography variant="h3" sx={{ mb: 4, fontWeight: 700 }}>
@@ -196,8 +235,11 @@ export default function PickupCheckoutPage() {
           </Alert>
         )}
 
-        <Paper sx={{ p: 4 }}>
-          {activeStep === 0 && (
+        <Grid container spacing={4}>
+          {/* Form Section */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Paper sx={{ p: 4 }}>
+              {activeStep === 0 && (
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                 <StorefrontIcon sx={{ color: 'primary.main' }} />
@@ -337,7 +379,7 @@ export default function PickupCheckoutPage() {
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      paymentMethod: e.target.value as 'SQUARE' | 'CASH',
+                      paymentMethod: e.target.value as 'SQUARE' | 'PAY_AT_PICKUP',
                     }))
                   }
                 >
@@ -372,13 +414,13 @@ export default function PickupCheckoutPage() {
                     sx={{
                       p: 2,
                       cursor: 'pointer',
-                      border: form.paymentMethod === 'CASH' ? '2px solid' : '1px solid',
-                      borderColor: form.paymentMethod === 'CASH' ? 'primary.main' : 'divider',
+                      border: form.paymentMethod === 'PAY_AT_PICKUP' ? '2px solid' : '1px solid',
+                      borderColor: form.paymentMethod === 'PAY_AT_PICKUP' ? 'primary.main' : 'divider',
                     }}
-                    onClick={() => setForm((prev) => ({ ...prev, paymentMethod: 'CASH' }))}
+                    onClick={() => setForm((prev) => ({ ...prev, paymentMethod: 'PAY_AT_PICKUP' }))}
                   >
                     <FormControlLabel
-                      value="CASH"
+                      value="PAY_AT_PICKUP"
                       control={<Radio />}
                       label={
                         <Box>
@@ -399,7 +441,7 @@ export default function PickupCheckoutPage() {
                 </Alert>
               )}
 
-              {form.paymentMethod === 'CASH' && (
+              {form.paymentMethod === 'PAY_AT_PICKUP' && (
                 <Alert severity="info" sx={{ mb: 3 }}>
                   予約確定後、店頭でお支払いください。
                 </Alert>
@@ -431,23 +473,62 @@ export default function PickupCheckoutPage() {
               </Box>
             </>
           )}
-        </Paper>
+            </Paper>
+          </Grid>
 
-        {/* Store Info */}
-        <Paper sx={{ mt: 4, p: 3, backgroundColor: '#FFF0F3' }}>
-          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
-            店舗情報
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            もも娘
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            〒150-0001 東京都渋谷区神宮前1-2-3
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            営業時間: 11:00 - 20:00（不定休）
-          </Typography>
-        </Paper>
+          {/* Order Summary */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, position: 'sticky', top: 100 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
+                注文内容
+              </Typography>
+
+              {items.map((item) => (
+                <Box
+                  key={item.product.id}
+                  sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}
+                >
+                  <Box>
+                    <Typography variant="body2">{item.product.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      数量: {item.qty}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2">
+                    ¥{formatPrice(item.product.price_yen * item.qty)}
+                  </Typography>
+                </Box>
+              ))}
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  合計
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  ¥{formatPrice(subtotal)}
+                </Typography>
+              </Box>
+
+              {/* Store Info */}
+              <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#FFF0F3' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
+                  受取場所
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  もも娘
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  〒150-0001 東京都渋谷区神宮前1-2-3
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  営業時間: 11:00 - 20:00
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
       </Container>
     </Layout>
   );

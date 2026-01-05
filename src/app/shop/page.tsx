@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -15,32 +15,46 @@ import {
   Tab,
   Button,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
-import { getProductsByKind } from '@/data/mockProducts';
 import type { Product } from '@/types/database';
 
 type TabValue = 'all' | 'frozen' | 'goods';
 
 export default function ShopPage() {
   const [tab, setTab] = useState<TabValue>('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { addItem, hasMixedTempZones, itemCount } = useCart();
 
-  const frozenProducts = getProductsByKind('FROZEN_FOOD');
-  const goodsProducts = getProductsByKind('GOODS');
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('/api/products');
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   const getDisplayProducts = (): Product[] => {
     switch (tab) {
       case 'frozen':
-        return frozenProducts;
+        return products.filter((p) => p.kind === 'FROZEN_FOOD');
       case 'goods':
-        return goodsProducts;
+        return products.filter((p) => p.kind === 'GOODS');
       default:
-        return [...frozenProducts, ...goodsProducts];
+        return products;
     }
   };
 
@@ -124,110 +138,128 @@ export default function ShopPage() {
           </Tabs>
         </Box>
 
+        {/* Loading */}
+        {isLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
         {/* Products Grid */}
-        <Grid container spacing={3}>
-          {getDisplayProducts().map((product) => (
-            <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
-                  <CardMedia
-                    sx={{
-                      height: 200,
-                      backgroundColor: '#FFF0F3',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: '4rem' }}>
-                      {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                    </Typography>
-                  </CardMedia>
-                </Link>
-
-                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ mb: 1 }}>
-                    {product.temp_zone === 'FROZEN' ? (
-                      <Chip
-                        icon={<AcUnitIcon />}
-                        label="冷凍"
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={{ mr: 1 }}
-                      />
-                    ) : (
-                      <Chip
-                        label="常温"
-                        size="small"
-                        color="default"
-                        variant="outlined"
-                        sx={{ mr: 1 }}
-                      />
-                    )}
-                  </Box>
-
+        {!isLoading && (
+          <Grid container spacing={3}>
+            {getDisplayProducts().map((product) => (
+              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
                   <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
-                    <Typography
-                      variant="h6"
+                    <CardMedia
                       sx={{
-                        mb: 1,
-                        color: 'text.primary',
-                        '&:hover': { color: 'primary.main' },
+                        height: 200,
+                        backgroundColor: '#FFF0F3',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      {product.name}
-                    </Typography>
+                      <Typography sx={{ fontSize: '4rem' }}>
+                        {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                      </Typography>
+                    </CardMedia>
                   </Link>
 
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      mb: 2,
-                      flex: 1,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {product.description}
-                  </Typography>
+                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ mb: 1 }}>
+                      {product.temp_zone === 'FROZEN' ? (
+                        <Chip
+                          icon={<AcUnitIcon />}
+                          label="冷凍"
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                      ) : (
+                        <Chip
+                          label="常温"
+                          size="small"
+                          color="default"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                      )}
+                    </Box>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
+                    <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          mb: 1,
+                          color: 'text.primary',
+                          '&:hover': { color: 'primary.main' },
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
+                    </Link>
+
                     <Typography
-                      variant="h6"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        mb: 2,
+                        flex: 1,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
                     >
-                      ¥{formatPrice(product.price_yen)}
+                      {product.description}
                     </Typography>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<ShoppingCartIcon />}
-                      onClick={() => handleAddToCart(product)}
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
                     >
-                      追加
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                      <Typography
+                        variant="h6"
+                        sx={{ color: 'primary.main', fontWeight: 700 }}
+                      >
+                        ¥{formatPrice(product.price_yen)}
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<ShoppingCartIcon />}
+                        onClick={() => handleAddToCart(product)}
+                      >
+                        追加
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && getDisplayProducts().length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Typography color="text.secondary">
+              商品がありません
+            </Typography>
+          </Box>
+        )}
 
         {/* Shipping Info */}
         <Box

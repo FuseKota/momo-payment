@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { squareClient, SQUARE_LOCATION_ID, getSquareEnvironmentName } from '@/lib/square/client';
 import crypto from 'crypto';
 import type { PaymentMethod } from '@/types/database';
+import { sendOrderConfirmationEmail } from '@/lib/email/resend';
 
 export const runtime = 'nodejs';
 
@@ -158,7 +159,30 @@ export async function POST(request: NextRequest) {
         amount_yen: total,
       });
 
-      // TODO: 管理者へメール通知
+      // 確認メールを送信
+      if (body.customer.email) {
+        try {
+          await sendOrderConfirmationEmail({
+            orderNo: orderRow.order_no,
+            customerName: body.customer.name,
+            customerEmail: body.customer.email,
+            orderType: 'PICKUP',
+            items: items.map((x) => ({
+              name: x.product.name,
+              qty: x.qty,
+              unitPrice: x.product.price_yen,
+              subtotal: x.lineTotal,
+            })),
+            subtotal,
+            shippingFee: 0,
+            total,
+            pickupDate: body.pickupDate,
+            pickupTime: body.pickupTime,
+          });
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+        }
+      }
 
       return NextResponse.json({
         ok: true,

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Box,
   Drawer,
@@ -16,14 +16,13 @@ import {
   ListItemText,
   IconButton,
   Divider,
-  useMediaQuery,
-  useTheme,
+  CircularProgress,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const drawerWidth = 240;
 
@@ -39,16 +38,44 @@ export default function AdminLayout({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const router = useRouter();
+  const { isAdmin, isLoading, signOut, user } = useAuth();
 
   // Skip layout for login page
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
 
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Redirect to login if not admin
+  if (!isAdmin) {
+    router.push('/admin/login');
+    return null;
+  }
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/admin/login');
   };
 
   const drawer = (
@@ -98,7 +125,7 @@ export default function AdminLayout({
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton component={Link} href="/admin/login">
+          <ListItemButton onClick={handleLogout}>
             <ListItemIcon>
               <LogoutIcon />
             </ListItemIcon>
@@ -130,9 +157,14 @@ export default function AdminLayout({
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             管理画面
           </Typography>
+          {user && (
+            <Typography variant="body2" color="text.secondary">
+              {user.email}
+            </Typography>
+          )}
         </Toolbar>
       </AppBar>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import type { Product, TempZone } from '@/types/database';
 
 export interface CartItem {
@@ -24,30 +24,31 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'momo-cart';
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Load cart from localStorage on mount
-  useEffect(() => {
+function getInitialItems(): CartItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
     if (stored) {
-      try {
-        setItems(JSON.parse(stored));
-      } catch {
-        // Invalid JSON, clear it
-        localStorage.removeItem(CART_STORAGE_KEY);
-      }
+      return JSON.parse(stored);
     }
-    setIsHydrated(true);
-  }, []);
+  } catch {
+    localStorage.removeItem(CART_STORAGE_KEY);
+  }
+  return [];
+}
 
-  // Save cart to localStorage on change
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>(getInitialItems);
+  const isInitialMount = useRef(true);
+
+  // Save cart to localStorage on change (skip initial mount)
   useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
-  }, [items, isHydrated]);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
   const addItem = (product: Product, qty = 1) => {
     setItems((prev) => {

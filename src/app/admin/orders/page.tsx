@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -19,58 +19,23 @@ import {
   Tabs,
   Tab,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-// Mock orders for development
-const mockOrders = [
-  {
-    id: '1',
-    orderNo: 'ORD-20240105-001',
-    type: 'SHIPPING',
-    customerName: '山田太郎',
-    email: 'yamada@example.com',
-    total: 3400,
-    status: 'PAID',
-    paymentStatus: 'PAID',
-    createdAt: '2024-01-05T10:30:00Z',
-  },
-  {
-    id: '2',
-    orderNo: 'ORD-20240105-002',
-    type: 'PICKUP',
-    customerName: '鈴木花子',
-    email: 'suzuki@example.com',
-    total: 850,
-    status: 'RESERVED',
-    paymentStatus: 'PENDING',
-    createdAt: '2024-01-05T11:00:00Z',
-  },
-  {
-    id: '3',
-    orderNo: 'ORD-20240104-003',
-    type: 'SHIPPING',
-    customerName: '田中一郎',
-    email: 'tanaka@example.com',
-    total: 5700,
-    status: 'SHIPPED',
-    paymentStatus: 'PAID',
-    createdAt: '2024-01-04T14:20:00Z',
-  },
-  {
-    id: '4',
-    orderNo: 'ORD-20240104-004',
-    type: 'PICKUP',
-    customerName: '佐藤美咲',
-    email: 'sato@example.com',
-    total: 1700,
-    status: 'FULFILLED',
-    paymentStatus: 'PAID',
-    createdAt: '2024-01-04T09:15:00Z',
-  },
-];
+interface Order {
+  id: string;
+  order_no: string;
+  order_type: 'SHIPPING' | 'PICKUP';
+  customer_name: string;
+  customer_email: string;
+  total_yen: number;
+  status: string;
+  payment_status: string;
+  created_at: string;
+}
 
 const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
   RESERVED: { label: '予約済', color: 'info' },
@@ -87,6 +52,31 @@ type TabValue = 'all' | 'shipping' | 'pickup';
 export default function AdminOrdersPage() {
   const [tab, setTab] = useState<TabValue>('all');
   const [search, setSearch] = useState('');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (tab !== 'all') {
+        params.set('type', tab === 'shipping' ? 'SHIPPING' : 'PICKUP');
+      }
+      const response = await fetch(`/api/admin/orders?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tab]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -103,19 +93,14 @@ export default function AdminOrdersPage() {
     return new Intl.NumberFormat('ja-JP').format(price);
   };
 
-  const filteredOrders = mockOrders.filter((order) => {
-    const matchesTab =
-      tab === 'all' ||
-      (tab === 'shipping' && order.type === 'SHIPPING') ||
-      (tab === 'pickup' && order.type === 'PICKUP');
-
-    const matchesSearch =
-      !search ||
-      order.orderNo.toLowerCase().includes(search.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      order.email.toLowerCase().includes(search.toLowerCase());
-
-    return matchesTab && matchesSearch;
+  const filteredOrders = orders.filter((order) => {
+    if (!search) return true;
+    const searchLower = search.toLowerCase();
+    return (
+      order.order_no.toLowerCase().includes(searchLower) ||
+      order.customer_name.toLowerCase().includes(searchLower) ||
+      order.customer_email.toLowerCase().includes(searchLower)
+    );
   });
 
   return (
@@ -124,7 +109,12 @@ export default function AdminOrdersPage() {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           注文管理
         </Typography>
-        <Button startIcon={<RefreshIcon />} variant="outlined">
+        <Button
+          startIcon={<RefreshIcon />}
+          variant="outlined"
+          onClick={fetchOrders}
+          disabled={isLoading}
+        >
           更新
         </Button>
       </Box>
@@ -156,80 +146,86 @@ export default function AdminOrdersPage() {
         </Box>
       </Paper>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>注文番号</TableCell>
-              <TableCell>種別</TableCell>
-              <TableCell>顧客</TableCell>
-              <TableCell align="right">金額</TableCell>
-              <TableCell>ステータス</TableCell>
-              <TableCell>注文日時</TableCell>
-              <TableCell align="center">操作</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredOrders.map((order) => (
-              <TableRow key={order.id} hover>
-                <TableCell>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                    {order.orderNo}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={order.type === 'SHIPPING' ? '配送' : '店頭'}
-                    size="small"
-                    variant="outlined"
-                    color={order.type === 'SHIPPING' ? 'primary' : 'secondary'}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">{order.customerName}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {order.email}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    ¥{formatPrice(order.total)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={statusLabels[order.status]?.label || order.status}
-                    size="small"
-                    color={statusLabels[order.status]?.color || 'default'}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">{formatDate(order.createdAt)}</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton
-                    component={Link}
-                    href={`/admin/orders/${order.id}`}
-                    size="small"
-                    color="primary"
-                  >
-                    <VisibilityIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredOrders.length === 0 && (
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
-                  <Typography color="text.secondary">
-                    該当する注文がありません
-                  </Typography>
-                </TableCell>
+                <TableCell>注文番号</TableCell>
+                <TableCell>種別</TableCell>
+                <TableCell>顧客</TableCell>
+                <TableCell align="right">金額</TableCell>
+                <TableCell>ステータス</TableCell>
+                <TableCell>注文日時</TableCell>
+                <TableCell align="center">操作</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id} hover>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                      {order.order_no}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={order.order_type === 'SHIPPING' ? '配送' : '店頭'}
+                      size="small"
+                      variant="outlined"
+                      color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{order.customer_name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {order.customer_email}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      ¥{formatPrice(order.total_yen)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={statusLabels[order.status]?.label || order.status}
+                      size="small"
+                      color={statusLabels[order.status]?.color || 'default'}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{formatDate(order.created_at)}</Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton
+                      component={Link}
+                      href={`/admin/orders/${order.id}`}
+                      size="small"
+                      color="primary"
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredOrders.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                    <Typography color="text.secondary">
+                      該当する注文がありません
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </Box>
   );
 }

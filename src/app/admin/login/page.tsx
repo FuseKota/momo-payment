@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -13,29 +13,56 @@ import {
   CircularProgress,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { signIn, isAdmin, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    if (!authLoading && isAdmin) {
+      router.push('/admin/orders');
+    }
+  }, [isAdmin, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    try {
-      // TODO: Implement Supabase auth
-      // For now, just redirect to orders page
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push('/admin/orders');
-    } catch {
+    const { error } = await signIn(email, password);
+
+    if (error) {
       setError('ログインに失敗しました。メールアドレスとパスワードを確認してください。');
       setIsLoading(false);
+      return;
     }
+
+    // Auth state change will trigger the redirect via useEffect
+    // But we also check here for immediate feedback
+    router.push('/admin/orders');
   };
+
+  if (authLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box

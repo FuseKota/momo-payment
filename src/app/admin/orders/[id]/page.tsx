@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -18,6 +18,8 @@ import {
   TableHead,
   TableRow,
   Alert,
+  CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -28,37 +30,40 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-// Mock order for development
-const mockOrder = {
-  id: '1',
-  orderNo: 'ORD-20240105-001',
-  type: 'SHIPPING',
-  status: 'PAID',
-  paymentStatus: 'PAID',
-  paymentMethod: 'SQUARE',
-  customer: {
-    name: '山田太郎',
-    email: 'yamada@example.com',
-    phone: '090-1234-5678',
-  },
-  shipping: {
-    postalCode: '150-0001',
-    prefecture: '東京都',
-    city: '渋谷区',
-    address1: '神宮前1-2-3',
-    address2: 'サンプルマンション101',
-  },
-  items: [
-    { id: '1', name: '冷凍魯肉飯（2食入）', qty: 2, unitPrice: 1200, subtotal: 2400 },
-  ],
-  subtotal: 2400,
-  shippingFee: 1200,
-  total: 3600,
-  trackingNumber: null,
-  createdAt: '2024-01-05T10:30:00Z',
-  paidAt: '2024-01-05T10:35:00Z',
-  shippedAt: null,
-};
+interface OrderItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  qty: number;
+  unit_price_yen: number;
+  line_total_yen: number;
+}
+
+interface Order {
+  id: string;
+  order_no: string;
+  order_type: 'SHIPPING' | 'PICKUP';
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  shipping_postal_code: string | null;
+  shipping_prefecture: string | null;
+  shipping_city: string | null;
+  shipping_address1: string | null;
+  shipping_address2: string | null;
+  subtotal_yen: number;
+  shipping_fee_yen: number;
+  total_yen: number;
+  tracking_number: string | null;
+  created_at: string;
+  paid_at: string | null;
+  shipped_at: string | null;
+  fulfilled_at: string | null;
+  order_items: OrderItem[];
+}
 
 const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
   RESERVED: { label: '予約済', color: 'info' },
@@ -72,7 +77,33 @@ const statusLabels: Record<string, { label: string; color: 'default' | 'primary'
 
 export default function AdminOrderDetailPage({ params }: Props) {
   const { id } = use(params);
-  const order = mockOrder; // In production, fetch from API
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  useEffect(() => {
+    async function fetchOrder() {
+      try {
+        const response = await fetch(`/api/admin/orders/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setOrder(data);
+          setTrackingNumber(data.tracking_number || '');
+        }
+      } catch (error) {
+        console.error('Failed to fetch order:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchOrder();
+  }, [id]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
@@ -89,6 +120,58 @@ export default function AdminOrderDetailPage({ params }: Props) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP').format(price);
   };
+
+  const updateOrderStatus = async (status: string, extraData?: Record<string, unknown>) => {
+    if (!order) return;
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, ...extraData }),
+      });
+
+      if (response.ok) {
+        const updatedOrder = await response.json();
+        setOrder({ ...order, ...updatedOrder });
+        setSnackbar({ open: true, message: 'ステータスを更新しました', severity: 'success' });
+      } else {
+        throw new Error('Failed to update');
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: '更新に失敗しました', severity: 'error' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleShipped = () => {
+    updateOrderStatus('SHIPPED', { tracking_number: trackingNumber });
+  };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!order) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 8 }}>
+        <Typography color="text.secondary">注文が見つかりません</Typography>
+        <Button
+          component={Link}
+          href="/admin/orders"
+          startIcon={<ArrowBackIcon />}
+          sx={{ mt: 2 }}
+        >
+          注文一覧に戻る
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -124,7 +207,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   注文番号
                 </Typography>
                 <Typography sx={{ fontFamily: 'monospace' }}>
-                  {order.orderNo}
+                  {order.order_no}
                 </Typography>
               </Grid>
               <Grid size={6}>
@@ -132,24 +215,24 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   種別
                 </Typography>
                 <Chip
-                  label={order.type === 'SHIPPING' ? '配送' : '店頭受取'}
+                  label={order.order_type === 'SHIPPING' ? '配送' : '店頭受取'}
                   size="small"
                   variant="outlined"
-                  color={order.type === 'SHIPPING' ? 'primary' : 'secondary'}
+                  color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
                 />
               </Grid>
               <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">
                   注文日時
                 </Typography>
-                <Typography>{formatDate(order.createdAt)}</Typography>
+                <Typography>{formatDate(order.created_at)}</Typography>
               </Grid>
               <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">
                   決済方法
                 </Typography>
                 <Typography>
-                  {order.paymentMethod === 'SQUARE' ? 'オンライン決済' : '店頭払い'}
+                  {order.payment_method === 'SQUARE' ? 'オンライン決済' : '店頭払い'}
                 </Typography>
               </Grid>
             </Grid>
@@ -165,39 +248,39 @@ export default function AdminOrderDetailPage({ params }: Props) {
                 <Typography variant="body2" color="text.secondary">
                   お名前
                 </Typography>
-                <Typography>{order.customer.name}</Typography>
+                <Typography>{order.customer_name}</Typography>
               </Grid>
               <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">
                   メールアドレス
                 </Typography>
-                <Typography>{order.customer.email}</Typography>
+                <Typography>{order.customer_email}</Typography>
               </Grid>
               <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">
                   電話番号
                 </Typography>
-                <Typography>{order.customer.phone}</Typography>
+                <Typography>{order.customer_phone || '-'}</Typography>
               </Grid>
             </Grid>
           </Paper>
 
           {/* Shipping Address (for SHIPPING orders) */}
-          {order.type === 'SHIPPING' && order.shipping && (
+          {order.order_type === 'SHIPPING' && order.shipping_postal_code && (
             <Paper sx={{ p: 3, mb: 3 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 配送先
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                〒{order.shipping.postalCode}
+                〒{order.shipping_postal_code}
               </Typography>
               <Typography>
-                {order.shipping.prefecture}
-                {order.shipping.city}
-                {order.shipping.address1}
+                {order.shipping_prefecture}
+                {order.shipping_city}
+                {order.shipping_address1}
               </Typography>
-              {order.shipping.address2 && (
-                <Typography>{order.shipping.address2}</Typography>
+              {order.shipping_address2 && (
+                <Typography>{order.shipping_address2}</Typography>
               )}
             </Paper>
           )}
@@ -218,12 +301,12 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {order.items.map((item) => (
+                  {order.order_items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell align="right">¥{formatPrice(item.unitPrice)}</TableCell>
+                      <TableCell>{item.product_name}</TableCell>
+                      <TableCell align="right">¥{formatPrice(item.unit_price_yen)}</TableCell>
                       <TableCell align="right">{item.qty}</TableCell>
-                      <TableCell align="right">¥{formatPrice(item.subtotal)}</TableCell>
+                      <TableCell align="right">¥{formatPrice(item.line_total_yen)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -235,16 +318,16 @@ export default function AdminOrderDetailPage({ params }: Props) {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-end' }}>
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <Typography color="text.secondary">商品小計</Typography>
-                <Typography>¥{formatPrice(order.subtotal)}</Typography>
+                <Typography>¥{formatPrice(order.subtotal_yen)}</Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <Typography color="text.secondary">送料</Typography>
-                <Typography>¥{formatPrice(order.shippingFee)}</Typography>
+                <Typography>¥{formatPrice(order.shipping_fee_yen)}</Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <Typography sx={{ fontWeight: 700 }}>合計</Typography>
                 <Typography sx={{ fontWeight: 700, color: 'primary.main' }}>
-                  ¥{formatPrice(order.total)}
+                  ¥{formatPrice(order.total_yen)}
                 </Typography>
               </Box>
             </Box>
@@ -260,9 +343,9 @@ export default function AdminOrderDetailPage({ params }: Props) {
               <Typography variant="h6">決済状況</Typography>
             </Box>
 
-            {order.paymentStatus === 'PAID' ? (
+            {order.payment_status === 'PAID' ? (
               <Alert severity="success" icon={<CheckCircleIcon />}>
-                決済完了: {formatDate(order.paidAt)}
+                決済完了: {formatDate(order.paid_at)}
               </Alert>
             ) : (
               <Alert severity="warning">決済待ち</Alert>
@@ -270,21 +353,21 @@ export default function AdminOrderDetailPage({ params }: Props) {
           </Paper>
 
           {/* Shipping (for SHIPPING orders) */}
-          {order.type === 'SHIPPING' && (
+          {order.order_type === 'SHIPPING' && (
             <Paper sx={{ p: 3, mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <LocalShippingIcon sx={{ color: 'primary.main' }} />
                 <Typography variant="h6">発送管理</Typography>
               </Box>
 
-              {order.shippedAt ? (
+              {order.shipped_at ? (
                 <>
                   <Alert severity="success" sx={{ mb: 2 }}>
-                    発送済: {formatDate(order.shippedAt)}
+                    発送済: {formatDate(order.shipped_at)}
                   </Alert>
-                  {order.trackingNumber && (
+                  {order.tracking_number && (
                     <Typography variant="body2">
-                      追跡番号: {order.trackingNumber}
+                      追跡番号: {order.tracking_number}
                     </Typography>
                   )}
                 </>
@@ -296,11 +379,15 @@ export default function AdminOrderDetailPage({ params }: Props) {
                     size="small"
                     sx={{ mb: 2 }}
                     placeholder="例: 1234-5678-9012"
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
                   />
                   <Button
                     variant="contained"
                     fullWidth
                     startIcon={<LocalShippingIcon />}
+                    onClick={handleShipped}
+                    disabled={isUpdating || order.payment_status !== 'PAID'}
                   >
                     発送完了にする
                   </Button>
@@ -316,22 +403,46 @@ export default function AdminOrderDetailPage({ params }: Props) {
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {order.status === 'PAID' && (
-                <Button variant="outlined" color="primary">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => updateOrderStatus('PACKING')}
+                  disabled={isUpdating}
+                >
                   梱包中にする
                 </Button>
               )}
               {order.status === 'SHIPPED' && (
-                <Button variant="outlined" color="success">
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={() => updateOrderStatus('FULFILLED')}
+                  disabled={isUpdating}
+                >
                   完了にする
                 </Button>
               )}
-              <Button variant="outlined" color="error">
-                キャンセル
-              </Button>
+              {order.status !== 'CANCELLED' && order.status !== 'FULFILLED' && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => updateOrderStatus('CANCELLED')}
+                  disabled={isUpdating}
+                >
+                  キャンセル
+                </Button>
+              )}
             </Box>
           </Paper>
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
     </Box>
   );
 }

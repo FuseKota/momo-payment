@@ -73,7 +73,7 @@ stable
 as $$
   select
     to_char(now(), 'YYYYMMDD') || '-' ||
-    upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 8));
+    upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 8));
 $$;
 
 -- =========

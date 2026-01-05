@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Box,
   Container,
@@ -41,7 +40,6 @@ interface ShippingForm {
 const steps = ['配送先入力', 'お支払い'];
 
 export default function ShippingCheckoutPage() {
-  const router = useRouter();
   const { items, subtotal, getTempZone, clearCart } = useCart();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,20 +103,23 @@ export default function ShippingCheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: items.map((item) => ({
-            productId: item.product.id,
-            qty: item.qty,
-          })),
-          shipping: {
+          customer: {
             name: form.name,
-            email: form.email,
             phone: form.phone,
+            email: form.email,
+          },
+          address: {
             postalCode: form.postalCode,
-            prefecture: form.prefecture,
+            pref: form.prefecture,
             city: form.city,
             address1: form.address1,
             address2: form.address2,
           },
+          items: items.map((item) => ({
+            productId: item.product.id,
+            qty: item.qty,
+          })),
+          agreementAccepted: true,
         }),
       });
 
@@ -129,9 +130,9 @@ export default function ShippingCheckoutPage() {
       }
 
       // Redirect to Square payment link
-      if (data.paymentUrl) {
+      if (data.data?.checkoutUrl) {
         clearCart();
-        window.location.href = data.paymentUrl;
+        window.location.href = data.data.checkoutUrl;
       } else {
         throw new Error('決済URLの取得に失敗しました');
       }

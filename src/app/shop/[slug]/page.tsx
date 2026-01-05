@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -14,6 +14,7 @@ import {
   Divider,
   Breadcrumbs,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
@@ -23,7 +24,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InfoIcon from '@mui/icons-material/Info';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
-import { getProductBySlug } from '@/data/mockProducts';
+import type { Product } from '@/types/database';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -32,9 +33,37 @@ interface Props {
 export default function ProductDetailPage({ params }: Props) {
   const { slug } = use(params);
   const router = useRouter();
-  const product = getProductBySlug(slug);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const { addItem, itemCount } = useCart();
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const response = await fetch(`/api/products?slug=${slug}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProduct(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch product:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [slug]);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+          <CircularProgress />
+        </Container>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (
