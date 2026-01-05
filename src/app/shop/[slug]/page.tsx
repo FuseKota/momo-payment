@@ -17,7 +17,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -151,20 +150,7 @@ export default function ProductDetailPage({ params }: Props) {
           {/* Product Info */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box>
-              <Box sx={{ mb: 2 }}>
-                {product.temp_zone === 'FROZEN' ? (
-                  <Chip
-                    icon={<AcUnitIcon />}
-                    label="冷凍食品"
-                    color="primary"
-                    variant="outlined"
-                  />
-                ) : (
-                  <Chip label="グッズ" color="default" variant="outlined" />
-                )}
-              </Box>
-
-              <Typography variant="h3" sx={{ mb: 2, fontWeight: 700 }}>
+              <Typography variant="h3" sx={{ mb: 2, fontWeight: 700, color: '#1a1a1a' }}>
                 {product.name}
               </Typography>
 
@@ -192,7 +178,7 @@ export default function ProductDetailPage({ params }: Props) {
 
               {/* Quantity Selector */}
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                <Typography variant="body1" sx={{ mr: 3 }}>
+                <Typography variant="body1" sx={{ mr: 3, color: '#1a1a1a' }}>
                   数量:
                 </Typography>
                 <Box
@@ -216,6 +202,7 @@ export default function ProductDetailPage({ params }: Props) {
                       fontWeight: 600,
                       minWidth: 40,
                       textAlign: 'center',
+                      color: '#1a1a1a',
                     }}
                   >
                     {qty}
@@ -240,25 +227,7 @@ export default function ProductDetailPage({ params }: Props) {
                 カートに追加
               </Button>
 
-              {product.temp_zone === 'FROZEN' && (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: '#FFF0F3',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 1,
-                  }}
-                >
-                  <AcUnitIcon sx={{ color: 'primary.main', mt: 0.3 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    この商品は冷凍便でお届けします。
-                    送料: ¥1,200
-                  </Typography>
-                </Box>
-              )}
-            </Box>
+              </Box>
           </Grid>
         </Grid>
 

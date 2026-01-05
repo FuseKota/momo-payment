@@ -124,7 +124,7 @@ export default function AdminOrdersPage() {
           <Tabs value={tab} onChange={(_, value) => setTab(value)}>
             <Tab label="すべて" value="all" />
             <Tab label="配送" value="shipping" />
-            <Tab label="店頭受取" value="pickup" />
+            <Tab label="キッチンカー" value="pickup" />
           </Tabs>
         </Box>
 
@@ -174,7 +174,7 @@ export default function AdminOrdersPage() {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={order.order_type === 'SHIPPING' ? '配送' : '店頭'}
+                      label={order.order_type === 'SHIPPING' ? '配送' : 'キッチンカー'}
                       size="small"
                       variant="outlined"
                       color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}

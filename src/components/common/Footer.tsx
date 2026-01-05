@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Box, Container, Typography, Grid, IconButton } from '@mui/material';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
+import LanguageIcon from '@mui/icons-material/Language';
 
 export default function Footer() {
   return (
@@ -12,8 +13,8 @@ export default function Footer() {
       sx={{
         mt: 'auto',
         py: 6,
-        background: 'linear-gradient(180deg, #FFFBFC 0%, #FFF0F3 100%)',
-        borderTop: '1px solid rgba(255, 102, 128, 0.1)',
+        background: 'linear-gradient(180deg, #FFE8ED 0%, #FFD6DE 100%)',
+        borderTop: '1px solid rgba(255, 102, 128, 0.2)',
       }}
     >
       <Container maxWidth="lg">
@@ -43,6 +44,23 @@ export default function Footer() {
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <IconButton
+                component="a"
+                href="https://sakura-sisters.com/momo-musume/"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
+                }}
+              >
+                <LanguageIcon />
+              </IconButton>
+              <IconButton
+                component="a"
+                href="https://www.instagram.com/momomusume_fukushima_official/"
+                target="_blank"
+                rel="noopener noreferrer"
                 size="small"
                 sx={{
                   color: 'primary.main',
@@ -52,6 +70,10 @@ export default function Footer() {
                 <InstagramIcon />
               </IconButton>
               <IconButton
+                component="a"
+                href="https://x.com/momomusume_jp"
+                target="_blank"
+                rel="noopener noreferrer"
                 size="small"
                 sx={{
                   color: 'primary.main',
@@ -63,7 +85,7 @@ export default function Footer() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 6, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
               ご注文
             </Typography>
@@ -76,7 +98,7 @@ export default function Footer() {
                     '&:hover': { color: 'primary.main' },
                   }}
                 >
-                  店頭受け取り
+                  キッチンカー販売
                 </Typography>
               </Link>
               <Link href="/shop" style={{ textDecoration: 'none' }}>
@@ -88,25 +110,6 @@ export default function Footer() {
                   }}
                 >
                   配送注文
-                </Typography>
-              </Link>
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 6, md: 4 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
-              インフォメーション
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link href="/legal/tokushoho" style={{ textDecoration: 'none' }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: 'text.secondary',
-                    '&:hover': { color: 'primary.main' },
-                  }}
-                >
-                  特定商取引法に基づく表記
                 </Typography>
               </Link>
             </Box>

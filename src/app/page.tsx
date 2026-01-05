@@ -6,15 +6,12 @@ import {
   Container,
   Typography,
   Button,
-  Card,
-  CardContent,
   Grid,
   Chip,
 } from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
 import { Layout } from '@/components/common';
 
 export default function Home() {
@@ -83,7 +80,7 @@ export default function Home() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              もも娘へようこそ
+              もも娘物販サイトへようこそ
             </Typography>
 
             <Typography
@@ -91,9 +88,9 @@ export default function Home() {
               color="text.secondary"
               sx={{ mb: 4, fontWeight: 400, lineHeight: 1.8 }}
             >
-              本格台湾魯肉飯とオリジナルグッズ
+              本格台湾料理と福島もも娘オリジナルグッズ
               <br />
-              店頭受け取り・配送でお届けします
+              キッチンカー販売・配送でお届けします
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -105,7 +102,7 @@ export default function Home() {
                 startIcon={<StorefrontIcon />}
                 sx={{ minWidth: 180 }}
               >
-                店頭受け取り
+                キッチンカー販売
               </Button>
               <Button
                 component={Link}
@@ -132,21 +129,27 @@ export default function Home() {
         </Typography>
 
         <Grid container spacing={4}>
-          {/* 店頭受け取り */}
+          {/* キッチンカー販売 */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card
-              sx={{
-                height: '100%',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: '0 12px 40px rgba(255, 102, 128, 0.2)',
-                },
-              }}
+            <Box
               component={Link}
               href="/pickup"
+              sx={{
+                display: 'block',
+                height: '100%',
+                textDecoration: 'none',
+                border: '3px solid #FF6680',
+                borderRadius: '12px',
+                backgroundColor: '#fff',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(255, 102, 128, 0.2)',
+                },
+              }}
             >
-              <CardContent sx={{ p: 4 }}>
+              <Box sx={{ p: 4 }}>
                 <Box
                   sx={{
                     width: 64,
@@ -163,12 +166,12 @@ export default function Home() {
                 </Box>
 
                 <Typography variant="h4" sx={{ mb: 2, color: 'text.primary' }}>
-                  店頭受け取り
+                  キッチンカー販売
                 </Typography>
 
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                  お店で直接お受け取りいただけます。
-                  事前決済または店頭払いをお選びいただけます。
+                  キッチンカーで直接お受け取りいただけます。
+                  事前決済または現地払いをお選びいただけます。
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -180,31 +183,37 @@ export default function Home() {
                     variant="outlined"
                   />
                   <Chip
-                    label="店頭払いOK"
+                    label="現地払いOK"
                     size="small"
                     color="primary"
                     variant="outlined"
                   />
                 </Box>
-              </CardContent>
-            </Card>
+              </Box>
+            </Box>
           </Grid>
 
           {/* 配送注文 */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card
-              sx={{
-                height: '100%',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: '0 12px 40px rgba(255, 102, 128, 0.2)',
-                },
-              }}
+            <Box
               component={Link}
               href="/shop"
+              sx={{
+                display: 'block',
+                height: '100%',
+                textDecoration: 'none',
+                border: '3px solid #FF6680',
+                borderRadius: '12px',
+                backgroundColor: '#fff',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(255, 102, 128, 0.2)',
+                },
+              }}
             >
-              <CardContent sx={{ p: 4 }}>
+              <Box sx={{ p: 4 }}>
                 <Box
                   sx={{
                     width: 64,
@@ -231,52 +240,18 @@ export default function Home() {
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   <Chip
-                    icon={<AcUnitIcon />}
-                    label="冷凍便対応"
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                  <Chip
                     label="全国配送"
                     size="small"
                     color="primary"
                     variant="outlined"
                   />
                 </Box>
-              </CardContent>
-            </Card>
+              </Box>
+            </Box>
           </Grid>
         </Grid>
       </Container>
 
-      {/* Info Section */}
-      <Box sx={{ backgroundColor: '#FFF0F3', py: { xs: 6, md: 8 } }}>
-        <Container maxWidth="md">
-          <Box
-            sx={{
-              textAlign: 'center',
-              p: 4,
-              borderRadius: 4,
-              backgroundColor: 'white',
-              boxShadow: '0 4px 20px rgba(255, 102, 128, 0.1)',
-            }}
-          >
-            <Typography variant="h5" sx={{ mb: 2, color: 'primary.main' }}>
-              🍑 もも娘について
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 2 }}>
-              台湾の家庭料理「魯肉飯（ルーローハン）」を
-              <br />
-              本場の味でお届けするお店です。
-              <br />
-              こだわりの八角香る豚バラ肉の煮込みを
-              <br />
-              ぜひお楽しみください。
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
     </Layout>
   );
 }

@@ -54,8 +54,8 @@ const theme = createTheme({
       main: '#43A047',
     },
     text: {
-      primary: '#37474F',
-      secondary: '#78909C',
+      primary: '#1a1a1a',
+      secondary: '#616161',
     },
   },
   typography: {

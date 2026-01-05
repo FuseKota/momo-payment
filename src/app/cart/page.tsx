@@ -21,7 +21,6 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import StorefrontIcon from '@mui/icons-material/Storefront';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
@@ -30,13 +29,11 @@ const SHIPPING_FEE = 1200;
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, updateQty, removeItem, clearCart, subtotal, itemCount, getTempZone, hasMixedTempZones, cartMode } = useCart();
+  const { items, updateQty, removeItem, clearCart, subtotal, itemCount, cartMode } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP').format(price);
   };
-
-  const tempZone = getTempZone();
   const isPickupMode = cartMode === 'pickup';
   const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE : 0);
 
@@ -59,7 +56,7 @@ export default function CartPage() {
           >
             <ShoppingCartIcon sx={{ fontSize: 48, color: 'primary.main' }} />
           </Box>
-          <Typography variant="h4" sx={{ mb: 2 }}>
+          <Typography variant="h4" sx={{ mb: 2, color: '#1a1a1a' }}>
             カートは空です
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
@@ -82,7 +79,7 @@ export default function CartPage() {
               size="large"
               startIcon={<StorefrontIcon />}
             >
-              店頭受取商品を見る
+              キッチンカー販売商品を見る
             </Button>
           </Box>
         </Container>
@@ -95,13 +92,13 @@ export default function CartPage() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+            <Typography variant="h3" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
               カート
             </Typography>
             {isPickupMode ? (
               <Chip
                 icon={<StorefrontIcon />}
-                label="店頭受取"
+                label="キッチンカー"
                 color="secondary"
                 variant="outlined"
               />
@@ -123,12 +120,6 @@ export default function CartPage() {
           </Button>
         </Box>
 
-        {hasMixedTempZones() && !isPickupMode && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            冷凍食品とグッズは同時に注文できません。どちらかを削除してください。
-          </Alert>
-        )}
-
         <Grid container spacing={4}>
           {/* Cart Items */}
           <Grid size={{ xs: 12, md: 8 }}>
@@ -138,45 +129,42 @@ export default function CartPage() {
                   {index > 0 && <Divider sx={{ my: 3 }} />}
                   <Box sx={{ display: 'flex', gap: 3 }}>
                     {/* Product Image */}
-                    <Box
-                      sx={{
-                        width: 100,
-                        height: 100,
-                        backgroundColor: '#FFF0F3',
-                        borderRadius: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '3rem' }}>
-                        {item.product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                      </Typography>
-                    </Box>
+                    {item.product.image_url ? (
+                      <Box
+                        component="img"
+                        src={item.product.image_url}
+                        alt={item.product.name}
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          borderRadius: 2,
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          backgroundColor: '#FFF0F3',
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '3rem' }}>
+                          {item.product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                        </Typography>
+                      </Box>
+                    )}
 
                     {/* Product Info */}
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                         <Box>
-                          <Box sx={{ mb: 1 }}>
-                            {item.product.temp_zone === 'FROZEN' ? (
-                              <Chip
-                                icon={<AcUnitIcon />}
-                                label="冷凍"
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                              />
-                            ) : (
-                              <Chip
-                                label="常温"
-                                size="small"
-                                color="default"
-                                variant="outlined"
-                              />
-                            )}
-                          </Box>
                           <Link
                             href={`/shop/${item.product.slug}`}
                             style={{ textDecoration: 'none' }}
@@ -273,9 +261,7 @@ export default function CartPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <LocalShippingIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                    <Typography color="text.secondary">
-                      送料（{tempZone === 'FROZEN' ? '冷凍便' : '常温便'}）
-                    </Typography>
+                    <Typography color="text.secondary">送料</Typography>
                   </Box>
                   <Typography>¥{formatPrice(SHIPPING_FEE)}</Typography>
                 </Box>
@@ -297,14 +283,13 @@ export default function CartPage() {
                 size="large"
                 fullWidth
                 onClick={() => router.push(isPickupMode ? '/checkout/pickup' : '/checkout/shipping')}
-                disabled={!isPickupMode && hasMixedTempZones()}
                 startIcon={isPickupMode ? <StorefrontIcon /> : <LocalShippingIcon />}
                 sx={{ mb: 2 }}
               >
-                {isPickupMode ? '受取予約に進む' : 'レジに進む'}
+                {isPickupMode ? '注文に進む' : 'レジに進む'}
               </Button>
 
-              {isPickupMode ? (
+              {isPickupMode && (
                 <Box
                   sx={{
                     p: 2,
@@ -317,26 +302,10 @@ export default function CartPage() {
                 >
                   <StorefrontIcon sx={{ color: 'primary.main', fontSize: 18, mt: 0.3 }} />
                   <Typography variant="body2" color="text.secondary">
-                    店頭でお受け取りください
+                    キッチンカーでお受け取りください
                   </Typography>
                 </Box>
-              ) : tempZone === 'FROZEN' ? (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: '#FFF0F3',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 1,
-                  }}
-                >
-                  <AcUnitIcon sx={{ color: 'primary.main', fontSize: 18, mt: 0.3 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    冷凍便でお届けします
-                  </Typography>
-                </Box>
-              ) : null}
+              )}
             </Paper>
           </Grid>
         </Grid>

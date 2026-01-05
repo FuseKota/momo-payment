@@ -22,14 +22,10 @@ import {
   StepLabel,
   Alert,
   CircularProgress,
-  Select,
-  MenuItem,
-  InputLabel,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import PaymentIcon from '@mui/icons-material/Payment';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 
@@ -37,47 +33,11 @@ interface PickupForm {
   name: string;
   email: string;
   phone: string;
-  pickupDate: string;
-  pickupTime: string;
   paymentMethod: 'SQUARE' | 'PAY_AT_PICKUP';
   notes: string;
 }
 
-const steps = ['受取情報', 'お支払い'];
-
-// Generate available pickup dates (next 7 days, excluding past times)
-const getAvailableDates = () => {
-  const dates: string[] = [];
-  const now = new Date();
-  for (let i = 1; i <= 7; i++) {
-    const date = new Date(now);
-    date.setDate(date.getDate() + i);
-    dates.push(date.toISOString().split('T')[0]);
-  }
-  return dates;
-};
-
-const pickupTimes = [
-  '11:00',
-  '11:30',
-  '12:00',
-  '12:30',
-  '13:00',
-  '13:30',
-  '14:00',
-  '14:30',
-  '15:00',
-  '15:30',
-  '16:00',
-  '16:30',
-  '17:00',
-  '17:30',
-  '18:00',
-  '18:30',
-  '19:00',
-  '19:30',
-  '20:00',
-];
+const steps = ['お客様情報', 'お支払い'];
 
 export default function PickupCheckoutPage() {
   const router = useRouter();
@@ -89,22 +49,12 @@ export default function PickupCheckoutPage() {
     name: '',
     email: '',
     phone: '',
-    pickupDate: '',
-    pickupTime: '',
     paymentMethod: 'SQUARE',
     notes: '',
   });
 
-  const availableDates = getAvailableDates();
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP').format(price);
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-    return `${date.getMonth() + 1}月${date.getDate()}日（${weekdays[date.getDay()]}）`;
   };
 
   const handleInputChange = (field: keyof PickupForm) => (
@@ -118,8 +68,6 @@ export default function PickupCheckoutPage() {
       'name',
       'email',
       'phone',
-      'pickupDate',
-      'pickupTime',
     ];
     return required.every((field) => form[field].trim() !== '');
   };
@@ -156,8 +104,7 @@ export default function PickupCheckoutPage() {
             qty: item.qty,
           })),
           paymentMethod: form.paymentMethod,
-          pickupDate: form.pickupDate,
-          pickupTime: form.pickupTime,
+          notes: form.notes,
           agreementAccepted: true,
         }),
       });
@@ -198,7 +145,7 @@ export default function PickupCheckoutPage() {
             variant="contained"
             startIcon={<ArrowBackIcon />}
           >
-            店頭受取メニューに戻る
+            キッチンカーメニューに戻る
           </Button>
         </Container>
       </Layout>
@@ -214,11 +161,11 @@ export default function PickupCheckoutPage() {
           startIcon={<ArrowBackIcon />}
           sx={{ mb: 3 }}
         >
-          店頭受取メニューに戻る
+          キッチンカーメニューに戻る
         </Button>
 
-        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700 }}>
-          店頭受取予約
+        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700, color: '#1a1a1a' }}>
+          キッチンカー予約
         </Typography>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -278,47 +225,6 @@ export default function PickupCheckoutPage() {
                 </Grid>
 
                 <Grid size={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <AccessTimeIcon sx={{ color: 'primary.main' }} />
-                    <Typography variant="h6">受取日時</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <FormControl fullWidth required>
-                    <InputLabel>受取日</InputLabel>
-                    <Select
-                      value={form.pickupDate}
-                      label="受取日"
-                      onChange={(e) => setForm((prev) => ({ ...prev, pickupDate: e.target.value }))}
-                    >
-                      {availableDates.map((date) => (
-                        <MenuItem key={date} value={date}>
-                          {formatDate(date)}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <FormControl fullWidth required>
-                    <InputLabel>受取時間</InputLabel>
-                    <Select
-                      value={form.pickupTime}
-                      label="受取時間"
-                      onChange={(e) => setForm((prev) => ({ ...prev, pickupTime: e.target.value }))}
-                    >
-                      {pickupTimes.map((time) => (
-                        <MenuItem key={time} value={time}>
-                          {time}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid size={12}>
                   <TextField
                     label="備考（任意）"
                     fullWidth
@@ -352,13 +258,10 @@ export default function PickupCheckoutPage() {
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                  予約内容
+                  お客様情報
                 </Typography>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography>{form.name} 様</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {form.pickupDate && formatDate(form.pickupDate)} {form.pickupTime}
-                  </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {form.email} / {form.phone}
                   </Typography>
@@ -424,9 +327,9 @@ export default function PickupCheckoutPage() {
                       control={<Radio />}
                       label={
                         <Box>
-                          <Typography sx={{ fontWeight: 600 }}>店頭払い（現金）</Typography>
+                          <Typography sx={{ fontWeight: 600 }}>現地払い（現金）</Typography>
                           <Typography variant="body2" color="text.secondary">
-                            受取時に店頭でお支払いします
+                            受取時に現地でお支払いします
                           </Typography>
                         </Box>
                       }
@@ -443,7 +346,7 @@ export default function PickupCheckoutPage() {
 
               {form.paymentMethod === 'PAY_AT_PICKUP' && (
                 <Alert severity="info" sx={{ mb: 3 }}>
-                  予約確定後、店頭でお支払いください。
+                  予約確定後、現地でお支払いください。
                 </Alert>
               )}
 
@@ -508,22 +411,6 @@ export default function PickupCheckoutPage() {
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                   ¥{formatPrice(subtotal)}
-                </Typography>
-              </Box>
-
-              {/* Store Info */}
-              <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#FFF0F3' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
-                  受取場所
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  もも娘
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  〒150-0001 東京都渋谷区神宮前1-2-3
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  営業時間: 11:00 - 20:00
                 </Typography>
               </Box>
             </Paper>

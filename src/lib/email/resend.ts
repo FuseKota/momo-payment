@@ -96,7 +96,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
         <h3 style="color: #FF6680; margin-top: 0;">注文情報</h3>
         <p style="margin: 0 0 8px;">
           <strong>注文番号:</strong> ${data.orderNo}<br>
-          <strong>注文種別:</strong> ${data.orderType === 'SHIPPING' ? '配送' : '店頭受取'}
+          <strong>注文種別:</strong> ${data.orderType === 'SHIPPING' ? '配送' : 'キッチンカー'}
         </p>
 
         <h3 style="color: #FF6680; margin-top: 24px;">ご注文商品</h3>

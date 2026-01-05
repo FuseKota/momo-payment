@@ -20,7 +20,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 
@@ -40,7 +39,7 @@ interface ShippingForm {
 const steps = ['配送先入力', 'お支払い'];
 
 export default function ShippingCheckoutPage() {
-  const { items, subtotal, getTempZone, clearCart } = useCart();
+  const { items, subtotal, clearCart } = useCart();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +58,6 @@ export default function ShippingCheckoutPage() {
     return new Intl.NumberFormat('ja-JP').format(price);
   };
 
-  const tempZone = getTempZone();
   const total = subtotal + SHIPPING_FEE;
 
   const handleInputChange = (field: keyof ShippingForm) => (
@@ -174,7 +172,7 @@ export default function ShippingCheckoutPage() {
           カートに戻る
         </Button>
 
-        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700 }}>
+        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700, color: '#1a1a1a' }}>
           配送チェックアウト
         </Typography>
 
@@ -373,9 +371,7 @@ export default function ShippingCheckoutPage() {
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography color="text.secondary">
-                  送料（{tempZone === 'FROZEN' ? '冷凍便' : '常温便'}）
-                </Typography>
+                <Typography color="text.secondary">送料</Typography>
                 <Typography>¥{formatPrice(SHIPPING_FEE)}</Typography>
               </Box>
 
@@ -389,24 +385,6 @@ export default function ShippingCheckoutPage() {
                   ¥{formatPrice(total)}
                 </Typography>
               </Box>
-
-              {tempZone === 'FROZEN' && (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: '#FFF0F3',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 1,
-                  }}
-                >
-                  <AcUnitIcon sx={{ color: 'primary.main', fontSize: 18, mt: 0.3 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    冷凍便でお届けします
-                  </Typography>
-                </Box>
-              )}
             </Paper>
           </Grid>
         </Grid>

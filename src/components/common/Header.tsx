@@ -24,6 +24,9 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
+import LanguageIcon from '@mui/icons-material/Language';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import XIcon from '@mui/icons-material/X';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -36,45 +39,56 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
 
   const navItems = [
     { label: 'ホーム', href: '/', icon: <HomeIcon /> },
-    { label: '店頭受け取り', href: '/pickup', icon: <StorefrontIcon /> },
+    { label: 'キッチンカー販売', href: '/pickup', icon: <StorefrontIcon /> },
     { label: '配送注文', href: '/shop', icon: <LocalShippingIcon /> },
   ];
 
   return (
     <>
       <AppBar position="sticky" color="inherit" elevation={0}>
-        <Toolbar sx={{ maxWidth: 1200, width: '100%', mx: 'auto', px: { xs: 2, md: 3 } }}>
+        <Toolbar
+          sx={{
+            maxWidth: 1200,
+            width: '100%',
+            mx: 'auto',
+            px: { xs: 2, md: 4 },
+            minHeight: { xs: 70, md: 80 },
+            py: 1,
+          }}
+        >
           {isMobile && (
             <IconButton
               edge="start"
               color="primary"
               onClick={() => setDrawerOpen(true)}
               sx={{ mr: 1 }}
+              size="large"
             >
-              <MenuIcon />
+              <MenuIcon sx={{ fontSize: 28 }} />
             </IconButton>
           )}
 
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 48, md: 56 },
+                height: { xs: 48, md: 56 },
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #FF859A 0%, #FF6680 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mr: 1.5,
+                mr: 2,
               }}
             >
-              <Typography sx={{ fontSize: '1.2rem' }}>🍑</Typography>
+              <Typography sx={{ fontSize: { xs: '1.5rem', md: '1.8rem' } }}>🍑</Typography>
             </Box>
             <Typography
-              variant="h6"
+              variant="h5"
               component="span"
               sx={{
                 fontWeight: 700,
+                fontSize: { xs: '1.3rem', md: '1.5rem' },
                 background: 'linear-gradient(135deg, #FF6680 0%, #E84D6A 100%)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
@@ -88,7 +102,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
           <Box sx={{ flexGrow: 1 }} />
 
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
               {navItems.map((item) => (
                 <Button
                   key={item.href}
@@ -96,8 +110,12 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   href={item.href}
                   color="inherit"
                   startIcon={item.icon}
+                  size="large"
                   sx={{
                     color: 'text.secondary',
+                    fontSize: '1rem',
+                    px: 2.5,
+                    py: 1,
                     '&:hover': {
                       color: 'primary.main',
                       backgroundColor: 'rgba(255, 102, 128, 0.08)',
@@ -110,14 +128,58 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </Box>
           )}
 
+          {/* Social Links */}
+          <Box sx={{ display: 'flex', gap: 0.5, ml: { xs: 0, md: 2 } }}>
+            <IconButton
+              component="a"
+              href="https://sakura-sisters.com/momo-musume/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+              }}
+            >
+              <LanguageIcon />
+            </IconButton>
+            <IconButton
+              component="a"
+              href="https://www.instagram.com/momomusume_fukushima_official/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+              }}
+            >
+              <InstagramIcon />
+            </IconButton>
+            <IconButton
+              component="a"
+              href="https://x.com/momomusume_jp"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+              }}
+            >
+              <XIcon />
+            </IconButton>
+          </Box>
+
           <IconButton
             component={Link}
             href="/cart"
             color="primary"
-            sx={{ ml: 2 }}
+            size="large"
+            sx={{ ml: 3 }}
           >
             <Badge badgeContent={cartItemCount} color="secondary">
-              <ShoppingCartIcon />
+              <ShoppingCartIcon sx={{ fontSize: 28 }} />
             </Badge>
           </IconButton>
         </Toolbar>
@@ -164,6 +226,47 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
               </ListItem>
             ))}
           </List>
+          <Box sx={{ px: 2, pt: 2, display: 'flex', gap: 1 }}>
+            <IconButton
+              component="a"
+              href="https://sakura-sisters.com/momo-musume/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
+              }}
+            >
+              <LanguageIcon />
+            </IconButton>
+            <IconButton
+              component="a"
+              href="https://www.instagram.com/momomusume_fukushima_official/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
+              }}
+            >
+              <InstagramIcon />
+            </IconButton>
+            <IconButton
+              component="a"
+              href="https://x.com/momomusume_jp"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
+              }}
+            >
+              <XIcon />
+            </IconButton>
+          </Box>
         </Box>
       </Drawer>
     </>

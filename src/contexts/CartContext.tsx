@@ -106,10 +106,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const productMode = getProductMode(product);
     if (cartMode === 'pickup' && productMode === 'shipping') {
-      return '店頭受取商品がカートにあります。配送商品を追加するにはカートをクリアしてください。';
+      return 'キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。';
     }
     if (cartMode === 'shipping' && productMode === 'pickup') {
-      return '配送商品がカートにあります。店頭受取商品を追加するにはカートをクリアしてください。';
+      return '配送商品がカートにあります。キッチンカー販売商品を追加するにはカートをクリアしてください。';
     }
     return null;
   };

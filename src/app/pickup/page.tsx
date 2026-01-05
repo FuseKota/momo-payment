@@ -7,7 +7,6 @@ import {
   Container,
   Typography,
   Button,
-  Paper,
   Grid,
   Card,
   CardContent,
@@ -19,10 +18,8 @@ import {
   IconButton,
 } from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PaymentIcon from '@mui/icons-material/Payment';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -39,12 +36,12 @@ const steps = [
   {
     icon: <PaymentIcon sx={{ fontSize: 40 }} />,
     title: 'Step 2',
-    description: '受取日時を選択してお支払い',
+    description: 'お客様情報を入力してお支払い',
   },
   {
     icon: <StorefrontIcon sx={{ fontSize: 40 }} />,
     title: 'Step 3',
-    description: '店頭で受取',
+    description: 'キッチンカーで受取',
   },
 ];
 
@@ -134,7 +131,7 @@ export default function PickupPage() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              店頭受取
+              キッチンカー販売
             </Typography>
             <Typography
               variant="h5"
@@ -142,7 +139,6 @@ export default function PickupPage() {
               sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
             >
               事前予約でスムーズにお受け取り。
-              待ち時間なしで出来立てをお渡しします。
             </Typography>
             {itemCount > 0 && (
               <Button
@@ -164,14 +160,14 @@ export default function PickupPage() {
         {/* Cart mode warning */}
         {cartMode === 'shipping' && (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            配送商品がカートにあります。店頭受取商品を追加するにはカートをクリアしてください。
+            配送商品がカートにあります。キッチンカー販売商品を追加するにはカートをクリアしてください。
           </Alert>
         )}
 
         {/* How it works */}
         <Typography
           variant="h4"
-          sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}
+          sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}
         >
           ご利用の流れ
         </Typography>
@@ -180,12 +176,17 @@ export default function PickupPage() {
           {steps.map((step, index) => (
             <Grid key={index} size={{ xs: 12, md: 4 }}>
               <Card
+                elevation={0}
                 sx={{
                   height: '100%',
                   textAlign: 'center',
                   boxShadow: 'none',
                   border: '1px solid',
                   borderColor: 'divider',
+                  '&:hover': {
+                    boxShadow: 'none',
+                    transform: 'none',
+                  },
                 }}
               >
                 <CardContent sx={{ py: 4 }}>
@@ -232,7 +233,7 @@ export default function PickupPage() {
           <>
             <Typography
               variant="h4"
-              sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}
+              sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}
             >
               フードメニュー
             </Typography>
@@ -348,9 +349,9 @@ export default function PickupPage() {
           <>
             <Typography
               variant="h4"
-              sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}
+              sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}
             >
-              グッズ
+              福島もも娘グッズ
             </Typography>
 
             <Grid container spacing={3} sx={{ mb: 6 }}>
@@ -474,43 +475,11 @@ export default function PickupPage() {
               startIcon={<ShoppingCartIcon />}
               sx={{ px: 6, py: 1.5 }}
             >
-              受取予約に進む ({itemCount}点)
+              注文に進む ({itemCount}点)
             </Button>
           </Box>
         )}
 
-        {/* Store Info */}
-        <Paper sx={{ p: 4, backgroundColor: '#FFF0F3' }}>
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <LocationOnIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="h6">店舗情報</Typography>
-              </Box>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                もも娘
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                〒150-0001 東京都渋谷区神宮前1-2-3
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                最寄り駅: 原宿駅より徒歩5分
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <AccessTimeIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="h6">営業時間</Typography>
-              </Box>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                11:00 - 20:00
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                定休日: 不定休（SNSでお知らせ）
-              </Typography>
-            </Grid>
-          </Grid>
-        </Paper>
       </Container>
 
       {/* Snackbar for notifications */}

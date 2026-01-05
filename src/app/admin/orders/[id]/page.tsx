@@ -215,7 +215,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   種別
                 </Typography>
                 <Chip
-                  label={order.order_type === 'SHIPPING' ? '配送' : '店頭受取'}
+                  label={order.order_type === 'SHIPPING' ? '配送' : 'キッチンカー'}
                   size="small"
                   variant="outlined"
                   color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
@@ -232,7 +232,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   決済方法
                 </Typography>
                 <Typography>
-                  {order.payment_method === 'SQUARE' ? 'オンライン決済' : '店頭払い'}
+                  {order.payment_method === 'SQUARE' ? 'オンライン決済' : '現地払い'}
                 </Typography>
               </Grid>
             </Grid>

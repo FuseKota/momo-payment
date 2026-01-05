@@ -167,7 +167,7 @@ function CompleteContent() {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             {isPaymentComplete
               ? isPickup
-                ? '店頭受取のご予約を承りました。'
+                ? 'キッチンカー販売のご予約を承りました。'
                 : 'ご注文を承りました。確認メールをお送りしました。'
               : isPendingPayment
               ? 'お支払いが完了次第、確認メールをお送りします。'
@@ -271,31 +271,14 @@ function CompleteContent() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <StorefrontIcon sx={{ color: 'primary.main' }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  店頭受取について
+                  キッチンカー受取について
                 </Typography>
               </Box>
-              {order.pickup_date && (
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  受取予定: {order.pickup_date}
-                  {order.pickup_time && ` ${order.pickup_time}`}
-                </Typography>
-              )}
               {order.payment_method === 'PAY_AT_PICKUP' && (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  お支払いは店頭にてお願いいたします。
+                  お支払いは現地にてお願いいたします。
                 </Alert>
               )}
-              <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#FFF0F3' }}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                  もも娘
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  〒150-0001 東京都渋谷区神宮前1-2-3
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  営業時間: 11:00 - 20:00
-                </Typography>
-              </Paper>
             </Box>
           ) : (
             <Box sx={{ textAlign: 'left', mb: 4 }}>
@@ -328,11 +311,6 @@ function CompleteContent() {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 発送完了後、追跡番号をメールでお知らせいたします。
               </Typography>
-              {order.temp_zone === 'FROZEN' && (
-                <Typography variant="body2" color="text.secondary">
-                  ※冷凍便でお届けします。届き次第冷凍庫での保管をお願いします。
-                </Typography>
-              )}
             </Box>
           )}
 

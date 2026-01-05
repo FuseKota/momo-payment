@@ -18,8 +18,6 @@ import {
   CircularProgress,
   Snackbar,
 } from '@mui/material';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
@@ -36,7 +34,7 @@ export default function ShopPage() {
     message: '',
     severity: 'success',
   });
-  const { addItem, hasMixedTempZones, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode } = useCart();
+  const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode } = useCart();
 
   useEffect(() => {
     async function fetchProducts() {
@@ -118,19 +116,12 @@ export default function ShopPage() {
         {/* Cart mode warning */}
         {cartMode === 'pickup' && (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            店頭受取商品がカートにあります。配送商品を追加するにはカートをクリアしてください。
-          </Alert>
-        )}
-
-        {/* Alert for mixed temp zones */}
-        {hasMixedTempZones() && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            冷凍食品とグッズは同時に注文できません。別々にご注文ください。
+            キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。
           </Alert>
         )}
 
         {/* Tabs */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 4, borderBottom: '2px solid #FFE0E6' }}>
           <Tabs
             value={tab}
             onChange={(_, value) => setTab(value)}
@@ -145,18 +136,8 @@ export default function ShopPage() {
             }}
           >
             <Tab label="すべて" value="all" />
-            <Tab
-              label="冷凍食品"
-              value="frozen"
-              icon={<AcUnitIcon sx={{ fontSize: 18 }} />}
-              iconPosition="start"
-            />
-            <Tab
-              label="グッズ"
-              value="goods"
-              icon={<LocalOfferIcon sx={{ fontSize: 18 }} />}
-              iconPosition="start"
-            />
+            <Tab label="フード" value="frozen" />
+            <Tab label="グッズ" value="goods" />
           </Tabs>
         </Box>
 
@@ -208,27 +189,6 @@ export default function ShopPage() {
                   </Link>
 
                   <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ mb: 1 }}>
-                      {product.temp_zone === 'FROZEN' ? (
-                        <Chip
-                          icon={<AcUnitIcon />}
-                          label="冷凍"
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                          sx={{ mr: 1 }}
-                        />
-                      ) : (
-                        <Chip
-                          label="常温"
-                          size="small"
-                          color="default"
-                          variant="outlined"
-                          sx={{ mr: 1 }}
-                        />
-                      )}
-                    </Box>
-
                     <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
                       <Typography
                         variant="h6"
@@ -308,14 +268,8 @@ export default function ShopPage() {
           <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
             配送について
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            • 冷凍食品は冷凍便でお届けします（送料: ¥1,200）
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            • グッズは常温便でお届けします（送料: ¥1,200）
-          </Typography>
           <Typography variant="body2" color="text.secondary">
-            • 冷凍食品とグッズは温度帯が異なるため、別々にご注文ください
+            • 送料: ¥1,200（全国一律）
           </Typography>
         </Box>
       </Container>
