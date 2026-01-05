@@ -158,19 +158,31 @@ export default function ShopPage() {
                   }}
                 >
                   <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
-                    <CardMedia
-                      sx={{
-                        height: 200,
-                        backgroundColor: '#FFF0F3',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '4rem' }}>
-                        {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                      </Typography>
-                    </CardMedia>
+                    {product.image_url ? (
+                      <CardMedia
+                        component="img"
+                        image={product.image_url}
+                        alt={product.name}
+                        sx={{
+                          height: 200,
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <CardMedia
+                        sx={{
+                          height: 200,
+                          backgroundColor: '#FFF0F3',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '4rem' }}>
+                          {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                        </Typography>
+                      </CardMedia>
+                    )}
                   </Link>
 
                   <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

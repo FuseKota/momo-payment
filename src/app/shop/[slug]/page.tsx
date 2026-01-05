@@ -111,20 +111,41 @@ export default function ProductDetailPage({ params }: Props) {
         <Grid container spacing={4}>
           {/* Product Image */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper
-              sx={{
-                height: 400,
-                backgroundColor: '#FFF0F3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 3,
-              }}
-            >
-              <Typography sx={{ fontSize: '8rem' }}>
-                {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-              </Typography>
-            </Paper>
+            {product.image_url ? (
+              <Paper
+                sx={{
+                  height: 400,
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                }}
+              >
+                <Box
+                  component="img"
+                  src={product.image_url}
+                  alt={product.name}
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </Paper>
+            ) : (
+              <Paper
+                sx={{
+                  height: 400,
+                  backgroundColor: '#FFF0F3',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 3,
+                }}
+              >
+                <Typography sx={{ fontSize: '8rem' }}>
+                  {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                </Typography>
+              </Paper>
+            )}
           </Grid>
 
           {/* Product Info */}
