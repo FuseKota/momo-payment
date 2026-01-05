@@ -16,6 +16,7 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -30,12 +31,18 @@ export default function ShopPage() {
   const [tab, setTab] = useState<TabValue>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { addItem, hasMixedTempZones, itemCount } = useCart();
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const { addItem, hasMixedTempZones, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode } = useCart();
 
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch('/api/products');
+        // Only fetch shipping products
+        const response = await fetch('/api/products?mode=shipping');
         const data = await response.json();
         setProducts(data);
       } catch (error) {
@@ -59,7 +66,15 @@ export default function ShopPage() {
   };
 
   const handleAddToCart = (product: Product) => {
-    addItem(product, 1);
+    const message = getIncompatibleModeMessage(product);
+    if (message) {
+      setSnackbar({ open: true, message, severity: 'error' });
+      return;
+    }
+    const success = addItem(product, 1);
+    if (success) {
+      setSnackbar({ open: true, message: `${product.name}をカートに追加しました`, severity: 'success' });
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -100,6 +115,13 @@ export default function ShopPage() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Cart mode warning */}
+        {cartMode === 'pickup' && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            店頭受取商品がカートにあります。配送商品を追加するにはカートをクリアしてください。
+          </Alert>
+        )}
+
         {/* Alert for mixed temp zones */}
         {hasMixedTempZones() && (
           <Alert severity="warning" sx={{ mb: 3 }}>
@@ -253,6 +275,7 @@ export default function ShopPage() {
                         size="small"
                         startIcon={<ShoppingCartIcon />}
                         onClick={() => handleAddToCart(product)}
+                        disabled={!canAddProduct(product)}
                       >
                         追加
                       </Button>
@@ -296,6 +319,22 @@ export default function ShopPage() {
           </Typography>
         </Box>
       </Container>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 }

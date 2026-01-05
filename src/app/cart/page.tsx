@@ -20,7 +20,9 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 
@@ -28,14 +30,15 @@ const SHIPPING_FEE = 1200;
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, updateQty, removeItem, subtotal, itemCount, getTempZone, hasMixedTempZones } = useCart();
+  const { items, updateQty, removeItem, clearCart, subtotal, itemCount, getTempZone, hasMixedTempZones, cartMode } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP').format(price);
   };
 
   const tempZone = getTempZone();
-  const total = subtotal + (items.length > 0 ? SHIPPING_FEE : 0);
+  const isPickupMode = cartMode === 'pickup';
+  const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE : 0);
 
   if (items.length === 0) {
     return (
@@ -62,15 +65,26 @@ export default function CartPage() {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             商品をカートに追加してください
           </Typography>
-          <Button
-            component={Link}
-            href="/shop"
-            variant="contained"
-            size="large"
-            startIcon={<ArrowBackIcon />}
-          >
-            商品一覧に戻る
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
+              component={Link}
+              href="/shop"
+              variant="contained"
+              size="large"
+              startIcon={<LocalShippingIcon />}
+            >
+              配送商品を見る
+            </Button>
+            <Button
+              component={Link}
+              href="/pickup"
+              variant="outlined"
+              size="large"
+              startIcon={<StorefrontIcon />}
+            >
+              店頭受取商品を見る
+            </Button>
+          </Box>
         </Container>
       </Layout>
     );
@@ -79,11 +93,37 @@ export default function CartPage() {
   return (
     <Layout cartItemCount={itemCount}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700 }}>
-          カート
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+              カート
+            </Typography>
+            {isPickupMode ? (
+              <Chip
+                icon={<StorefrontIcon />}
+                label="店頭受取"
+                color="secondary"
+                variant="outlined"
+              />
+            ) : (
+              <Chip
+                icon={<LocalShippingIcon />}
+                label="配送"
+                color="primary"
+                variant="outlined"
+              />
+            )}
+          </Box>
+          <Button
+            startIcon={<DeleteSweepIcon />}
+            color="error"
+            onClick={clearCart}
+          >
+            カートを空にする
+          </Button>
+        </Box>
 
-        {hasMixedTempZones() && (
+        {hasMixedTempZones() && !isPickupMode && (
           <Alert severity="error" sx={{ mb: 3 }}>
             冷凍食品とグッズは同時に注文できません。どちらかを削除してください。
           </Alert>
@@ -209,7 +249,7 @@ export default function CartPage() {
 
             <Button
               component={Link}
-              href="/shop"
+              href={isPickupMode ? '/pickup' : '/shop'}
               startIcon={<ArrowBackIcon />}
               sx={{ mt: 3 }}
             >
@@ -229,15 +269,17 @@ export default function CartPage() {
                 <Typography>¥{formatPrice(subtotal)}</Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LocalShippingIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                  <Typography color="text.secondary">
-                    送料（{tempZone === 'FROZEN' ? '冷凍便' : '常温便'}）
-                  </Typography>
+              {!isPickupMode && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LocalShippingIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                    <Typography color="text.secondary">
+                      送料（{tempZone === 'FROZEN' ? '冷凍便' : '常温便'}）
+                    </Typography>
+                  </Box>
+                  <Typography>¥{formatPrice(SHIPPING_FEE)}</Typography>
                 </Box>
-                <Typography>¥{formatPrice(SHIPPING_FEE)}</Typography>
-              </Box>
+              )}
 
               <Divider sx={{ my: 2 }} />
 
@@ -254,14 +296,31 @@ export default function CartPage() {
                 variant="contained"
                 size="large"
                 fullWidth
-                onClick={() => router.push('/checkout/shipping')}
-                disabled={hasMixedTempZones()}
+                onClick={() => router.push(isPickupMode ? '/checkout/pickup' : '/checkout/shipping')}
+                disabled={!isPickupMode && hasMixedTempZones()}
+                startIcon={isPickupMode ? <StorefrontIcon /> : <LocalShippingIcon />}
                 sx={{ mb: 2 }}
               >
-                レジに進む
+                {isPickupMode ? '受取予約に進む' : 'レジに進む'}
               </Button>
 
-              {tempZone === 'FROZEN' && (
+              {isPickupMode ? (
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    backgroundColor: '#FFF0F3',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                  }}
+                >
+                  <StorefrontIcon sx={{ color: 'primary.main', fontSize: 18, mt: 0.3 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    店頭でお受け取りください
+                  </Typography>
+                </Box>
+              ) : tempZone === 'FROZEN' ? (
                 <Box
                   sx={{
                     p: 2,
@@ -277,7 +336,7 @@ export default function CartPage() {
                     冷凍便でお届けします
                   </Typography>
                 </Box>
-              )}
+              ) : null}
             </Paper>
           </Grid>
         </Grid>

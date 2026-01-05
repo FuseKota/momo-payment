@@ -194,11 +194,11 @@ export default function PickupCheckoutPage() {
           </Typography>
           <Button
             component={Link}
-            href="/shop"
+            href="/pickup"
             variant="contained"
             startIcon={<ArrowBackIcon />}
           >
-            商品一覧に戻る
+            店頭受取メニューに戻る
           </Button>
         </Container>
       </Layout>
@@ -210,11 +210,11 @@ export default function PickupCheckoutPage() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Button
           component={Link}
-          href="/cart"
+          href="/pickup"
           startIcon={<ArrowBackIcon />}
           sx={{ mb: 3 }}
         >
-          カートに戻る
+          店頭受取メニューに戻る
         </Button>
 
         <Typography variant="h3" sx={{ mb: 4, fontWeight: 700 }}>

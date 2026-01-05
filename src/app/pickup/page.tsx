@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -10,42 +11,35 @@ import {
   Grid,
   Card,
   CardContent,
+  CardMedia,
+  Chip,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  IconButton,
 } from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PaymentIcon from '@mui/icons-material/Payment';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
-
-const menuItems = [
-  {
-    name: '魯肉飯（ルーローハン）',
-    description: '八角香る豚バラ煮込み丼',
-    price: 850,
-  },
-  {
-    name: '鶏肉飯（チーローハン）',
-    description: '台湾風チキンライス',
-    price: 800,
-  },
-  {
-    name: '排骨飯（パイコーハン）',
-    description: 'サクサク豚カツ丼',
-    price: 950,
-  },
-];
+import { useCart } from '@/contexts/CartContext';
+import type { Product } from '@/types/database';
 
 const steps = [
   {
     icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
     title: 'Step 1',
-    description: '日時を予約',
+    description: '商品をカートに追加',
   },
   {
     icon: <PaymentIcon sx={{ fontSize: 40 }} />,
     title: 'Step 2',
-    description: 'お支払い方法を選択',
+    description: '受取日時を選択してお支払い',
   },
   {
     icon: <StorefrontIcon sx={{ fontSize: 40 }} />,
@@ -55,12 +49,71 @@ const steps = [
 ];
 
 export default function PickupPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const { addItem, canAddProduct, getIncompatibleModeMessage, itemCount, items, updateQty, cartMode } = useCart();
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('/api/products?mode=pickup');
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP').format(price);
   };
 
+  const handleAddToCart = (product: Product) => {
+    const message = getIncompatibleModeMessage(product);
+    if (message) {
+      setSnackbar({ open: true, message, severity: 'error' });
+      return;
+    }
+    const success = addItem(product, 1);
+    if (success) {
+      setSnackbar({ open: true, message: `${product.name}をカートに追加しました`, severity: 'success' });
+    }
+  };
+
+  const getCartQty = (productId: string): number => {
+    const item = items.find((i) => i.product.id === productId);
+    return item?.qty || 0;
+  };
+
+  const handleUpdateQty = (productId: string, delta: number) => {
+    const currentQty = getCartQty(productId);
+    const newQty = currentQty + delta;
+    if (newQty <= 0) {
+      updateQty(productId, 0);
+    } else {
+      updateQty(productId, newQty);
+    }
+  };
+
+  // Group products by type
+  const foodProducts = products.filter((p) =>
+    ['karaage-5pc', 'tapioca-milk-tea', 'rurohan-single', 'rurohan-set', 'jirohan-single', 'jirohan-set', 'taiwan-beer', 'pineapple-cake'].includes(p.slug)
+  );
+  const goodsProducts = products.filter((p) =>
+    ['tshirt-light', 'tshirt-heavy', 'keychain'].includes(p.slug)
+  );
+
   return (
-    <Layout>
+    <Layout cartItemCount={itemCount}>
       {/* Hero Section */}
       <Box
         sx={{
@@ -91,21 +144,30 @@ export default function PickupPage() {
               事前予約でスムーズにお受け取り。
               待ち時間なしで出来立てをお渡しします。
             </Typography>
-            <Button
-              component={Link}
-              href="/checkout/pickup"
-              variant="contained"
-              size="large"
-              startIcon={<StorefrontIcon />}
-              sx={{ px: 4, py: 1.5 }}
-            >
-              予約する
-            </Button>
+            {itemCount > 0 && (
+              <Button
+                component={Link}
+                href="/checkout/pickup"
+                variant="contained"
+                size="large"
+                startIcon={<ShoppingCartIcon />}
+                sx={{ px: 4, py: 1.5 }}
+              >
+                カートを見る ({itemCount}点)
+              </Button>
+            )}
           </Box>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 6 }}>
+        {/* Cart mode warning */}
+        {cartMode === 'shipping' && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            配送商品がカートにあります。店頭受取商品を追加するにはカートをクリアしてください。
+          </Alert>
+        )}
+
         {/* How it works */}
         <Typography
           variant="h4"
@@ -158,62 +220,264 @@ export default function PickupPage() {
           ))}
         </Grid>
 
-        {/* Menu Preview */}
-        <Typography
-          variant="h4"
-          sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}
-        >
-          メニュー
-        </Typography>
+        {/* Loading */}
+        {isLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-        <Grid container spacing={3} sx={{ mb: 6 }}>
-          {menuItems.map((item, index) => (
-            <Grid key={index} size={{ xs: 12, md: 4 }}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Box
-                  sx={{
-                    height: 150,
-                    backgroundColor: '#FFF0F3',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <Typography sx={{ fontSize: '4rem' }}>🍚</Typography>
-                </Box>
-                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                  {item.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {item.description}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ color: 'primary.main', fontWeight: 700 }}
-                >
-                  ¥{formatPrice(item.price)}
-                </Typography>
-              </Paper>
+        {/* Food Menu */}
+        {!isLoading && foodProducts.length > 0 && (
+          <>
+            <Typography
+              variant="h4"
+              sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}
+            >
+              フードメニュー
+            </Typography>
+
+            <Grid container spacing={3} sx={{ mb: 6 }}>
+              {foodProducts.map((product) => {
+                const cartQty = getCartQty(product.id);
+                return (
+                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      {product.image_url ? (
+                        <CardMedia
+                          component="img"
+                          image={product.image_url}
+                          alt={product.name}
+                          sx={{ height: 180, objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <CardMedia
+                          sx={{
+                            height: 180,
+                            backgroundColor: '#FFF0F3',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography sx={{ fontSize: '4rem' }}>🍚</Typography>
+                        </CardMedia>
+                      )}
+                      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                          {product.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            mb: 2,
+                            flex: 1,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {product.description}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography
+                            variant="h6"
+                            sx={{ color: 'primary.main', fontWeight: 700 }}
+                          >
+                            ¥{formatPrice(product.price_yen)}
+                          </Typography>
+                          {cartQty > 0 ? (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                border: '2px solid',
+                                borderColor: 'primary.main',
+                                borderRadius: 2,
+                              }}
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => handleUpdateQty(product.id, -1)}
+                                sx={{ color: 'primary.main' }}
+                              >
+                                <RemoveIcon fontSize="small" />
+                              </IconButton>
+                              <Typography sx={{ px: 1, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
+                                {cartQty}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleUpdateQty(product.id, 1)}
+                                sx={{ color: 'primary.main' }}
+                              >
+                                <AddIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ) : (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() => handleAddToCart(product)}
+                              disabled={!canAddProduct(product)}
+                            >
+                              追加
+                            </Button>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
             </Grid>
-          ))}
-        </Grid>
+          </>
+        )}
 
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            ※メニューは店頭でお選びください
-          </Typography>
-          <Button
-            component={Link}
-            href="/checkout/pickup"
-            variant="contained"
-            size="large"
-            startIcon={<StorefrontIcon />}
-          >
-            受取予約をする
-          </Button>
-        </Box>
+        {/* Goods */}
+        {!isLoading && goodsProducts.length > 0 && (
+          <>
+            <Typography
+              variant="h4"
+              sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}
+            >
+              グッズ
+            </Typography>
+
+            <Grid container spacing={3} sx={{ mb: 6 }}>
+              {goodsProducts.map((product) => {
+                const cartQty = getCartQty(product.id);
+                const isOutOfStock = product.stock_qty !== null && product.stock_qty <= 0;
+                return (
+                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      {product.image_url ? (
+                        <CardMedia
+                          component="img"
+                          image={product.image_url}
+                          alt={product.name}
+                          sx={{ height: 180, objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <CardMedia
+                          sx={{
+                            height: 180,
+                            backgroundColor: '#FFF0F3',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography sx={{ fontSize: '4rem' }}>🎁</Typography>
+                        </CardMedia>
+                      )}
+                      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {isOutOfStock && (
+                          <Chip label="在庫切れ" color="error" size="small" sx={{ mb: 1, alignSelf: 'flex-start' }} />
+                        )}
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                          {product.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            mb: 2,
+                            flex: 1,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {product.description}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography
+                            variant="h6"
+                            sx={{ color: 'primary.main', fontWeight: 700 }}
+                          >
+                            ¥{formatPrice(product.price_yen)}
+                          </Typography>
+                          {cartQty > 0 ? (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                border: '2px solid',
+                                borderColor: 'primary.main',
+                                borderRadius: 2,
+                              }}
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => handleUpdateQty(product.id, -1)}
+                                sx={{ color: 'primary.main' }}
+                              >
+                                <RemoveIcon fontSize="small" />
+                              </IconButton>
+                              <Typography sx={{ px: 1, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
+                                {cartQty}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleUpdateQty(product.id, 1)}
+                                sx={{ color: 'primary.main' }}
+                              >
+                                <AddIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ) : (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() => handleAddToCart(product)}
+                              disabled={isOutOfStock || !canAddProduct(product)}
+                            >
+                              追加
+                            </Button>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </>
+        )}
+
+        {/* Checkout Button */}
+        {itemCount > 0 && cartMode === 'pickup' && (
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Button
+              component={Link}
+              href="/checkout/pickup"
+              variant="contained"
+              size="large"
+              startIcon={<ShoppingCartIcon />}
+              sx={{ px: 6, py: 1.5 }}
+            >
+              受取予約に進む ({itemCount}点)
+            </Button>
+          </Box>
+        )}
 
         {/* Store Info */}
         <Paper sx={{ p: 4, backgroundColor: '#FFF0F3' }}>
@@ -248,6 +512,22 @@ export default function PickupPage() {
           </Grid>
         </Paper>
       </Container>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 }
