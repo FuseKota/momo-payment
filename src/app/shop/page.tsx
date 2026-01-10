@@ -17,8 +17,11 @@ import {
   Alert,
   CircularProgress,
   Snackbar,
+  IconButton,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import type { Product } from '@/types/database';
@@ -34,7 +37,7 @@ export default function ShopPage() {
     message: '',
     severity: 'success',
   });
-  const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode } = useCart();
+  const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode, items, updateQty } = useCart();
 
   useEffect(() => {
     async function fetchProducts() {
@@ -72,6 +75,21 @@ export default function ShopPage() {
     const success = addItem(product, 1);
     if (success) {
       setSnackbar({ open: true, message: `${product.name}をカートに追加しました`, severity: 'success' });
+    }
+  };
+
+  const getCartQty = (productId: string): number => {
+    const item = items.find((i) => i.product.id === productId);
+    return item?.qty || 0;
+  };
+
+  const handleUpdateQty = (productId: string, delta: number) => {
+    const currentQty = getCartQty(productId);
+    const newQty = currentQty + delta;
+    if (newQty <= 0) {
+      updateQty(productId, 0);
+    } else {
+      updateQty(productId, newQty);
     }
   };
 
@@ -151,99 +169,132 @@ export default function ShopPage() {
         {/* Products Grid */}
         {!isLoading && (
           <Grid container spacing={3}>
-            {getDisplayProducts().map((product) => (
-              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
-                    {product.image_url ? (
-                      <CardMedia
-                        component="img"
-                        image={product.image_url}
-                        alt={product.name}
-                        sx={{
-                          height: 200,
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <CardMedia
-                        sx={{
-                          height: 200,
-                          backgroundColor: '#FFF0F3',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '4rem' }}>
-                          {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                        </Typography>
-                      </CardMedia>
-                    )}
-                  </Link>
-
-                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {getDisplayProducts().map((product) => {
+              const cartQty = getCartQty(product.id);
+              return (
+                <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
                     <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          mb: 1,
-                          color: 'text.primary',
-                          '&:hover': { color: 'primary.main' },
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
+                      {product.image_url ? (
+                        <CardMedia
+                          component="img"
+                          image={product.image_url}
+                          alt={product.name}
+                          sx={{
+                            height: 200,
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <CardMedia
+                          sx={{
+                            height: 200,
+                            backgroundColor: '#FFF0F3',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography sx={{ fontSize: '4rem' }}>
+                            {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                          </Typography>
+                        </CardMedia>
+                      )}
                     </Link>
 
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        mb: 2,
-                        flex: 1,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {product.description}
-                    </Typography>
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <Link href={`/shop/${product.slug}`} style={{ textDecoration: 'none' }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            mb: 1,
+                            color: 'text.primary',
+                            '&:hover': { color: 'primary.main' },
+                          }}
+                        >
+                          {product.name}
+                        </Typography>
+                      </Link>
 
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
                       <Typography
-                        variant="h6"
-                        sx={{ color: 'primary.main', fontWeight: 700 }}
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 2,
+                          flex: 1,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
                       >
-                        ¥{formatPrice(product.price_yen)}
+                        {product.description}
                       </Typography>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<ShoppingCartIcon />}
-                        onClick={() => handleAddToCart(product)}
-                        disabled={!canAddProduct(product)}
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
                       >
-                        追加
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                        <Typography
+                          variant="h6"
+                          sx={{ color: 'primary.main', fontWeight: 700 }}
+                        >
+                          ¥{formatPrice(product.price_yen)}
+                        </Typography>
+                        {cartQty > 0 ? (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              border: '2px solid',
+                              borderColor: 'primary.main',
+                              borderRadius: 2,
+                            }}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => handleUpdateQty(product.id, -1)}
+                              sx={{ color: 'primary.main' }}
+                            >
+                              <RemoveIcon fontSize="small" />
+                            </IconButton>
+                            <Typography sx={{ px: 1, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
+                              {cartQty}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleUpdateQty(product.id, 1)}
+                              sx={{ color: 'primary.main' }}
+                            >
+                              <AddIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        ) : (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<AddIcon />}
+                            onClick={() => handleAddToCart(product)}
+                            disabled={!canAddProduct(product)}
+                          >
+                            追加
+                          </Button>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         )}
 

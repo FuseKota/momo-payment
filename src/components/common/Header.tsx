@@ -82,7 +82,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              福島もも娘
+              福島もも娘物販サイト
             </Typography>
           </Link>
 
@@ -195,7 +195,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
         <Box sx={{ width: 280, pt: 2 }}>
           <Box sx={{ px: 2, pb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              福島もも娘
+              福島もも娘物販サイト
             </Typography>
           </Box>
           <List>
