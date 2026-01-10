@@ -50,6 +50,7 @@ export interface Product {
   temp_zone: TempZone;
   stock_qty: number | null;
   image_url: string | null;
+  images: string[]; // Array of image URLs for product gallery
   food_label: FoodLabel | null;
   is_active: boolean;
   sort_order: number;
