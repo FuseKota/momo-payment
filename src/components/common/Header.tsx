@@ -129,68 +129,70 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </Box>
           )}
 
-          {/* Social Links */}
-          <Box sx={{ display: 'flex', gap: 0.5, ml: { xs: 0, md: 2 } }}>
-            <IconButton
-              component="a"
-              href="https://sakura-sisters.com/momo-musume/"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-              }}
-            >
-              <LanguageIcon />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://www.instagram.com/momomusume_fukushima_official/"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-              }}
-            >
-              <InstagramIcon />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://x.com/momomusume_jp"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-              }}
-            >
-              <XIcon />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-              }}
-            >
-              <YouTubeIcon />
-            </IconButton>
-          </Box>
+          {/* Social Links - Desktop only */}
+          {!isMobile && (
+            <Box sx={{ display: 'flex', gap: 0.5, ml: 2 }}>
+              <IconButton
+                component="a"
+                href="https://sakura-sisters.com/momo-musume/"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+                }}
+              >
+                <LanguageIcon />
+              </IconButton>
+              <IconButton
+                component="a"
+                href="https://www.instagram.com/momomusume_fukushima_official/"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+                }}
+              >
+                <InstagramIcon />
+              </IconButton>
+              <IconButton
+                component="a"
+                href="https://x.com/momomusume_jp"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+                }}
+              >
+                <XIcon />
+              </IconButton>
+              <IconButton
+                component="a"
+                href="https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+                }}
+              >
+                <YouTubeIcon />
+              </IconButton>
+            </Box>
+          )}
 
           <IconButton
             component={Link}
             href="/cart"
             color="primary"
             size="large"
-            sx={{ ml: 3 }}
+            sx={{ ml: { xs: 1, md: 3 } }}
           >
             <Badge badgeContent={cartItemCount} color="secondary">
               <ShoppingCartIcon sx={{ fontSize: 28 }} />
