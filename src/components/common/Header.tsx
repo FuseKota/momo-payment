@@ -70,20 +70,6 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
           )}
 
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <Box
-              sx={{
-                width: { xs: 48, md: 56 },
-                height: { xs: 48, md: 56 },
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FF859A 0%, #FF6680 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 2,
-              }}
-            >
-              <Typography sx={{ fontSize: { xs: '1.5rem', md: '1.8rem' } }}>🍑</Typography>
-            </Box>
             <Typography
               variant="h5"
               component="span"
@@ -96,7 +82,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              もも娘
+              福島もも娘
             </Typography>
           </Link>
 
@@ -207,23 +193,9 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
         onClose={() => setDrawerOpen(false)}
       >
         <Box sx={{ width: 280, pt: 2 }}>
-          <Box sx={{ px: 2, pb: 2, display: 'flex', alignItems: 'center' }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FF859A 0%, #FF6680 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 1.5,
-              }}
-            >
-              <Typography sx={{ fontSize: '1rem' }}>🍑</Typography>
-            </Box>
+          <Box sx={{ px: 2, pb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              もも娘
+              福島もも娘
             </Typography>
           </Box>
           <List>

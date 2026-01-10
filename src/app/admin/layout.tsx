@@ -88,7 +88,7 @@ export default function AdminLayout({
             color: 'primary.main',
           }}
         >
-          もも娘 管理画面
+          福島もも娘 管理画面
         </Typography>
       </Toolbar>
       <Divider />

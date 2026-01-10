@@ -53,22 +53,6 @@ export default function Home() {
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ textAlign: 'center', maxWidth: 700, mx: 'auto' }}>
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FF859A 0%, #FF6680 100%)',
-                mb: 3,
-                boxShadow: '0 8px 32px rgba(255, 102, 128, 0.3)',
-              }}
-            >
-              <Typography sx={{ fontSize: '2.5rem' }}>🍑</Typography>
-            </Box>
-
             <Typography
               variant="h1"
               sx={{
@@ -80,7 +64,9 @@ export default function Home() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              もも娘物販サイトへようこそ
+              福島もも娘物販サイトへ
+              <br />
+              ようこそ
             </Typography>
 
             <Typography

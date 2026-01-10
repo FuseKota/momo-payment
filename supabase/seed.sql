@@ -14,7 +14,7 @@ VALUES
     '["/images/rurohan-detail.jpg"]',
     '{"ingredients": "豚バラ肉、醤油、砂糖、米酒、八角、五香粉、にんにく、エシャロット", "allergens": "小麦、大豆、豚肉", "nutrition": {"calories": 450, "protein": 18, "fat": 28, "carbohydrates": 32, "sodium": 890}, "net_weight_grams": 600, "expiry_info": "製造日より6ヶ月（冷凍保存）", "storage_method": "-18℃以下で保存してください", "manufacturer": "もも娘"}',
     true, 2),
-  ('momo-tshirt-ship', 'GOODS', '福島もも娘黒Tシャツ', 'もも娘ロゴ入りのオリジナルTシャツ。やわらかい肌触りの綿100%素材。サイズはMとLをご用意。', 3500, false, true, 'AMBIENT', 20, '/images/tshirt.jpg', '[]', NULL, true, 10),
+  ('momo-tshirt-ship', 'GOODS', '【配送】福島もも娘黒Tシャツ', 'もも娘ロゴ入りのオリジナルTシャツ。やわらかい肌触りの綿100%素材。サイズはMとLをご用意。', 3500, false, true, 'AMBIENT', 20, '/images/tshirt.jpg', '[]', NULL, true, 10),
   ('momo-towel', 'GOODS', '【配送】もも娘フェイスタオル', 'ふわふわ肌触りの今治タオル。もも娘の刺繍入り。毎日使えるかわいいタオルです。', 1800, false, true, 'AMBIENT', 40, '/images/towel.jpg', '[]', NULL, true, 11),
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
@@ -58,15 +58,15 @@ ON CONFLICT (slug) DO UPDATE SET
 -- =====================
 INSERT INTO public.products (slug, kind, name, description, price_yen, can_pickup, can_ship, temp_zone, stock_qty, image_url, images, food_label, is_active, sort_order)
 VALUES
-  ('momo-batch', 'GOODS', '福島もも娘缶バッチ', '福島もも娘オリジナルデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch.jpg', '[]', NULL, true, 200),
-  ('batch-abuu', 'GOODS', 'アブー缶バッチ', 'アブーデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch_abuu.jpg', '[]', NULL, true, 201),
-  ('batch-rena', 'GOODS', 'レナ缶バッチ', 'レナデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch_rena.jpg', '[]', NULL, true, 202),
-  ('batch-maco', 'GOODS', 'まこ缶バッチ', 'まこデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch_maco.jpg', '[]', NULL, true, 203),
-  ('taiwan-eraser', 'GOODS', '台湾消しゴム', '台湾デザインの消しゴム。', 300, true, true, 'AMBIENT', 100, '/images/eraser.jpg', '[]', NULL, true, 204),
-  ('momo-hoodie', 'GOODS', '福島もも娘パーカー', '福島もも娘オリジナルデザインのパーカー。', 5000, true, true, 'AMBIENT', 30, '/images/hoodie.jpg', '[]', NULL, true, 205),
-  ('momo-photo-folder', 'GOODS', '福島もも娘フォトフォルダー', '福島もも娘オリジナルデザインのフォトフォルダー。', 800, true, true, 'AMBIENT', 50, '/images/photo_folder.jpg', '[]', NULL, true, 206),
-  ('momo-tshirt-white', 'GOODS', '福島もも娘白Tシャツ', '福島もも娘オリジナルデザインの白Tシャツ。', 3500, true, true, 'AMBIENT', 30, '/images/tshirt_white.jpg', '[]', NULL, true, 207),
-  ('momo-uchiwa', 'GOODS', '福島もも娘うちわ', '福島もも娘オリジナルデザインのうちわ。', 800, true, true, 'AMBIENT', 50, '/images/uchiwa_front.jpg', '["/images/uchiwa_back.jpg"]', NULL, true, 208)
+  ('momo-batch', 'GOODS', '【配送】福島もも娘缶バッチ', '福島もも娘オリジナルデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch.jpg', '[]', NULL, true, 200),
+  ('batch-abuu', 'GOODS', '【配送】アブー缶バッチ', 'アブーデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch_abuu.jpg', '[]', NULL, true, 201),
+  ('batch-rena', 'GOODS', '【配送】レナ缶バッチ', 'レナデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch_rena.jpg', '[]', NULL, true, 202),
+  ('batch-maco', 'GOODS', '【配送】まこ缶バッチ', 'まこデザインの缶バッチ。', 500, true, true, 'AMBIENT', 100, '/images/batch_maco.jpg', '[]', NULL, true, 203),
+  ('taiwan-eraser', 'GOODS', '【配送】台湾消しゴム', '台湾デザインの消しゴム。', 300, true, true, 'AMBIENT', 100, '/images/eraser.jpg', '[]', NULL, true, 204),
+  ('momo-hoodie', 'GOODS', '【配送】福島もも娘パーカー', '福島もも娘オリジナルデザインのパーカー。', 5000, true, true, 'AMBIENT', 30, '/images/hoodie.jpg', '[]', NULL, true, 205),
+  ('momo-photo-folder', 'GOODS', '【配送】福島もも娘フォトフォルダー', '福島もも娘オリジナルデザインのフォトフォルダー。', 800, true, true, 'AMBIENT', 50, '/images/photo_folder.jpg', '[]', NULL, true, 206),
+  ('momo-tshirt-white', 'GOODS', '【配送】福島もも娘白Tシャツ', '福島もも娘オリジナルデザインの白Tシャツ。', 3500, true, true, 'AMBIENT', 30, '/images/tshirt_white.jpg', '[]', NULL, true, 207),
+  ('momo-uchiwa', 'GOODS', '【配送】福島もも娘うちわ', '福島もも娘オリジナルデザインのうちわ。', 800, true, true, 'AMBIENT', 50, '/images/uchiwa_front.jpg', '["/images/uchiwa_back.jpg"]', NULL, true, 208)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

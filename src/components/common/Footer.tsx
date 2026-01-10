@@ -37,7 +37,7 @@ export default function Footer() {
                 <Typography sx={{ fontSize: '1rem' }}>🍑</Typography>
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                もも娘
+                福島もも娘
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
