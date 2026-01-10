@@ -35,7 +35,18 @@ export default function ProductDetailPage({ params }: Props) {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { addItem, itemCount } = useCart();
+
+  // Combine image_url and images array into a single array
+  const getAllImages = (p: Product): string[] => {
+    const imgs: string[] = [];
+    if (p.image_url) imgs.push(p.image_url);
+    if (p.images && Array.isArray(p.images)) {
+      imgs.push(...p.images.filter((img) => img && !imgs.includes(img)));
+    }
+    return imgs;
+  };
 
   useEffect(() => {
     async function fetchProduct() {
@@ -108,43 +119,89 @@ export default function ProductDetailPage({ params }: Props) {
         </Breadcrumbs>
 
         <Grid container spacing={4}>
-          {/* Product Image */}
+          {/* Product Images */}
           <Grid size={{ xs: 12, md: 6 }}>
-            {product.image_url ? (
-              <Paper
-                sx={{
-                  height: 400,
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                }}
-              >
-                <Box
-                  component="img"
-                  src={product.image_url}
-                  alt={product.name}
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-              </Paper>
-            ) : (
-              <Paper
-                sx={{
-                  height: 400,
-                  backgroundColor: '#FFF0F3',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 3,
-                }}
-              >
-                <Typography sx={{ fontSize: '8rem' }}>
-                  {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                </Typography>
-              </Paper>
-            )}
+            {(() => {
+              const allImages = getAllImages(product);
+              if (allImages.length === 0) {
+                return (
+                  <Paper
+                    sx={{
+                      height: 400,
+                      backgroundColor: '#FFF0F3',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 3,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: '8rem' }}>
+                      {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                    </Typography>
+                  </Paper>
+                );
+              }
+              return (
+                <Box>
+                  {/* Main Image */}
+                  <Paper
+                    sx={{
+                      height: 400,
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      mb: 2,
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={allImages[selectedImageIndex]}
+                      alt={`${product.name} - 画像${selectedImageIndex + 1}`}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  </Paper>
+                  {/* Thumbnails */}
+                  {allImages.length > 1 && (
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {allImages.map((img, index) => (
+                        <Box
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            border: '3px solid',
+                            borderColor: selectedImageIndex === index ? 'primary.main' : 'transparent',
+                            opacity: selectedImageIndex === index ? 1 : 0.7,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              opacity: 1,
+                            },
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src={img}
+                            alt={`${product.name} - サムネイル${index + 1}`}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              );
+            })()}
           </Grid>
 
           {/* Product Info */}
