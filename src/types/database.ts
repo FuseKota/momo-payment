@@ -54,8 +54,25 @@ export interface Product {
   food_label: FoodLabel | null;
   is_active: boolean;
   sort_order: number;
+  has_variants: boolean; // When true, inventory is tracked per variant
   created_at: string;
   updated_at: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  size: string | null;
+  price_yen: number | null; // null = use product.price_yen
+  stock_qty: number | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductWithVariants extends Product {
+  variants: ProductVariant[];
 }
 
 export interface Order {
@@ -83,12 +100,14 @@ export interface OrderItem {
   id: string;
   order_id: string;
   product_id: string;
+  variant_id: string | null;
   qty: number;
   unit_price_yen: number;
   line_total_yen: number;
   product_name: string;
   product_kind: ProductKind;
   product_temp_zone: TempZone;
+  product_size: string | null;
   created_at: string;
 }
 

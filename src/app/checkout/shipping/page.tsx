@@ -115,6 +115,7 @@ export default function ShippingCheckoutPage() {
           },
           items: items.map((item) => ({
             productId: item.product.id,
+            variantId: item.variant?.id,
             qty: item.qty,
           })),
           agreementAccepted: true,
@@ -346,22 +347,32 @@ export default function ShippingCheckoutPage() {
                 注文内容
               </Typography>
 
-              {items.map((item) => (
-                <Box
-                  key={item.product.id}
-                  sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}
-                >
-                  <Box>
-                    <Typography variant="body2">{item.product.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      数量: {item.qty}
+              {items.map((item) => {
+                const itemKey = item.variant?.id
+                  ? `${item.product.id}:${item.variant.id}`
+                  : item.product.id;
+                const unitPrice = item.variant?.price_yen ?? item.product.price_yen;
+
+                return (
+                  <Box
+                    key={itemKey}
+                    sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}
+                  >
+                    <Box>
+                      <Typography variant="body2">
+                        {item.product.name}
+                        {item.variant?.size && ` (${item.variant.size})`}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        数量: {item.qty}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2">
+                      ¥{formatPrice(unitPrice * item.qty)}
                     </Typography>
                   </Box>
-                  <Typography variant="body2">
-                    ¥{formatPrice(item.product.price_yen * item.qty)}
-                  </Typography>
-                </Box>
-              ))}
+                );
+              })}
 
               <Divider sx={{ my: 2 }} />
 

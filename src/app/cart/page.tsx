@@ -124,115 +124,130 @@ export default function CartPage() {
           {/* Cart Items */}
           <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 3 }}>
-              {items.map((item, index) => (
-                <Box key={item.product.id}>
-                  {index > 0 && <Divider sx={{ my: 3 }} />}
-                  <Box sx={{ display: 'flex', gap: 3 }}>
-                    {/* Product Image */}
-                    {item.product.image_url ? (
-                      <Box
-                        component="img"
-                        src={item.product.image_url}
-                        alt={item.product.name}
-                        sx={{
-                          width: 100,
-                          height: 100,
-                          borderRadius: 2,
-                          objectFit: 'cover',
-                          flexShrink: 0,
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 100,
-                          height: 100,
-                          backgroundColor: '#FFF0F3',
-                          borderRadius: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '3rem' }}>
-                          {item.product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                        </Typography>
-                      </Box>
-                    )}
+              {items.map((item, index) => {
+                const itemKey = item.variant?.id
+                  ? `${item.product.id}:${item.variant.id}`
+                  : item.product.id;
+                const unitPrice = item.variant?.price_yen ?? item.product.price_yen;
 
-                    {/* Product Info */}
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                        <Box>
-                          <Link
-                            href={`/shop/${item.product.slug}`}
-                            style={{ textDecoration: 'none' }}
-                          >
-                            <Typography
-                              variant="h6"
-                              sx={{
-                                color: 'text.primary',
-                                '&:hover': { color: 'primary.main' },
-                              }}
-                            >
-                              {item.product.name}
-                            </Typography>
-                          </Link>
-                        </Box>
-                        <IconButton
-                          onClick={() => removeItem(item.product.id)}
-                          sx={{ color: 'text.secondary' }}
+                return (
+                  <Box key={itemKey}>
+                    {index > 0 && <Divider sx={{ my: 3 }} />}
+                    <Box sx={{ display: 'flex', gap: 3 }}>
+                      {/* Product Image */}
+                      {item.product.image_url ? (
+                        <Box
+                          component="img"
+                          src={item.product.image_url}
+                          alt={item.product.name}
+                          sx={{
+                            width: 100,
+                            height: 100,
+                            borderRadius: 2,
+                            objectFit: 'cover',
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 100,
+                            height: 100,
+                            backgroundColor: '#FFF0F3',
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
                         >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
+                          <Typography sx={{ fontSize: '3rem' }}>
+                            {item.product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
+                          </Typography>
+                        </Box>
+                      )}
 
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          mt: 2,
-                        }}
-                      >
-                        {/* Quantity Controls */}
+                      {/* Product Info */}
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                          <Box>
+                            <Link
+                              href={`/shop/${item.product.slug}`}
+                              style={{ textDecoration: 'none' }}
+                            >
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  color: 'text.primary',
+                                  '&:hover': { color: 'primary.main' },
+                                }}
+                              >
+                                {item.product.name}
+                                {item.variant?.size && (
+                                  <Typography
+                                    component="span"
+                                    sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+                                  >
+                                    ({item.variant.size})
+                                  </Typography>
+                                )}
+                              </Typography>
+                            </Link>
+                          </Box>
+                          <IconButton
+                            onClick={() => removeItem(item.product.id, item.variant?.id)}
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+
                         <Box
                           sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
+                            justifyContent: 'space-between',
+                            mt: 2,
                           }}
                         >
-                          <IconButton
-                            size="small"
-                            onClick={() => updateQty(item.product.id, item.qty - 1)}
+                          {/* Quantity Controls */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                            }}
                           >
-                            <RemoveIcon fontSize="small" />
-                          </IconButton>
-                          <Typography sx={{ px: 2, minWidth: 32, textAlign: 'center' }}>
-                            {item.qty}
-                          </Typography>
-                          <IconButton
-                            size="small"
-                            onClick={() => updateQty(item.product.id, Math.min(10, item.qty + 1))}
-                            disabled={item.qty >= 10}
-                          >
-                            <AddIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
+                            <IconButton
+                              size="small"
+                              onClick={() => updateQty(item.product.id, item.qty - 1, item.variant?.id)}
+                            >
+                              <RemoveIcon fontSize="small" />
+                            </IconButton>
+                            <Typography sx={{ px: 2, minWidth: 32, textAlign: 'center' }}>
+                              {item.qty}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={() => updateQty(item.product.id, Math.min(10, item.qty + 1), item.variant?.id)}
+                              disabled={item.qty >= 10}
+                            >
+                              <AddIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
 
-                        {/* Price */}
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                          ¥{formatPrice(item.product.price_yen * item.qty)}
-                        </Typography>
+                          {/* Price */}
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                            ¥{formatPrice(unitPrice * item.qty)}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Box>
                   </Box>
-                </Box>
-              ))}
+                );
+              })}
             </Paper>
 
             <Button

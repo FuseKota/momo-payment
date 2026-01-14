@@ -1,21 +1,27 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import type { Product, TempZone } from '@/types/database';
+import type { Product, ProductVariant, TempZone } from '@/types/database';
 
 export type CartMode = 'pickup' | 'shipping' | null;
 
 export interface CartItem {
   product: Product;
+  variant?: ProductVariant;
   qty: number;
+}
+
+// Generate unique key for cart item (same product + different variant = different item)
+function getCartItemKey(productId: string, variantId?: string): string {
+  return variantId ? `${productId}:${variantId}` : productId;
 }
 
 interface CartContextType {
   items: CartItem[];
   cartMode: CartMode;
-  addItem: (product: Product, qty?: number) => boolean;
-  removeItem: (productId: string) => void;
-  updateQty: (productId: string, qty: number) => void;
+  addItem: (product: Product, qty?: number, variant?: ProductVariant) => boolean;
+  removeItem: (productId: string, variantId?: string) => void;
+  updateQty: (productId: string, qty: number, variantId?: string) => void;
   clearCart: () => void;
   switchMode: (mode: CartMode) => void;
   canAddProduct: (product: Product) => boolean;
@@ -114,20 +120,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const addItem = (product: Product, qty = 1): boolean => {
+  const addItem = (product: Product, qty = 1, variant?: ProductVariant): boolean => {
     if (!canAddProduct(product)) {
       return false;
     }
 
     const productMode = getProductMode(product);
+    const itemKey = getCartItemKey(product.id, variant?.id);
 
     setCart((prev) => {
-      const existing = prev.items.find((item) => item.product.id === product.id);
+      const existing = prev.items.find(
+        (item) => getCartItemKey(item.product.id, item.variant?.id) === itemKey
+      );
       if (existing) {
         return {
           ...prev,
           items: prev.items.map((item) =>
-            item.product.id === product.id
+            getCartItemKey(item.product.id, item.variant?.id) === itemKey
               ? { ...item, qty: item.qty + qty }
               : item
           ),
@@ -136,16 +145,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return {
         ...prev,
-        items: [...prev.items, { product, qty }],
+        items: [...prev.items, { product, variant, qty }],
         mode: prev.mode || productMode,
       };
     });
     return true;
   };
 
-  const removeItem = (productId: string) => {
+  const removeItem = (productId: string, variantId?: string) => {
+    const itemKey = getCartItemKey(productId, variantId);
     setCart((prev) => {
-      const newItems = prev.items.filter((item) => item.product.id !== productId);
+      const newItems = prev.items.filter(
+        (item) => getCartItemKey(item.product.id, item.variant?.id) !== itemKey
+      );
       return {
         items: newItems,
         mode: newItems.length === 0 ? null : prev.mode,
@@ -153,15 +165,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const updateQty = (productId: string, qty: number) => {
+  const updateQty = (productId: string, qty: number, variantId?: string) => {
     if (qty <= 0) {
-      removeItem(productId);
+      removeItem(productId, variantId);
       return;
     }
+    const itemKey = getCartItemKey(productId, variantId);
     setCart((prev) => ({
       ...prev,
       items: prev.items.map((item) =>
-        item.product.id === productId ? { ...item, qty } : item
+        getCartItemKey(item.product.id, item.variant?.id) === itemKey
+          ? { ...item, qty }
+          : item
       ),
     }));
   };
@@ -186,10 +201,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return items.some((item) => item.product.temp_zone !== firstZone);
   };
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.product.price_yen * item.qty,
-    0
-  );
+  const subtotal = items.reduce((sum, item) => {
+    const price = item.variant?.price_yen ?? item.product.price_yen;
+    return sum + price * item.qty;
+  }, 0);
 
   const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
 

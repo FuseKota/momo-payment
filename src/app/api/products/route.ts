@@ -11,16 +11,36 @@ export async function GET(request: Request) {
 
   try {
     if (slug) {
-      // Get single product by slug
+      // Get single product by slug with variants
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          variants:product_variants(
+            id,
+            product_id,
+            size,
+            price_yen,
+            stock_qty,
+            is_active,
+            sort_order,
+            created_at,
+            updated_at
+          )
+        `)
         .eq('slug', slug)
         .eq('is_active', true)
         .single();
 
       if (error) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
+
+      // Filter and sort active variants
+      if (data.variants) {
+        data.variants = data.variants
+          .filter((v: { is_active: boolean }) => v.is_active)
+          .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
       }
 
       return NextResponse.json(data);

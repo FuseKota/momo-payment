@@ -20,6 +20,7 @@ interface ShippingOrderRequest {
   };
   items: Array<{
     productId: string;
+    variantId?: string;
     qty: number;
   }>;
   agreementAccepted: boolean;
@@ -98,6 +99,37 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // バリエーション取得（variantIdがある場合）
+    const variantIds = body.items
+      .map((i) => i.variantId)
+      .filter((id): id is string => !!id);
+
+    let variants: Array<{ id: string; product_id: string; size: string | null; price_yen: number | null }> = [];
+    if (variantIds.length > 0) {
+      const { data: variantData, error: variantError } = await supabaseAdmin
+        .from('product_variants')
+        .select('id, product_id, size, price_yen')
+        .in('id', variantIds);
+
+      if (variantError) {
+        console.error('Variant fetch error:', variantError);
+        return NextResponse.json(
+          { ok: false, error: 'variant_fetch_failed' },
+          { status: 500 }
+        );
+      }
+
+      variants = variantData || [];
+
+      // Validate all requested variants exist
+      if (variants.length !== variantIds.length) {
+        return NextResponse.json(
+          { ok: false, error: 'variant_not_found' },
+          { status: 400 }
+        );
+      }
+    }
+
     // 温度帯混在チェック（MVP: 混在不可）
     const tempZone = products[0].temp_zone;
     if (products.some((p) => p.temp_zone !== tempZone)) {
@@ -110,12 +142,21 @@ export async function POST(request: NextRequest) {
     // 金額計算
     const items = body.items.map((i) => {
       const p = products.find((x) => x.id === i.productId)!;
+      const v = i.variantId ? variants.find((x) => x.id === i.variantId) : undefined;
       const qty = toInt(i.qty);
       if (qty <= 0 || qty > 99) {
         throw new Error('qty out of range');
       }
-      const lineTotal = p.price_yen * qty;
-      return { product: p, qty, lineTotal };
+      // Use variant price if available, otherwise use product price
+      const unitPrice = v?.price_yen ?? p.price_yen;
+      const lineTotal = unitPrice * qty;
+      return {
+        product: p,
+        variant: v,
+        qty,
+        unitPrice,
+        lineTotal,
+      };
     });
 
     const subtotal = items.reduce((sum, x) => sum + x.lineTotal, 0);
@@ -153,12 +194,14 @@ export async function POST(request: NextRequest) {
       items.map((x) => ({
         order_id: orderRow.id,
         product_id: x.product.id,
+        variant_id: x.variant?.id ?? null,
         qty: x.qty,
-        unit_price_yen: x.product.price_yen,
+        unit_price_yen: x.unitPrice,
         line_total_yen: x.lineTotal,
         product_name: x.product.name,
         product_kind: x.product.kind,
         product_temp_zone: x.product.temp_zone,
+        product_size: x.variant?.size ?? null,
       }))
     );
 
@@ -202,10 +245,12 @@ export async function POST(request: NextRequest) {
 
     // 6. Square Payment Link作成
     const lineItems = items.map((x) => ({
-      name: x.product.name,
+      name: x.variant?.size
+        ? `${x.product.name} (${x.variant.size})`
+        : x.product.name,
       quantity: String(x.qty),
       basePriceMoney: {
-        amount: BigInt(x.product.price_yen),
+        amount: BigInt(x.unitPrice),
         currency: 'JPY' as const,
       },
     }));

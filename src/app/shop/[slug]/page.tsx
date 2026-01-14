@@ -23,7 +23,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InfoIcon from '@mui/icons-material/Info';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
-import type { Product } from '@/types/database';
+import type { Product, ProductVariant, ProductWithVariants } from '@/types/database';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -32,10 +32,11 @@ interface Props {
 export default function ProductDetailPage({ params }: Props) {
   const { slug } = use(params);
   const router = useRouter();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductWithVariants | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const { addItem, itemCount } = useCart();
 
   // Combine image_url and images array into a single array
@@ -53,8 +54,16 @@ export default function ProductDetailPage({ params }: Props) {
       try {
         const response = await fetch(`/api/products?slug=${slug}`);
         if (response.ok) {
-          const data = await response.json();
+          const data: ProductWithVariants = await response.json();
           setProduct(data);
+
+          // Auto-select first available variant if product has variants
+          if (data.has_variants && data.variants?.length > 0) {
+            const firstAvailable = data.variants.find(
+              (v) => v.is_active && (v.stock_qty === null || v.stock_qty > 0)
+            );
+            setSelectedVariant(firstAvailable || null);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch product:', error);
@@ -96,9 +105,16 @@ export default function ProductDetailPage({ params }: Props) {
   }
 
   const handleAddToCart = () => {
-    addItem(product, qty);
+    // If product has variants but none selected, don't add
+    if (product.has_variants && !selectedVariant) {
+      return;
+    }
+    addItem(product, qty, selectedVariant || undefined);
     router.push('/cart');
   };
+
+  // Check if add to cart should be disabled
+  const isAddToCartDisabled = product.has_variants && !selectedVariant;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP').format(price);
@@ -233,6 +249,47 @@ export default function ProductDetailPage({ params }: Props) {
                 {product.description}
               </Typography>
 
+              {/* Size Selector */}
+              {product.has_variants && product.variants && product.variants.length > 0 && (
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 600, color: '#1a1a1a' }}>
+                    サイズを選択:
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {product.variants
+                      .filter((v) => v.is_active)
+                      .map((variant) => {
+                        const isOutOfStock = variant.stock_qty !== null && variant.stock_qty <= 0;
+                        const isSelected = selectedVariant?.id === variant.id;
+
+                        return (
+                          <Button
+                            key={variant.id}
+                            variant={isSelected ? 'contained' : 'outlined'}
+                            disabled={isOutOfStock}
+                            onClick={() => setSelectedVariant(variant)}
+                            sx={{
+                              minWidth: 70,
+                              fontWeight: 600,
+                              opacity: isOutOfStock ? 0.5 : 1,
+                            }}
+                          >
+                            {variant.size}
+                            {isOutOfStock && (
+                              <Typography
+                                component="span"
+                                sx={{ fontSize: '0.7rem', ml: 0.5 }}
+                              >
+                                (在庫切れ)
+                              </Typography>
+                            )}
+                          </Button>
+                        );
+                      })}
+                  </Box>
+                </Box>
+              )}
+
               {/* Quantity Selector */}
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
                 <Typography variant="body1" sx={{ mr: 3, color: '#1a1a1a' }}>
@@ -279,9 +336,10 @@ export default function ProductDetailPage({ params }: Props) {
                 fullWidth
                 startIcon={<ShoppingCartIcon />}
                 onClick={handleAddToCart}
+                disabled={isAddToCartDisabled}
                 sx={{ mb: 3, py: 1.5 }}
               >
-                カートに追加
+                {isAddToCartDisabled ? 'サイズを選択してください' : 'カートに追加'}
               </Button>
 
               </Box>
