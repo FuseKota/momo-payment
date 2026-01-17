@@ -1,7 +1,7 @@
 // Database types matching Supabase schema (MVP v1.0)
 
 export type OrderType = 'PICKUP' | 'SHIPPING';
-export type PaymentMethod = 'SQUARE' | 'PAY_AT_PICKUP';
+export type PaymentMethod = 'SQUARE' | 'STRIPE' | 'PAY_AT_PICKUP';
 export type TempZone = 'AMBIENT' | 'FROZEN';
 export type ProductKind = 'FROZEN_FOOD' | 'GOODS';
 export type OrderStatus =
@@ -136,13 +136,19 @@ export interface Shipment {
 export interface Payment {
   id: string;
   order_id: string;
-  provider: string;
+  provider: string; // 'square' | 'stripe' | 'on_site'
   status: PaymentStatus;
   amount_yen: number;
+  // Square関連（レガシー）
   square_payment_link_id: string | null;
   square_order_id: string | null;
   square_payment_id: string | null;
   square_environment: string | null;
+  // Stripe関連
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  stripe_environment: string | null;
+  // 共通
   idempotency_key: string | null;
   raw_webhook: Record<string, unknown> | null;
   created_at: string;
@@ -150,6 +156,13 @@ export interface Payment {
 }
 
 export interface SquareWebhookEvent {
+  event_id: string;
+  event_type: string;
+  received_at: string;
+  payload: Record<string, unknown>;
+}
+
+export interface StripeWebhookEvent {
   event_id: string;
   event_type: string;
   received_at: string;

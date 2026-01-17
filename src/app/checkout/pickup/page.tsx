@@ -33,7 +33,7 @@ interface PickupForm {
   name: string;
   email: string;
   phone: string;
-  paymentMethod: 'SQUARE' | 'PAY_AT_PICKUP';
+  paymentMethod: 'STRIPE' | 'PAY_AT_PICKUP';
   notes: string;
 }
 
@@ -49,7 +49,7 @@ export default function PickupCheckoutPage() {
     name: '',
     email: '',
     phone: '',
-    paymentMethod: 'SQUARE',
+    paymentMethod: 'STRIPE',
     notes: '',
   });
 
@@ -115,8 +115,8 @@ export default function PickupCheckoutPage() {
         throw new Error(data.error || '予約の作成に失敗しました');
       }
 
-      // Square決済の場合
-      if (form.paymentMethod === 'SQUARE' && data.data?.checkoutUrl) {
+      // Stripe決済の場合
+      if (form.paymentMethod === 'STRIPE' && data.data?.checkoutUrl) {
         clearCart();
         window.location.href = data.data.checkoutUrl;
       } else if (data.data?.orderNo) {
@@ -282,7 +282,7 @@ export default function PickupCheckoutPage() {
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      paymentMethod: e.target.value as 'SQUARE' | 'PAY_AT_PICKUP',
+                      paymentMethod: e.target.value as 'STRIPE' | 'PAY_AT_PICKUP',
                     }))
                   }
                 >
@@ -292,13 +292,13 @@ export default function PickupCheckoutPage() {
                       p: 2,
                       mb: 2,
                       cursor: 'pointer',
-                      border: form.paymentMethod === 'SQUARE' ? '2px solid' : '1px solid',
-                      borderColor: form.paymentMethod === 'SQUARE' ? 'primary.main' : 'divider',
+                      border: form.paymentMethod === 'STRIPE' ? '2px solid' : '1px solid',
+                      borderColor: form.paymentMethod === 'STRIPE' ? 'primary.main' : 'divider',
                     }}
-                    onClick={() => setForm((prev) => ({ ...prev, paymentMethod: 'SQUARE' }))}
+                    onClick={() => setForm((prev) => ({ ...prev, paymentMethod: 'STRIPE' }))}
                   >
                     <FormControlLabel
-                      value="SQUARE"
+                      value="STRIPE"
                       control={<Radio />}
                       label={
                         <Box>
@@ -306,7 +306,7 @@ export default function PickupCheckoutPage() {
                             オンライン決済（クレジットカード）
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            今すぐSquare決済で支払います
+                            今すぐオンライン決済で支払います
                           </Typography>
                         </Box>
                       }
@@ -338,9 +338,9 @@ export default function PickupCheckoutPage() {
                 </RadioGroup>
               </FormControl>
 
-              {form.paymentMethod === 'SQUARE' && (
+              {form.paymentMethod === 'STRIPE' && (
                 <Alert severity="info" sx={{ mb: 3 }}>
-                  「予約を確定する」ボタンをクリックすると、Square決済ページに移動します。
+                  「決済ページへ進む」ボタンをクリックすると、決済ページに移動します。
                 </Alert>
               )}
 
@@ -360,7 +360,7 @@ export default function PickupCheckoutPage() {
                   startIcon={
                     isLoading ? (
                       <CircularProgress size={20} />
-                    ) : form.paymentMethod === 'SQUARE' ? (
+                    ) : form.paymentMethod === 'STRIPE' ? (
                       <PaymentIcon />
                     ) : (
                       <StorefrontIcon />
@@ -369,7 +369,7 @@ export default function PickupCheckoutPage() {
                 >
                   {isLoading
                     ? '処理中...'
-                    : form.paymentMethod === 'SQUARE'
+                    : form.paymentMethod === 'STRIPE'
                     ? '決済ページへ進む'
                     : '予約を確定する'}
                 </Button>

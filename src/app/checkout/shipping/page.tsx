@@ -125,10 +125,21 @@ export default function ShippingCheckoutPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '注文の作成に失敗しました');
+        // ユーザーフレンドリーなエラーメッセージに変換
+        const errorMessages: Record<string, string> = {
+          temp_zone_mixed: '冷凍食品とグッズは同時に注文できません。別々にご注文ください。',
+          product_not_shippable: '配送できない商品が含まれています。',
+          product_not_found: '商品が見つかりません。',
+          address_required: '配送先住所を入力してください。',
+          customer_info_required: 'お客様情報を入力してください。',
+          items_required: 'カートが空です。',
+          agreement_required: '利用規約への同意が必要です。',
+        };
+        const message = errorMessages[data.error] || data.error || '注文の作成に失敗しました';
+        throw new Error(message);
       }
 
-      // Redirect to Square payment link
+      // Redirect to Stripe checkout
       if (data.data?.checkoutUrl) {
         clearCart();
         window.location.href = data.data.checkoutUrl;
@@ -318,7 +329,7 @@ export default function ShippingCheckoutPage() {
                   </Box>
 
                   <Alert severity="info" sx={{ mb: 3 }}>
-                    「決済する」ボタンをクリックすると、Square決済ページに移動します。
+                    「決済する」ボタンをクリックすると、決済ページに移動します。
                   </Alert>
 
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { squareClient, SQUARE_LOCATION_ID, getSquareEnvironmentName } from '@/lib/square/client';
+import { stripe, getStripeEnvironmentName } from '@/lib/stripe/client';
 import crypto from 'crypto';
 import type { PaymentMethod } from '@/types/database';
 import { sendOrderConfirmationEmail } from '@/lib/email/resend';
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const paymentMethod = body.paymentMethod === 'SQUARE' ? 'SQUARE' : 'PAY_AT_PICKUP';
+    const paymentMethod = body.paymentMethod === 'STRIPE' ? 'STRIPE' : 'PAY_AT_PICKUP';
 
     // 1. 商品をDBから取得
     const productIds = body.items.map((i) => i.productId);
@@ -197,13 +197,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Square決済の場合
+    // Stripe決済の場合
     const idempotencyKey = crypto.randomUUID();
     const { data: paymentRow } = await supabaseAdmin
       .from('payments')
       .insert({
         order_id: orderRow.id,
-        provider: 'square',
+        provider: 'stripe',
         status: 'INIT',
         amount_yen: total,
         idempotency_key: idempotencyKey,
@@ -211,33 +211,42 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single();
 
-    // Square Payment Link作成
+    // Stripe Checkout Session作成
     const lineItems = items.map((x) => ({
-      name: x.product.name,
-      quantity: String(x.qty),
-      basePriceMoney: {
-        amount: BigInt(x.product.price_yen),
-        currency: 'JPY' as const,
+      price_data: {
+        currency: 'jpy',
+        product_data: {
+          name: x.product.name,
+        },
+        unit_amount: x.product.price_yen,
       },
+      quantity: x.qty,
     }));
 
-    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/complete?orderNo=${orderRow.order_no}`;
+    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/complete?orderNo=${orderRow.order_no}`;
+    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/checkout/pickup?canceled=true`;
 
-    const response = await squareClient.checkout.paymentLinks.create({
-      idempotencyKey,
-      order: {
-        locationId: SQUARE_LOCATION_ID,
-        referenceId: orderRow.order_no,
-        lineItems,
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          order_no: orderRow.order_no,
+          order_id: orderRow.id,
+        },
+        locale: 'ja',
+        customer_email: body.customer.email || undefined,
       },
-      checkoutOptions: {
-        redirectUrl,
-      },
-    });
+      {
+        idempotencyKey,
+      }
+    );
 
-    const paymentLink = response.paymentLink;
-    const checkoutUrl = paymentLink?.url ?? paymentLink?.longUrl ?? '';
-    const squareOrderId = paymentLink?.orderId;
+    const checkoutUrl = session.url ?? '';
+    const stripeSessionId = session.id;
 
     // payments更新
     if (paymentRow) {
@@ -245,9 +254,8 @@ export async function POST(request: NextRequest) {
         .from('payments')
         .update({
           status: 'LINK_CREATED',
-          square_payment_link_id: paymentLink?.id ?? null,
-          square_order_id: squareOrderId ?? null,
-          square_environment: getSquareEnvironmentName(),
+          stripe_session_id: stripeSessionId,
+          stripe_environment: getStripeEnvironmentName(),
         })
         .eq('id', paymentRow.id);
     }
@@ -261,7 +269,7 @@ export async function POST(request: NextRequest) {
         orderNo: orderRow.order_no,
         orderType: 'PICKUP',
         status: 'PENDING_PAYMENT',
-        paymentMethod: 'SQUARE',
+        paymentMethod: 'STRIPE',
         totalYen: total,
         checkoutUrl,
       },

@@ -232,7 +232,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   決済方法
                 </Typography>
                 <Typography>
-                  {order.payment_method === 'SQUARE' ? 'オンライン決済' : '現地払い'}
+                  {order.payment_method === 'PAY_AT_PICKUP' ? '現地払い' : 'オンライン決済'}
                 </Typography>
               </Grid>
             </Grid>

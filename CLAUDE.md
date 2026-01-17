@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 momo-payment は「もも娘」のオンライン注文システム。店頭受け取りと配送ECの2つの購入体験を提供する。
 
 ### 主な機能
-- **店頭受け取り（PICKUP）**: Square事前決済 or 店頭払いを選択可能
-- **配送EC（SHIPPING）**: 冷凍食品・グッズをオンライン決済（Square必須）で配送
+- **店頭受け取り（PICKUP）**: Stripe事前決済 or 店頭払いを選択可能
+- **配送EC（SHIPPING）**: 冷凍食品・グッズをオンライン決済（Stripe必須）で配送
 
 ### 技術スタック
 - Next.js 16 (App Router)
@@ -16,7 +16,7 @@ momo-payment は「もも娘」のオンライン注文システム。店頭受�
 - MUI (Material UI v7)
 - Tailwind CSS
 - Supabase (PostgreSQL + Auth)
-- Square SDK v43 (決済)
+- Stripe SDK (決済)
 - Resend (メール通知)
 
 ## Build and Development Commands
@@ -52,7 +52,7 @@ src/app/
     ├── orders/
     │   ├── pickup/             # POST: 店頭受け取り注文作成
     │   └── shipping/           # POST: 配送注文作成
-    ├── webhooks/square/        # POST: Square Webhook
+    ├── webhooks/stripe/        # POST: Stripe Webhook
     └── admin/orders/[id]/
         ├── mark-paid/          # POST: 入金確認
         └── ship/               # POST: 発送登録
@@ -65,18 +65,18 @@ admin_users ─── (Supabase Auth)
 products ──┬── order_items ─── orders ──┬── payments
            │                            ├── shipping_addresses
            │                            ├── shipments
-           └── food_label (JSONB)       └── square_webhook_events
+           └── food_label (JSONB)       └── stripe_webhook_events
 ```
 
 ### ステータスフロー
 
 **店頭払い**: `RESERVED` → `PAID` → `FULFILLED`
-**Square決済（店頭受取）**: `PENDING_PAYMENT` → `PAID` → `FULFILLED`
-**Square決済（配送）**: `PENDING_PAYMENT` → `PAID` → `PACKING` → `SHIPPED` → `FULFILLED`
+**Stripe決済（店頭受取）**: `PENDING_PAYMENT` → `PAID` → `FULFILLED`
+**Stripe決済（配送）**: `PENDING_PAYMENT` → `PAID` → `PACKING` → `SHIPPED` → `FULFILLED`
 
 ### 重要な制約
 - **温度帯混在禁止**: 冷凍食品（FROZEN）とグッズ（AMBIENT）の同時購入は不可
-- **配送はオンライン決済必須**: SHIPPING注文はSquare決済のみ
+- **配送はオンライン決済必須**: SHIPPING注文はStripe決済のみ
 
 ## Key Files
 
@@ -87,8 +87,8 @@ products ──┬── order_items ─── orders ──┬── payments
 | `src/lib/supabase/admin.ts` | Supabase service_roleクライアント（API用） |
 | `src/lib/supabase/server.ts` | Supabase SSRクライアント |
 | `src/lib/supabase/client.ts` | Supabase ブラウザクライアント |
-| `src/lib/square/client.ts` | Square SDK設定 |
-| `src/lib/square/webhook.ts` | Square Webhook署名検証 |
+| `src/lib/stripe/client.ts` | Stripe SDK設定 |
+| `src/lib/stripe/webhook.ts` | Stripe Webhook署名検証 |
 | `src/lib/mui/theme.ts` | MUIテーマ設定 |
 | `src/lib/mui/ThemeRegistry.tsx` | MUI App Router統合 |
 | `supabase/migrations/` | DBスキーマ（確定版） |
@@ -103,12 +103,9 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# Square
-SQUARE_ENVIRONMENT=sandbox  # or production
-SQUARE_ACCESS_TOKEN=
-SQUARE_LOCATION_ID=
-SQUARE_WEBHOOK_SIGNATURE_KEY=
-SQUARE_WEBHOOK_NOTIFICATION_URL=
+# Stripe
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Email
 RESEND_API_KEY=
@@ -128,7 +125,7 @@ SHIPPING_FEE_YEN=1200
 - [x] Tailwind CSS設定
 - [x] MUI (Material UI) インストール・設定
 - [x] Supabaseクライアント設定
-- [x] Squareクライアント設定
+- [x] Stripeクライアント設定
 - [x] フォルダ構成作成
 - [x] 型定義ファイル作成
 - [x] 要件定義ドキュメント作成
@@ -142,7 +139,7 @@ SHIPPING_FEE_YEN=1200
 ### Phase 3: API実装 ✅
 - [x] POST /api/orders/pickup（店頭受け取り注文）
 - [x] POST /api/orders/shipping（配送注文）
-- [x] POST /api/webhooks/square（Webhook署名検証）
+- [x] POST /api/webhooks/stripe（Webhook署名検証）
 - [x] POST /api/admin/orders/[id]/mark-paid（入金確認）
 - [x] POST /api/admin/orders/[id]/ship（発送登録）
 
@@ -160,39 +157,67 @@ SHIPPING_FEE_YEN=1200
 - [ ] 特定商取引法ページ
 - [ ] 食品表示情報
 
-## Square SDK v43 Usage
+## Stripe SDK Usage
 
-Square SDK v43ではAPIが変更されています:
+Stripe Checkout Sessionを使った決済フロー:
 
 ```typescript
 // クライアント初期化
-import { SquareClient, SquareEnvironment } from 'square';
+import Stripe from 'stripe';
 
-const squareClient = new SquareClient({
-  token: process.env.SQUARE_ACCESS_TOKEN,
-  environment: SquareEnvironment.Sandbox,
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-01-27.acacia',
 });
 
-// Payment Link作成（checkout.paymentLinks.create）
-// ※ レスポンスは直接 paymentLink プロパティを持つ（result でラップされない）
-const response = await squareClient.checkout.paymentLinks.create({
-  idempotencyKey,
-  order: {
-    locationId,
-    lineItems: [{
-      name: '商品名',
-      quantity: '1',
-      basePriceMoney: {
-        amount: BigInt(1000),
-        currency: 'JPY' as const,  // Currency型として指定
-      },
-    }],
-  },
-  checkoutOptions: { redirectUrl },
+// Checkout Session作成
+const session = await stripe.checkout.sessions.create({
+  mode: 'payment',
+  payment_method_types: ['card'],
+  line_items: [{
+    price_data: {
+      currency: 'jpy',
+      product_data: { name: '商品名' },
+      unit_amount: 1000,  // JPYは整数（センチレスカレンシー）
+    },
+    quantity: 1,
+  }],
+  success_url: `${APP_URL}/complete?orderNo=${orderNo}`,
+  cancel_url: `${APP_URL}/checkout?canceled=true`,
+  metadata: { order_no: orderNo, order_id: orderId },
+  locale: 'ja',
+}, {
+  idempotencyKey,  // 冪等性確保
 });
-const checkoutUrl = response.paymentLink?.url;
 
-// Payment取得
-const paymentResponse = await squareClient.payments.get({ paymentId });
-const payment = paymentResponse.payment;
+const checkoutUrl = session.url;
+const sessionId = session.id;  // Webhook処理時の照合に使用
 ```
+
+### Webhook署名検証
+
+```typescript
+import { stripe } from '@/lib/stripe/client';
+
+const event = stripe.webhooks.constructEvent(
+  rawBody,
+  request.headers.get('stripe-signature')!,
+  process.env.STRIPE_WEBHOOK_SECRET!
+);
+
+// checkout.session.completed イベントで決済完了を検知
+if (event.type === 'checkout.session.completed') {
+  const session = event.data.object;
+  // session.id で payments テーブルと照合
+}
+```
+
+### ローカル開発時のWebhookテスト
+
+```bash
+# Stripe CLIでWebhookをローカルに転送
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+### テストカード
+- 成功: `4242 4242 4242 4242`
+- 拒否: `4000 0000 0000 9995`

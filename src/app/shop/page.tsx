@@ -24,13 +24,13 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
-import type { Product } from '@/types/database';
+import type { Product, ProductWithVariants } from '@/types/database';
 
 type TabValue = 'all' | 'frozen' | 'goods';
 
 export default function ShopPage() {
   const [tab, setTab] = useState<TabValue>('all');
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithVariants[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
@@ -55,7 +55,7 @@ export default function ShopPage() {
     fetchProducts();
   }, []);
 
-  const getDisplayProducts = (): Product[] => {
+  const getDisplayProducts = (): ProductWithVariants[] => {
     switch (tab) {
       case 'frozen':
         return products.filter((p) => p.kind === 'FROZEN_FOOD');
@@ -66,7 +66,11 @@ export default function ShopPage() {
     }
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: ProductWithVariants) => {
+    // Don't allow adding products with variants from listing page
+    if (product.has_variants) {
+      return;
+    }
     const message = getIncompatibleModeMessage(product);
     if (message) {
       setSnackbar({ open: true, message, severity: 'error' });
@@ -250,7 +254,16 @@ export default function ShopPage() {
                         >
                           ¥{formatPrice(product.price_yen)}
                         </Typography>
-                        {cartQty > 0 ? (
+                        {product.has_variants ? (
+                          <Button
+                            component={Link}
+                            href={`/shop/${product.slug}`}
+                            variant="outlined"
+                            size="small"
+                          >
+                            サイズを選択
+                          </Button>
+                        ) : cartQty > 0 ? (
                           <Box
                             sx={{
                               display: 'flex',
