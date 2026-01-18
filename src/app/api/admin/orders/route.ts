@@ -20,6 +20,11 @@ export async function GET(request: Request) {
           qty,
           unit_price_yen,
           line_total_yen
+        ),
+        shipments (
+          id,
+          tracking_no,
+          shipped_at
         )
       `)
       .order('created_at', { ascending: false });

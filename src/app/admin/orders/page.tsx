@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -13,7 +13,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  IconButton,
   TextField,
   InputAdornment,
   Tabs,
@@ -22,8 +21,22 @@ import {
   CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import RefreshIcon from '@mui/icons-material/Refresh';
+
+interface OrderItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  qty: number;
+  unit_price_yen: number;
+  line_total_yen: number;
+}
+
+interface Shipment {
+  id: string;
+  tracking_no: string | null;
+  shipped_at: string | null;
+}
 
 interface Order {
   id: string;
@@ -35,6 +48,8 @@ interface Order {
   status: string;
   payment_status: string;
   created_at: string;
+  order_items: OrderItem[];
+  shipments: Shipment[];
 }
 
 const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
@@ -50,6 +65,7 @@ const statusLabels: Record<string, { label: string; color: 'default' | 'primary'
 type TabValue = 'all' | 'shipping' | 'pickup';
 
 export default function AdminOrdersPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<TabValue>('all');
   const [search, setSearch] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -158,15 +174,21 @@ export default function AdminOrdersPage() {
                 <TableCell>注文番号</TableCell>
                 <TableCell>種別</TableCell>
                 <TableCell>顧客</TableCell>
+                <TableCell>購入商品</TableCell>
                 <TableCell align="right">金額</TableCell>
                 <TableCell>ステータス</TableCell>
+                <TableCell>発送</TableCell>
                 <TableCell>注文日時</TableCell>
-                <TableCell align="center">操作</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredOrders.map((order) => (
-                <TableRow key={order.id} hover>
+                <TableRow
+                  key={order.id}
+                  hover
+                  onClick={() => router.push(`/admin/orders/${order.id}`)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                       {order.order_no}
@@ -186,6 +208,14 @@ export default function AdminOrdersPage() {
                       {order.customer_email}
                     </Typography>
                   </TableCell>
+                  <TableCell>
+                    {order.order_items?.map((item, index) => (
+                      <Typography key={item.id} variant="body2" sx={{ fontSize: '0.8rem' }}>
+                        {item.product_name} × {item.qty}
+                        {index < order.order_items.length - 1 && ','}
+                      </Typography>
+                    ))}
+                  </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       ¥{formatPrice(order.total_yen)}
@@ -199,23 +229,24 @@ export default function AdminOrdersPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{formatDate(order.created_at)}</Typography>
+                    {order.order_type === 'SHIPPING' ? (
+                      order.shipments?.length > 0 && order.shipments[0].shipped_at ? (
+                        <Chip label="発送済" size="small" color="success" />
+                      ) : (
+                        <Chip label="未発送" size="small" variant="outlined" />
+                      )
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">-</Typography>
+                    )}
                   </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      component={Link}
-                      href={`/admin/orders/${order.id}`}
-                      size="small"
-                      color="primary"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
+                  <TableCell>
+                    <Typography variant="body2">{formatDate(order.created_at)}</Typography>
                   </TableCell>
                 </TableRow>
               ))}
               {filteredOrders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
                     <Typography color="text.secondary">
                       該当する注文がありません
                     </Typography>
