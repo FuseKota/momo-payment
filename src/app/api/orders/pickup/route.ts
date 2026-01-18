@@ -2,60 +2,66 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { stripe, getStripeEnvironmentName } from '@/lib/stripe/client';
 import crypto from 'crypto';
-import type { PaymentMethod } from '@/types/database';
 import { sendOrderConfirmationEmail } from '@/lib/email/resend';
+import { pickupOrderSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { checkOrderRateLimit, getClientIP } from '@/lib/security/rate-limit';
+import { validateOrigin } from '@/lib/security/csrf';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 export const runtime = 'nodejs';
-
-interface PickupOrderRequest {
-  customer: {
-    name: string;
-    phone: string;
-    email?: string;
-  };
-  items: Array<{
-    productId: string;
-    qty: number;
-  }>;
-  paymentMethod: PaymentMethod;
-  pickupDate?: string;
-  pickupTime?: string;
-  agreementAccepted: boolean;
-}
 
 function toInt(n: unknown): number {
   const x = Number(n);
   if (!Number.isFinite(x)) throw new Error('invalid number');
-  return Math.trunc(x);
+  if (!Number.isInteger(x)) throw new Error('must be integer');
+  return x;
 }
 
 export async function POST(request: NextRequest) {
+  const clientIP = getClientIP(request);
+
   try {
-    const body: PickupOrderRequest = await request.json();
-
-    // バリデーション
-    if (!body.customer?.name || !body.customer?.phone) {
+    // 1. レート制限チェック
+    const rateLimit = checkOrderRateLimit(clientIP);
+    if (!rateLimit.allowed) {
+      secureLog('warn', 'Rate limit exceeded', { ip: clientIP });
       return NextResponse.json(
-        { ok: false, error: 'customer_info_required' },
+        { ok: false, error: 'rate_limit_exceeded', retryAfter: rateLimit.resetIn },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.resetIn),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      );
+    }
+
+    // 2. CSRF保護（Origin検証）
+    const originCheck = validateOrigin(request);
+    if (!originCheck.valid) {
+      secureLog('warn', 'CSRF check failed', { ip: clientIP, reason: originCheck.reason });
+      return NextResponse.json(
+        { ok: false, error: 'invalid_origin' },
+        { status: 403 }
+      );
+    }
+
+    // 3. リクエストボディのパース
+    const rawBody = await request.json();
+
+    // 4. zodスキーマでバリデーション
+    const parseResult = pickupOrderSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const errors = formatValidationErrors(parseResult.error);
+      return NextResponse.json(
+        { ok: false, error: 'validation_error', details: errors },
         { status: 400 }
       );
     }
 
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json(
-        { ok: false, error: 'items_required' },
-        { status: 400 }
-      );
-    }
-
-    if (!body.agreementAccepted) {
-      return NextResponse.json(
-        { ok: false, error: 'agreement_required' },
-        { status: 400 }
-      );
-    }
-
-    const paymentMethod = body.paymentMethod === 'STRIPE' ? 'STRIPE' : 'PAY_AT_PICKUP';
+    const body = parseResult.data;
+    const paymentMethod = body.paymentMethod;
 
     // 1. 商品をDBから取得
     const productIds = body.items.map((i) => i.productId);
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
       .in('id', productIds);
 
     if (productError) {
-      console.error('DB error:', productError);
+      secureLog('error', 'DB error', safeErrorLog(productError));
       return NextResponse.json(
         { ok: false, error: 'db_error' },
         { status: 500 }
@@ -128,7 +134,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (orderError || !orderRow) {
-      console.error('Order create error:', orderError);
+      secureLog('error', 'Order create error', safeErrorLog(orderError));
       return NextResponse.json(
         { ok: false, error: 'order_create_failed' },
         { status: 500 }
@@ -180,7 +186,7 @@ export async function POST(request: NextRequest) {
             pickupTime: body.pickupTime,
           });
         } catch (emailError) {
-          console.error('Failed to send confirmation email:', emailError);
+          secureLog('error', 'Failed to send confirmation email', safeErrorLog(emailError));
         }
       }
 
@@ -275,7 +281,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('Pickup order error:', err);
+    secureLog('error', 'Pickup order error', safeErrorLog(err));
     return NextResponse.json(
       { ok: false, error: 'internal_error' },
       { status: 500 }
