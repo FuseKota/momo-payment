@@ -10,6 +10,7 @@ import {
   sendPaymentConfirmationEmail,
   sendOrderConfirmationEmail,
 } from '@/lib/email/resend';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 export const runtime = 'nodejs';
 
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!event) {
-    console.error('Stripe webhook: invalid signature');
+    secureLog('error', 'Stripe webhook: invalid signature');
     return new NextResponse('Invalid signature', { status: 403 });
   }
 
@@ -41,23 +42,23 @@ export async function POST(request: NextRequest) {
   if (insertError) {
     // unique違反 = 既に処理済み
     if (insertError.message.includes('duplicate key')) {
-      console.log('Stripe webhook: duplicate event, skipping');
+      secureLog('info', 'Stripe webhook: duplicate event, skipping');
       return NextResponse.json({ ok: true, message: 'already processed' });
     }
-    console.error('Stripe webhook: insert error', insertError);
+    secureLog('error', 'Stripe webhook: insert error', safeErrorLog(insertError));
     // 他のエラーでも200を返す（Stripeの無限再送を防ぐ）
   }
 
   // 4. checkout.session.completed 以外は無視
   if (!isCheckoutSessionCompleted(event)) {
-    console.log(`Stripe webhook: ignoring event type ${event.type}`);
+    secureLog('info', `Stripe webhook: ignoring event type ${event.type}`);
     return NextResponse.json({ ok: true, message: 'ignored' });
   }
 
   // 5. セッション情報を抽出
   const sessionInfo = extractSessionInfo(event);
   if (!sessionInfo) {
-    console.error('Stripe webhook: no session info in event');
+    secureLog('error', 'Stripe webhook: no session info in event');
     return NextResponse.json({ ok: true, message: 'no session info' });
   }
 
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (paymentError || !paymentRow) {
-    console.error('Stripe webhook: payment row not found', paymentError);
+    secureLog('error', 'Stripe webhook: payment row not found', paymentError ? safeErrorLog(paymentError) : undefined);
     return NextResponse.json({ ok: true, message: 'payment not found' });
   }
 
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     .eq('id', paymentRow.id);
 
   if (updatePaymentError) {
-    console.error('Stripe webhook: failed to update payment', updatePaymentError);
+    secureLog('error', 'Stripe webhook: failed to update payment', safeErrorLog(updatePaymentError));
   }
 
   // 8. ordersを更新（PAID）
@@ -99,10 +100,10 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (updateOrderError) {
-    console.error('Stripe webhook: failed to update order', updateOrderError);
+    secureLog('error', 'Stripe webhook: failed to update order', safeErrorLog(updateOrderError));
   }
 
-  console.log(`Stripe webhook: order ${paymentRow.order_id} marked as PAID`);
+  secureLog('info', `Stripe webhook: order ${paymentRow.order_id} marked as PAID`);
 
   // 9. メール通知を送信
   if (orderData && orderData.customer_email) {
@@ -181,11 +182,9 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      console.log(
-        `Stripe webhook: sent confirmation emails to ${orderData.customer_email}`
-      );
+      secureLog('info', 'Stripe webhook: sent confirmation emails');
     } catch (emailError) {
-      console.error('Stripe webhook: failed to send email', emailError);
+      secureLog('error', 'Stripe webhook: failed to send email', safeErrorLog(emailError));
       // メール送信失敗しても200を返す（決済処理自体は成功）
     }
   }

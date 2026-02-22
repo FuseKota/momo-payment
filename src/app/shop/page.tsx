@@ -24,6 +24,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils/format';
 import type { Product, ProductWithVariants } from '@/types/database';
 
 type TabValue = 'all' | 'frozen' | 'goods';
@@ -95,10 +96,6 @@ export default function ShopPage() {
     } else {
       updateQty(productId, newQty);
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
   };
 
   return (

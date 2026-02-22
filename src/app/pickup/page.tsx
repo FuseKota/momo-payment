@@ -25,6 +25,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils/format';
 import type { Product } from '@/types/database';
 
 const steps = [
@@ -69,10 +70,6 @@ export default function PickupPage() {
     }
     fetchProducts();
   }, []);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   const handleAddToCart = (product: Product) => {
     const message = getIncompatibleModeMessage(product);

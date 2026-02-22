@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -16,12 +16,19 @@ import {
   StepLabel,
   Alert,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatPrice } from '@/lib/utils/format';
+import type { CustomerAddress } from '@/types/database';
 
 const SHIPPING_FEE = 1200;
 
@@ -40,9 +47,12 @@ const steps = ['配送先入力', 'お支払い'];
 
 export default function ShippingCheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
+  const { user } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [form, setForm] = useState<ShippingForm>({
     name: '',
     email: '',
@@ -54,11 +64,52 @@ export default function ShippingCheckoutPage() {
     address2: '',
   });
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
+  const total = subtotal + SHIPPING_FEE;
+
+  // ログインユーザーの保存済み住所を取得
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchAddresses = async () => {
+      try {
+        const res = await fetch('/api/mypage/addresses');
+        if (res.ok) {
+          const data = await res.json();
+          setSavedAddresses(data);
+          // デフォルト住所があれば自動選択
+          const defaultAddr = data.find((a: CustomerAddress) => a.is_default);
+          if (defaultAddr) {
+            setSelectedAddressId(defaultAddr.id);
+            applyAddress(defaultAddr);
+          }
+        }
+      } catch {
+        // 住所取得失敗は無視（手動入力で対応可能）
+      }
+    };
+
+    fetchAddresses();
+  }, [user]);
+
+  const applyAddress = (addr: CustomerAddress) => {
+    setForm((prev) => ({
+      ...prev,
+      name: addr.recipient_name,
+      phone: addr.recipient_phone,
+      postalCode: addr.postal_code,
+      prefecture: addr.pref,
+      city: addr.city,
+      address1: addr.address1,
+      address2: addr.address2 || '',
+    }));
   };
 
-  const total = subtotal + SHIPPING_FEE;
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    if (addressId === '') return;
+    const addr = savedAddresses.find((a) => a.id === addressId);
+    if (addr) applyAddress(addr);
+  };
 
   const handleInputChange = (field: keyof ShippingForm) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -125,7 +176,6 @@ export default function ShippingCheckoutPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        // ユーザーフレンドリーなエラーメッセージに変換
         const errorMessages: Record<string, string> = {
           temp_zone_mixed: '冷凍食品とグッズは同時に注文できません。別々にご注文ください。',
           product_not_shippable: '配送できない商品が含まれています。',
@@ -212,6 +262,25 @@ export default function ShippingCheckoutPage() {
                     <LocalShippingIcon sx={{ color: 'primary.main' }} />
                     <Typography variant="h6">配送先情報</Typography>
                   </Box>
+
+                  {/* 保存済み住所選択 */}
+                  {savedAddresses.length > 0 && (
+                    <FormControl fullWidth sx={{ mb: 3 }}>
+                      <InputLabel>保存済み住所から選択</InputLabel>
+                      <Select
+                        value={selectedAddressId}
+                        label="保存済み住所から選択"
+                        onChange={(e) => handleAddressSelect(e.target.value)}
+                      >
+                        <MenuItem value="">手動入力</MenuItem>
+                        {savedAddresses.map((addr) => (
+                          <MenuItem key={addr.id} value={addr.id}>
+                            {addr.label} - {addr.recipient_name} ({addr.pref}{addr.city})
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
 
                   <Grid container spacing={3}>
                     <Grid size={12}>

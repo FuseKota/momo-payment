@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadProductImage, deleteProductImage } from '@/lib/storage/upload';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { requireAdmin } from '@/lib/auth/require-admin';
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -47,7 +52,7 @@ export async function POST(request: NextRequest) {
       path: result.path,
     });
   } catch (error) {
-    console.error('Upload API error:', error);
+    secureLog('error', 'Upload API error', safeErrorLog(error));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -56,6 +61,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path');
@@ -78,7 +86,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete API error:', error);
+    secureLog('error', 'Delete API error', safeErrorLog(error));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

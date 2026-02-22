@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth/require-admin';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
@@ -30,6 +34,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   const { id } = await params;
   const supabase = getSupabaseAdmin();
   const body = await request.json();
@@ -56,6 +63,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(request: Request, { params }: RouteParams) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 

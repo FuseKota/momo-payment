@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-
-// TODO: 管理者認証を追加
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { requireAdmin } from '@/lib/auth/require-admin';
 
 interface MarkPaidRequest {
   note?: string;
@@ -11,6 +11,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   try {
     const { id: orderId } = await params;
     const body: MarkPaidRequest = await request.json();
@@ -54,7 +57,7 @@ export async function POST(
       .eq('id', orderId);
 
     if (updateError) {
-      console.error('Update error:', updateError);
+      secureLog('error', 'Mark paid update error', safeErrorLog(updateError));
       return NextResponse.json(
         { ok: false, error: 'update_failed' },
         { status: 500 }
@@ -77,7 +80,7 @@ export async function POST(
       },
     });
   } catch (err) {
-    console.error('Mark paid error:', err);
+    secureLog('error', 'Mark paid error', safeErrorLog(err));
     return NextResponse.json(
       { ok: false, error: 'internal_error' },
       { status: 500 }

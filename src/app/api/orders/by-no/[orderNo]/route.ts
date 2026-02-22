@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 export const runtime = 'nodejs';
 
@@ -72,7 +73,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error('Get order error:', err);
+    secureLog('error', 'Get order error', safeErrorLog(err));
     return NextResponse.json(
       { ok: false, error: 'internal_error' },
       { status: 500 }

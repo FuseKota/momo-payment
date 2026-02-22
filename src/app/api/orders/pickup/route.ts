@@ -2,20 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { stripe, getStripeEnvironmentName } from '@/lib/stripe/client';
 import crypto from 'crypto';
+import { env } from '@/lib/env';
 import { sendOrderConfirmationEmail } from '@/lib/email/resend';
 import { pickupOrderSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { checkOrderRateLimit, getClientIP } from '@/lib/security/rate-limit';
 import { validateOrigin } from '@/lib/security/csrf';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { toInt } from '@/lib/utils/format';
+import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
-
-function toInt(n: unknown): number {
-  const x = Number(n);
-  if (!Number.isFinite(x)) throw new Error('invalid number');
-  if (!Number.isInteger(x)) throw new Error('must be integer');
-  return x;
-}
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -47,10 +43,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. リクエストボディのパース
+    // 3. ログインユーザーの場合、user_idを取得（オプション）
+    let userId: string | null = null;
+    try {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id ?? null;
+    } catch {
+      // ゲスト購入の場合は無視
+    }
+
+    // 4. リクエストボディのパース
     const rawBody = await request.json();
 
-    // 4. zodスキーマでバリデーション
+    // 5. zodスキーマでバリデーション
     const parseResult = pickupOrderSchema.safeParse(rawBody);
     if (!parseResult.success) {
       const errors = formatValidationErrors(parseResult.error);
@@ -129,6 +135,7 @@ export async function POST(request: NextRequest) {
         pickup_date: body.pickupDate ?? null,
         pickup_time: body.pickupTime ?? null,
         agreement_accepted: true,
+        user_id: userId,
       })
       .select('id, order_no')
       .single();
@@ -229,8 +236,8 @@ export async function POST(request: NextRequest) {
       quantity: x.qty,
     }));
 
-    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/complete?orderNo=${orderRow.order_no}`;
-    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/checkout/pickup?canceled=true`;
+    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/complete?orderNo=${orderRow.order_no}`;
+    const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/checkout/pickup?canceled=true`;
 
     const session = await stripe.checkout.sessions.create(
       {

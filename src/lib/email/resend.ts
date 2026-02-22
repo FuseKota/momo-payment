@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
+import { env } from '@/lib/env';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(env.RESEND_API_KEY);
 
 export interface OrderConfirmationData {
   orderNo: string;
@@ -34,7 +36,7 @@ export interface ShippingNotificationData {
   trackingNumber?: string;
 }
 
-const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@momomusume.com';
+const FROM_EMAIL = env.EMAIL_FROM || 'noreply@momomusume.com';
 const FROM_NAME = 'もも娘';
 
 export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
@@ -150,7 +152,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
     });
 
     if (error) {
-      console.error('Failed to send order confirmation email:', error);
+      secureLog('error', 'Failed to send order confirmation email', safeErrorLog(error));
       return { success: false, error };
     }
 
@@ -224,7 +226,7 @@ export async function sendShippingNotificationEmail(data: ShippingNotificationDa
     });
 
     if (error) {
-      console.error('Failed to send shipping notification email:', error);
+      secureLog('error', 'Failed to send shipping notification email', safeErrorLog(error));
       return { success: false, error };
     }
 
@@ -293,7 +295,7 @@ export async function sendPaymentConfirmationEmail(data: {
     });
 
     if (error) {
-      console.error('Failed to send payment confirmation email:', error);
+      secureLog('error', 'Failed to send payment confirmation email', safeErrorLog(error));
       return { success: false, error };
     }
 

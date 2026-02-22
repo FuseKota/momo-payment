@@ -23,6 +23,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InfoIcon from '@mui/icons-material/Info';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils/format';
 import type { Product, ProductVariant, ProductWithVariants } from '@/types/database';
 
 interface Props {
@@ -115,10 +116,6 @@ export default function ProductDetailPage({ params }: Props) {
 
   // Check if add to cart should be disabled
   const isAddToCartDisabled = product.has_variants && !selectedVariant;
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   return (
     <Layout cartItemCount={itemCount}>

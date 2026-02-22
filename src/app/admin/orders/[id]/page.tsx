@@ -25,6 +25,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { formatPrice, formatDate } from '@/lib/utils/format';
+import { statusLabels } from '@/lib/utils/constants';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -65,16 +67,6 @@ interface Order {
   order_items: OrderItem[];
 }
 
-const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
-  RESERVED: { label: '予約済', color: 'info' },
-  PENDING_PAYMENT: { label: '決済待ち', color: 'warning' },
-  PAID: { label: '入金済', color: 'success' },
-  PACKING: { label: '梱包中', color: 'primary' },
-  SHIPPED: { label: '発送済', color: 'secondary' },
-  FULFILLED: { label: '完了', color: 'default' },
-  CANCELLED: { label: 'キャンセル', color: 'error' },
-};
-
 export default function AdminOrderDetailPage({ params }: Props) {
   const { id } = use(params);
   const [order, setOrder] = useState<Order | null>(null);
@@ -104,22 +96,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
     }
     fetchOrder();
   }, [id]);
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   const updateOrderStatus = async (status: string, extraData?: Record<string, unknown>) => {
     if (!order) return;

@@ -28,6 +28,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils/format';
 
 interface PickupForm {
   name: string;
@@ -52,10 +53,6 @@ export default function PickupCheckoutPage() {
     paymentMethod: 'STRIPE',
     notes: '',
   });
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   const handleInputChange = (field: keyof PickupForm) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { value: string } }

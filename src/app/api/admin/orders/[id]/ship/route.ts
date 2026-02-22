@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-
-// TODO: 管理者認証を追加
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { requireAdmin } from '@/lib/auth/require-admin';
 
 interface ShipRequest {
   carrier: string;
@@ -12,6 +12,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   try {
     const { id: orderId } = await params;
     const body: ShipRequest = await request.json();
@@ -62,7 +65,7 @@ export async function POST(
     });
 
     if (shipmentError) {
-      console.error('Shipment create error:', shipmentError);
+      secureLog('error', 'Shipment create error', safeErrorLog(shipmentError));
       return NextResponse.json(
         { ok: false, error: 'shipment_create_failed' },
         { status: 500 }
@@ -76,7 +79,7 @@ export async function POST(
       .eq('id', orderId);
 
     if (updateError) {
-      console.error('Update error:', updateError);
+      secureLog('error', 'Ship update error', safeErrorLog(updateError));
       return NextResponse.json(
         { ok: false, error: 'update_failed' },
         { status: 500 }
@@ -95,7 +98,7 @@ export async function POST(
       },
     });
   } catch (err) {
-    console.error('Ship error:', err);
+    secureLog('error', 'Ship error', safeErrorLog(err));
     return NextResponse.json(
       { ok: false, error: 'internal_error' },
       { status: 500 }

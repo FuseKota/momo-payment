@@ -22,6 +22,8 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { formatPrice, formatDate } from '@/lib/utils/format';
+import { statusLabels } from '@/lib/utils/constants';
 
 interface OrderItem {
   id: string;
@@ -51,16 +53,6 @@ interface Order {
   order_items: OrderItem[];
   shipments: Shipment[];
 }
-
-const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
-  RESERVED: { label: '予約済', color: 'info' },
-  PENDING_PAYMENT: { label: '決済待ち', color: 'warning' },
-  PAID: { label: '入金済', color: 'success' },
-  PACKING: { label: '梱包中', color: 'primary' },
-  SHIPPED: { label: '発送済', color: 'secondary' },
-  FULFILLED: { label: '完了', color: 'default' },
-  CANCELLED: { label: 'キャンセル', color: 'error' },
-};
 
 type TabValue = 'all' | 'shipping' | 'pickup';
 
@@ -93,21 +85,6 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   const filteredOrders = orders.filter((order) => {
     if (!search) return true;

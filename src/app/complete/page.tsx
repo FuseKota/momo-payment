@@ -19,6 +19,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { Layout } from '@/components/common';
+import { formatPrice } from '@/lib/utils/format';
 
 interface OrderItem {
   id: string;
@@ -89,10 +90,6 @@ function CompleteContent() {
 
     fetchOrder();
   }, [orderNo]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   if (loading) {
     return (

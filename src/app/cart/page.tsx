@@ -24,6 +24,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils/format';
 
 const SHIPPING_FEE = 1200;
 
@@ -31,9 +32,6 @@ export default function CartPage() {
   const router = useRouter();
   const { items, updateQty, removeItem, clearCart, subtotal, itemCount, cartMode } = useCart();
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
   const isPickupMode = cartMode === 'pickup';
   const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE : 0);
 

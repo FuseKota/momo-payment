@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 import { stripe } from './client';
+import { env } from '@/lib/env';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 /**
  * Stripe Webhook署名検証
@@ -9,10 +11,8 @@ export function verifyStripeWebhookSignature(params: {
   signatureHeader: string | null;
   rawBody: string | Buffer;
 }): Stripe.Event | null {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret || !params.signatureHeader) {
-    console.error('Stripe webhook config missing');
+  if (!params.signatureHeader) {
+    secureLog('error', 'Stripe webhook config missing');
     return null;
   }
 
@@ -20,10 +20,10 @@ export function verifyStripeWebhookSignature(params: {
     return stripe.webhooks.constructEvent(
       params.rawBody,
       params.signatureHeader,
-      webhookSecret
+      env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+    secureLog('error', 'Webhook signature verification failed', safeErrorLog(err));
     return null;
   }
 }

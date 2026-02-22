@@ -16,6 +16,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Divider,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -24,10 +25,14 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
+import PersonIcon from '@mui/icons-material/Person';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LanguageIcon from '@mui/icons-material/Language';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -37,11 +42,19 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, isAdmin, signOut } = useAuth();
 
   const navItems = [
     { label: 'ホーム', href: '/', icon: <HomeIcon /> },
     { label: 'キッチンカー販売', href: '/pickup', icon: <StorefrontIcon /> },
     { label: '配送注文', href: '/shop', icon: <LocalShippingIcon /> },
+  ];
+
+  const socialLinks = [
+    { href: 'https://sakura-sisters.com/momo-musume/', icon: <LanguageIcon /> },
+    { href: 'https://www.instagram.com/momomusume_fukushima_official/', icon: <InstagramIcon /> },
+    { href: 'https://x.com/momomusume_jp', icon: <XIcon /> },
+    { href: 'https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F', icon: <YouTubeIcon /> },
   ];
 
   return (
@@ -118,58 +131,69 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
           {/* Social Links - Desktop only */}
           {!isMobile && (
             <Box sx={{ display: 'flex', gap: 0.5, ml: 2 }}>
-              <IconButton
-                component="a"
-                href="https://sakura-sisters.com/momo-musume/"
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-                }}
-              >
-                <LanguageIcon />
-              </IconButton>
-              <IconButton
-                component="a"
-                href="https://www.instagram.com/momomusume_fukushima_official/"
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-                }}
-              >
-                <InstagramIcon />
-              </IconButton>
-              <IconButton
-                component="a"
-                href="https://x.com/momomusume_jp"
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-                }}
-              >
-                <XIcon />
-              </IconButton>
-              <IconButton
-                component="a"
-                href="https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F"
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
-                }}
-              >
-                <YouTubeIcon />
-              </IconButton>
+              {socialLinks.map((link) => (
+                <IconButton
+                  key={link.href}
+                  component="a"
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main', backgroundColor: 'rgba(255, 102, 128, 0.08)' },
+                  }}
+                >
+                  {link.icon}
+                </IconButton>
+              ))}
+            </Box>
+          )}
+
+          {/* Auth buttons - Desktop only */}
+          {!isMobile && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Button
+                      component={Link}
+                      href="/admin/orders"
+                      size="small"
+                      startIcon={<AdminPanelSettingsIcon />}
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      管理画面
+                    </Button>
+                  )}
+                  <Button
+                    component={Link}
+                    href="/mypage"
+                    size="small"
+                    startIcon={<PersonIcon />}
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    マイページ
+                  </Button>
+                  <IconButton
+                    onClick={signOut}
+                    size="small"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    <LogoutIcon />
+                  </IconButton>
+                </>
+              ) : (
+                <Button
+                  component={Link}
+                  href="/login"
+                  size="small"
+                  startIcon={<PersonIcon />}
+                  sx={{ color: 'text.secondary' }}
+                >
+                  ログイン
+                </Button>
+              )}
             </Box>
           )}
 
@@ -214,59 +238,86 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
               </ListItem>
             ))}
           </List>
+
+          <Divider sx={{ my: 1 }} />
+
+          {/* Auth section in drawer */}
+          <List>
+            {user ? (
+              <>
+                {isAdmin && (
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      href="/admin/orders"
+                      onClick={() => setDrawerOpen(false)}
+                    >
+                      <ListItemIcon sx={{ color: 'primary.main' }}>
+                        <AdminPanelSettingsIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="管理画面" />
+                    </ListItemButton>
+                  </ListItem>
+                )}
+                <ListItem disablePadding>
+                  <ListItemButton
+                    component={Link}
+                    href="/mypage"
+                    onClick={() => setDrawerOpen(false)}
+                  >
+                    <ListItemIcon sx={{ color: 'primary.main' }}>
+                      <PersonIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="マイページ" />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    onClick={() => {
+                      signOut();
+                      setDrawerOpen(false);
+                    }}
+                  >
+                    <ListItemIcon sx={{ color: 'primary.main' }}>
+                      <LogoutIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="ログアウト" />
+                  </ListItemButton>
+                </ListItem>
+              </>
+            ) : (
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  href="/login"
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  <ListItemIcon sx={{ color: 'primary.main' }}>
+                    <PersonIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="ログイン" />
+                </ListItemButton>
+              </ListItem>
+            )}
+          </List>
+
           <Box sx={{ px: 2, pt: 2, display: 'flex', gap: 1 }}>
-            <IconButton
-              component="a"
-              href="https://sakura-sisters.com/momo-musume/"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'primary.main',
-                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
-              }}
-            >
-              <LanguageIcon />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://www.instagram.com/momomusume_fukushima_official/"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'primary.main',
-                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
-              }}
-            >
-              <InstagramIcon />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://x.com/momomusume_jp"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'primary.main',
-                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
-              }}
-            >
-              <XIcon />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://www.youtube.com/@%E7%A6%8F%E5%B3%B6%E3%82%82%E3%82%82%E5%A8%98%E5%85%AC%E5%BC%8F"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              sx={{
-                color: 'primary.main',
-                '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
-              }}
-            >
-              <YouTubeIcon />
-            </IconButton>
+            {socialLinks.map((link) => (
+              <IconButton
+                key={link.href}
+                component="a"
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': { backgroundColor: 'rgba(255, 102, 128, 0.1)' },
+                }}
+              >
+                {link.icon}
+              </IconButton>
+            ))}
           </Box>
         </Box>
       </Drawer>

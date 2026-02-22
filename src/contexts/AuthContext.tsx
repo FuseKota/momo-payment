@@ -8,8 +8,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isCustomer: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -23,21 +25,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const supabase = createClient();
 
+  const checkAdminStatus = async (userId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', userId)
+      .single();
+    return !!data;
+  };
+
   useEffect(() => {
-    // Get initial session
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Check if user is admin
-        const { data } = await supabase
-          .from('admin_users')
-          .select('user_id')
-          .eq('user_id', session.user.id)
-          .single();
-        setIsAdmin(!!data);
+        const admin = await checkAdminStatus(session.user.id);
+        setIsAdmin(admin);
       }
 
       setIsLoading(false);
@@ -45,19 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     getSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const { data } = await supabase
-            .from('admin_users')
-            .select('user_id')
-            .eq('user_id', session.user.id)
-            .single();
-          setIsAdmin(!!data);
+          const admin = await checkAdminStatus(session.user.id);
+          setIsAdmin(admin);
         } else {
           setIsAdmin(false);
         }
@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -77,6 +78,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signUp = async (email: string, password: string, name: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: name },
+      },
+    });
+
+    if (error) return { error };
+
+    // customer_profiles にプロフィール作成
+    if (data.user) {
+      await supabase.from('customer_profiles').insert({
+        user_id: data.user.id,
+        display_name: name,
+      });
+    }
+
+    return { error: null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -84,14 +107,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAdmin(false);
   };
 
+  const isCustomer = !!user && !isAdmin;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
         isAdmin,
+        isCustomer,
         isLoading,
         signIn,
+        signUp,
         signOut,
       }}
     >

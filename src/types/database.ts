@@ -92,6 +92,7 @@ export interface Order {
   pickup_time: string | null;
   agreement_accepted: boolean;
   admin_note: string | null;
+  user_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -172,6 +173,30 @@ export interface StripeWebhookEvent {
 export interface AdminUser {
   user_id: string;
   role: string;
+  created_at: string;
+}
+
+export interface CustomerProfile {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerAddress {
+  id: string;
+  user_id: string;
+  label: string;
+  postal_code: string;
+  pref: string;
+  city: string;
+  address1: string;
+  address2: string | null;
+  recipient_name: string;
+  recipient_phone: string;
+  is_default: boolean;
   created_at: string;
 }
 

@@ -33,6 +33,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { formatPrice } from '@/lib/utils/format';
 import type { Product } from '@/types/database';
 
 interface ProductFormData {
@@ -90,10 +91,6 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ja-JP').format(price);
-  };
 
   const handleToggleActive = async (product: Product) => {
     try {
