@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
 
   // 9. メール通知を送信
   if (orderData && orderData.customer_email) {
+    const orderLocale = orderData.locale || 'ja';
     try {
       // 支払い確認メール
       await sendPaymentConfirmationEmail({
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest) {
         customerName: orderData.customer_name,
         customerEmail: orderData.customer_email,
         total: orderData.total_yen,
+        locale: orderLocale,
       });
 
       // shipping_addresses テーブルから住所を取得
@@ -153,6 +155,7 @@ export async function POST(request: NextRequest) {
               address1: addressData.address1,
               address2: addressData.address2,
             },
+            locale: orderLocale,
           });
         }
       } else {
@@ -179,6 +182,7 @@ export async function POST(request: NextRequest) {
           total: orderData.total_yen,
           pickupDate: orderData.pickup_date,
           pickupTime: orderData.pickup_time,
+          locale: orderLocale,
         });
       }
 

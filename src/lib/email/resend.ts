@@ -1,8 +1,16 @@
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import jaMessages from '../../../messages/ja.json';
+import zhTwMessages from '../../../messages/zh-tw.json';
 
 const resend = new Resend(env.RESEND_API_KEY);
+
+type Messages = typeof jaMessages;
+
+function getMessages(locale: string): Messages {
+  return locale === 'zh-tw' ? zhTwMessages : jaMessages;
+}
 
 export interface OrderConfirmationData {
   orderNo: string;
@@ -27,6 +35,7 @@ export interface OrderConfirmationData {
   };
   pickupDate?: string;
   pickupTime?: string;
+  locale?: string;
 }
 
 export interface ShippingNotificationData {
@@ -34,12 +43,16 @@ export interface ShippingNotificationData {
   customerName: string;
   customerEmail: string;
   trackingNumber?: string;
+  locale?: string;
 }
 
 const FROM_EMAIL = env.EMAIL_FROM || 'noreply@momomusume.com';
-const FROM_NAME = 'もも娘';
 
 export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
+  const m = getMessages(data.locale || 'ja');
+  const e = m.email;
+  const fromName = e.brandName;
+
   const itemsHtml = data.items
     .map(
       (item) => `
@@ -54,7 +67,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
 
   const shippingAddressHtml = data.shippingAddress
     ? `
-      <h3 style="color: #FF6680; margin-top: 24px;">配送先</h3>
+      <h3 style="color: #FF6680; margin-top: 24px;">${e.shippingDestination}</h3>
       <p style="margin: 0;">
         〒${data.shippingAddress.postalCode}<br>
         ${data.shippingAddress.prefecture}${data.shippingAddress.city}${data.shippingAddress.address1}<br>
@@ -66,12 +79,14 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
   const pickupInfoHtml =
     data.orderType === 'PICKUP' && data.pickupDate
       ? `
-      <h3 style="color: #FF6680; margin-top: 24px;">受取予定</h3>
+      <h3 style="color: #FF6680; margin-top: 24px;">${e.pickupSchedule}</h3>
       <p style="margin: 0;">
-        日時: ${data.pickupDate} ${data.pickupTime || ''}
+        ${e.dateTime} ${data.pickupDate} ${data.pickupTime || ''}
       </p>
     `
       : '';
+
+  const orderTypeLabel = data.orderType === 'SHIPPING' ? e.orderTypeShipping : e.orderTypePickup;
 
   const html = `
     <!DOCTYPE html>
@@ -82,32 +97,31 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
     </head>
     <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">もも娘</h1>
-        <p style="color: #666; margin: 8px 0 0;">ご注文ありがとうございます</p>
+        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
+        <p style="color: #666; margin: 8px 0 0;">${e.orderConfirmGreeting}</p>
       </div>
 
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 16px;">${data.customerName} 様</p>
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', data.customerName)}</p>
         <p style="margin: 0;">
-          この度はもも娘をご利用いただき、誠にありがとうございます。<br>
-          以下の内容でご注文を承りました。
+          ${e.orderConfirmMessage.replace(/\n/g, '<br>')}
         </p>
       </div>
 
       <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px;">
-        <h3 style="color: #FF6680; margin-top: 0;">注文情報</h3>
+        <h3 style="color: #FF6680; margin-top: 0;">${e.orderInfo}</h3>
         <p style="margin: 0 0 8px;">
-          <strong>注文番号:</strong> ${data.orderNo}<br>
-          <strong>注文種別:</strong> ${data.orderType === 'SHIPPING' ? '配送' : 'キッチンカー'}
+          <strong>${e.orderNo}</strong> ${data.orderNo}<br>
+          <strong>${e.orderType}</strong> ${orderTypeLabel}
         </p>
 
-        <h3 style="color: #FF6680; margin-top: 24px;">ご注文商品</h3>
+        <h3 style="color: #FF6680; margin-top: 24px;">${e.orderedItems}</h3>
         <table style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="background: #f9f9f9;">
-              <th style="padding: 8px; text-align: left;">商品名</th>
-              <th style="padding: 8px; text-align: right;">数量</th>
-              <th style="padding: 8px; text-align: right;">小計</th>
+              <th style="padding: 8px; text-align: left;">${e.productName}</th>
+              <th style="padding: 8px; text-align: right;">${e.qty}</th>
+              <th style="padding: 8px; text-align: right;">${e.lineSubtotal}</th>
             </tr>
           </thead>
           <tbody>
@@ -116,10 +130,10 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
         </table>
 
         <div style="margin-top: 16px; text-align: right; border-top: 2px solid #eee; padding-top: 16px;">
-          <p style="margin: 4px 0;">商品小計: ¥${data.subtotal.toLocaleString()}</p>
-          <p style="margin: 4px 0;">送料: ¥${data.shippingFee.toLocaleString()}</p>
+          <p style="margin: 4px 0;">${e.subtotal} ¥${data.subtotal.toLocaleString()}</p>
+          <p style="margin: 4px 0;">${e.shippingFee} ¥${data.shippingFee.toLocaleString()}</p>
           <p style="margin: 4px 0; font-size: 18px; font-weight: bold; color: #FF6680;">
-            合計: ¥${data.total.toLocaleString()}
+            ${e.total} ¥${data.total.toLocaleString()}
           </p>
         </div>
 
@@ -129,25 +143,26 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
 
       <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px; font-size: 12px; color: #666;">
         <p style="margin: 0 0 8px;">
-          ご不明な点がございましたら、お気軽にお問い合わせください。
+          ${e.contactNotice}
         </p>
         <p style="margin: 0;">
-          このメールは自動送信されています。返信はお受けできませんのでご了承ください。
+          ${e.autoSendNotice}
         </p>
       </div>
 
       <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© もも娘</p>
+        <p style="margin: 0;">© ${e.brandName}</p>
       </div>
     </body>
     </html>
   `;
 
   try {
+    const subject = e.orderConfirmSubject.replace('{orderNo}', data.orderNo);
     const { data: result, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      from: `${fromName} <${FROM_EMAIL}>`,
       to: data.customerEmail,
-      subject: `【もも娘】ご注文確認 - ${data.orderNo}`,
+      subject,
       html,
     });
 
@@ -164,10 +179,14 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
 }
 
 export async function sendShippingNotificationEmail(data: ShippingNotificationData) {
+  const m = getMessages(data.locale || 'ja');
+  const e = m.email;
+  const fromName = e.brandName;
+
   const trackingHtml = data.trackingNumber
     ? `
       <p style="margin: 16px 0;">
-        <strong>追跡番号:</strong> ${data.trackingNumber}
+        <strong>${e.trackingNo}</strong> ${data.trackingNumber}
       </p>
     `
     : '';
@@ -181,47 +200,46 @@ export async function sendShippingNotificationEmail(data: ShippingNotificationDa
     </head>
     <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">もも娘</h1>
-        <p style="color: #666; margin: 8px 0 0;">発送完了のお知らせ</p>
+        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
+        <p style="color: #666; margin: 8px 0 0;">${e.shippingGreeting}</p>
       </div>
 
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 16px;">${data.customerName} 様</p>
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', data.customerName)}</p>
         <p style="margin: 0;">
-          いつもご利用いただきありがとうございます。<br>
-          ご注文いただいた商品を発送いたしました。
+          ${e.shippingThankYou.replace(/\n/g, '<br>')}
         </p>
       </div>
 
       <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px;">
         <p style="margin: 0;">
-          <strong>注文番号:</strong> ${data.orderNo}
+          <strong>${e.orderNo}</strong> ${data.orderNo}
         </p>
         ${trackingHtml}
         <p style="margin: 16px 0 0; color: #666;">
-          商品の到着まで今しばらくお待ちください。<br>
-          冷凍便でお届けの場合は、届き次第冷凍庫での保管をお願いいたします。
+          ${e.shippingWaitNotice.replace(/\n/g, '<br>')}
         </p>
       </div>
 
       <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px; font-size: 12px; color: #666;">
         <p style="margin: 0;">
-          このメールは自動送信されています。返信はお受けできませんのでご了承ください。
+          ${e.autoSendNotice}
         </p>
       </div>
 
       <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© もも娘</p>
+        <p style="margin: 0;">© ${e.brandName}</p>
       </div>
     </body>
     </html>
   `;
 
   try {
+    const subject = e.shippingSubject.replace('{orderNo}', data.orderNo);
     const { data: result, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      from: `${fromName} <${FROM_EMAIL}>`,
       to: data.customerEmail,
-      subject: `【もも娘】発送完了のお知らせ - ${data.orderNo}`,
+      subject,
       html,
     });
 
@@ -242,7 +260,12 @@ export async function sendPaymentConfirmationEmail(data: {
   customerName: string;
   customerEmail: string;
   total: number;
+  locale?: string;
 }) {
+  const m = getMessages(data.locale || 'ja');
+  const e = m.email;
+  const fromName = e.brandName;
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -252,45 +275,46 @@ export async function sendPaymentConfirmationEmail(data: {
     </head>
     <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">もも娘</h1>
-        <p style="color: #666; margin: 8px 0 0;">お支払い完了のお知らせ</p>
+        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
+        <p style="color: #666; margin: 8px 0 0;">${e.paymentGreeting}</p>
       </div>
 
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 16px;">${data.customerName} 様</p>
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', data.customerName)}</p>
         <p style="margin: 0;">
-          お支払いが完了しました。ありがとうございます。
+          ${e.paymentCompleteMessage}
         </p>
       </div>
 
       <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px;">
         <p style="margin: 0;">
-          <strong>注文番号:</strong> ${data.orderNo}<br>
-          <strong>お支払い金額:</strong> ¥${data.total.toLocaleString()}
+          <strong>${e.orderNo}</strong> ${data.orderNo}<br>
+          <strong>${e.paymentAmount}</strong> ¥${data.total.toLocaleString()}
         </p>
         <p style="margin: 16px 0 0; color: #666;">
-          商品の発送準備が整い次第、発送完了のお知らせをお送りします。
+          ${e.paymentShipNotice}
         </p>
       </div>
 
       <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px; font-size: 12px; color: #666;">
         <p style="margin: 0;">
-          このメールは自動送信されています。返信はお受けできませんのでご了承ください。
+          ${e.autoSendNotice}
         </p>
       </div>
 
       <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© もも娘</p>
+        <p style="margin: 0;">© ${e.brandName}</p>
       </div>
     </body>
     </html>
   `;
 
   try {
+    const subject = e.paymentSubject.replace('{orderNo}', data.orderNo);
     const { data: result, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      from: `${fromName} <${FROM_EMAIL}>`,
       to: data.customerEmail,
-      subject: `【もも娘】お支払い完了のお知らせ - ${data.orderNo}`,
+      subject,
       html,
     });
 

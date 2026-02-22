@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import NextLink from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import {
   AppBar,
   Toolbar,
@@ -33,6 +35,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import { useAuth } from '@/contexts/AuthContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -43,11 +46,12 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, isAdmin, signOut } = useAuth();
+  const t = useTranslations('common');
 
   const navItems = [
-    { label: 'ホーム', href: '/', icon: <HomeIcon /> },
-    { label: 'キッチンカー販売', href: '/pickup', icon: <StorefrontIcon /> },
-    { label: '配送注文', href: '/shop', icon: <LocalShippingIcon /> },
+    { label: t('home'), href: '/' as const, icon: <HomeIcon /> },
+    { label: t('pickup'), href: '/pickup' as const, icon: <StorefrontIcon /> },
+    { label: t('shipping'), href: '/shop' as const, icon: <LocalShippingIcon /> },
   ];
 
   const socialLinks = [
@@ -95,7 +99,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              福島もも娘物販サイト
+              {t('siteName')}
             </Typography>
           </Link>
 
@@ -150,20 +154,25 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </Box>
           )}
 
+          {/* Language Switcher */}
+          <Box sx={{ ml: { xs: 0, md: 1 } }}>
+            <LanguageSwitcher />
+          </Box>
+
           {/* Auth buttons - Desktop only */}
           {!isMobile && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
               {user ? (
                 <>
                   {isAdmin && (
                     <Button
-                      component={Link}
+                      component={NextLink}
                       href="/admin/orders"
                       size="small"
                       startIcon={<AdminPanelSettingsIcon />}
                       sx={{ color: 'text.secondary' }}
                     >
-                      管理画面
+                      {t('admin')}
                     </Button>
                   )}
                   <Button
@@ -173,7 +182,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                     startIcon={<PersonIcon />}
                     sx={{ color: 'text.secondary' }}
                   >
-                    マイページ
+                    {t('mypage')}
                   </Button>
                   <IconButton
                     onClick={signOut}
@@ -191,7 +200,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   startIcon={<PersonIcon />}
                   sx={{ color: 'text.secondary' }}
                 >
-                  ログイン
+                  {t('login')}
                 </Button>
               )}
             </Box>
@@ -202,7 +211,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             href="/cart"
             color="primary"
             size="large"
-            sx={{ ml: { xs: 1, md: 3 } }}
+            sx={{ ml: { xs: 1, md: 2 } }}
           >
             <Badge badgeContent={cartItemCount} color="secondary">
               <ShoppingCartIcon sx={{ fontSize: 28 }} />
@@ -219,7 +228,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
         <Box sx={{ width: 280, pt: 2 }}>
           <Box sx={{ px: 2, pb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              福島もも娘物販サイト
+              {t('siteName')}
             </Typography>
           </Box>
           <List>
@@ -248,14 +257,14 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 {isAdmin && (
                   <ListItem disablePadding>
                     <ListItemButton
-                      component={Link}
+                      component={NextLink}
                       href="/admin/orders"
                       onClick={() => setDrawerOpen(false)}
                     >
                       <ListItemIcon sx={{ color: 'primary.main' }}>
                         <AdminPanelSettingsIcon />
                       </ListItemIcon>
-                      <ListItemText primary="管理画面" />
+                      <ListItemText primary={t('admin')} />
                     </ListItemButton>
                   </ListItem>
                 )}
@@ -268,7 +277,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                     <ListItemIcon sx={{ color: 'primary.main' }}>
                       <PersonIcon />
                     </ListItemIcon>
-                    <ListItemText primary="マイページ" />
+                    <ListItemText primary={t('mypage')} />
                   </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
@@ -281,7 +290,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                     <ListItemIcon sx={{ color: 'primary.main' }}>
                       <LogoutIcon />
                     </ListItemIcon>
-                    <ListItemText primary="ログアウト" />
+                    <ListItemText primary={t('logout')} />
                   </ListItemButton>
                 </ListItem>
               </>
@@ -295,7 +304,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   <ListItemIcon sx={{ color: 'primary.main' }}>
                     <PersonIcon />
                   </ListItemIcon>
-                  <ListItemText primary="ログイン" />
+                  <ListItemText primary={t('login')} />
                 </ListItemButton>
               </ListItem>
             )}

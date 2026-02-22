@@ -112,10 +112,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const productMode = getProductMode(product);
     if (cartMode === 'pickup' && productMode === 'shipping') {
-      return 'キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。';
+      return 'cartContext.pickupInCartWarning';
     }
     if (cartMode === 'shipping' && productMode === 'pickup') {
-      return '配送商品がカートにあります。キッチンカー販売商品を追加するにはカートをクリアしてください。';
+      return 'cartContext.shippingInCartWarning';
     }
     return null;
   };

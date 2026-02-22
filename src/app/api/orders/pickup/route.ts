@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
 
     const body = parseResult.data;
     const paymentMethod = body.paymentMethod;
+    const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : 'ja') as string;
 
     // 1. 商品をDBから取得
     const productIds = body.items.map((i) => i.productId);
@@ -136,6 +137,7 @@ export async function POST(request: NextRequest) {
         pickup_time: body.pickupTime ?? null,
         agreement_accepted: true,
         user_id: userId,
+        locale,
       })
       .select('id, order_no')
       .single();
@@ -191,6 +193,7 @@ export async function POST(request: NextRequest) {
             total,
             pickupDate: body.pickupDate,
             pickupTime: body.pickupTime,
+            locale,
           });
         } catch (emailError) {
           secureLog('error', 'Failed to send confirmation email', safeErrorLog(emailError));
@@ -236,8 +239,8 @@ export async function POST(request: NextRequest) {
       quantity: x.qty,
     }));
 
-    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/complete?orderNo=${orderRow.order_no}`;
-    const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/checkout/pickup?canceled=true`;
+    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/complete?orderNo=${orderRow.order_no}`;
+    const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/checkout/pickup?canceled=true`;
 
     const session = await stripe.checkout.sessions.create(
       {
@@ -250,7 +253,7 @@ export async function POST(request: NextRequest) {
           order_no: orderRow.order_no,
           order_id: orderRow.id,
         },
-        locale: 'ja',
+        locale: locale === 'zh-tw' ? 'zh' : 'ja',
         customer_email: body.customer.email || undefined,
       },
       {

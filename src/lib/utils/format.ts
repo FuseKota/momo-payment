@@ -1,8 +1,8 @@
 /**
  * 価格をカンマ区切りでフォーマット（例: 1000 → "1,000"）
  */
-export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('ja-JP').format(price);
+export function formatPrice(price: number, locale: string = 'ja-JP'): string {
+  return new Intl.NumberFormat(locale).format(price);
 }
 
 /**
@@ -16,12 +16,12 @@ export function toInt(n: unknown): number {
 }
 
 /**
- * 日付文字列を日本語フォーマットに変換
+ * 日付文字列をフォーマットに変換
  */
-export function formatDate(dateStr: string | null): string {
+export function formatDate(dateStr: string | null, locale: string = 'ja-JP'): string {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
-  return date.toLocaleDateString('ja-JP', {
+  return date.toLocaleDateString(locale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

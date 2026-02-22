@@ -93,6 +93,7 @@ export interface Order {
   agreement_accepted: boolean;
   admin_note: string | null;
   user_id: string | null;
+  locale: string;
   created_at: string;
   updated_at: string;
 }

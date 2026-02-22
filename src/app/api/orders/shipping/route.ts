@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = parseResult.data;
+    const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : 'ja') as string;
     const shippingFeeYen = env.SHIPPING_FEE_YEN;
 
     // 1. 商品をDBから取得（改ざん防止）
@@ -179,6 +180,7 @@ export async function POST(request: NextRequest) {
         customer_email: body.customer.email ?? null,
         agreement_accepted: true,
         user_id: userId,
+        locale,
       })
       .select('id, order_no')
       .single();
@@ -271,8 +273,8 @@ export async function POST(request: NextRequest) {
       quantity: 1,
     });
 
-    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/complete?orderNo=${orderRow.order_no}`;
-    const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/checkout/shipping?canceled=true`;
+    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/complete?orderNo=${orderRow.order_no}`;
+    const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/checkout/shipping?canceled=true`;
 
     const session = await stripe.checkout.sessions.create(
       {
@@ -285,7 +287,7 @@ export async function POST(request: NextRequest) {
           order_no: orderRow.order_no,
           order_id: orderRow.id,
         },
-        locale: 'ja',
+        locale: locale === 'zh-tw' ? 'zh' : 'ja',
         customer_email: body.customer.email || undefined,
       },
       {
