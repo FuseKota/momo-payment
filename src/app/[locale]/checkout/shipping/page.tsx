@@ -25,7 +25,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
-import { Layout } from '@/components/common';
+import { Layout, PostalCodeField } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice } from '@/lib/utils/format';
@@ -316,17 +316,22 @@ export default function ShippingCheckoutPage() {
                         placeholder="090-1234-5678"
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <TextField
-                        label={t('postalCode')}
-                        fullWidth
-                        required
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <PostalCodeField
                         value={form.postalCode}
-                        onChange={handleInputChange('postalCode')}
-                        placeholder="123-4567"
+                        onChange={(val) => setForm((prev) => ({ ...prev, postalCode: val }))}
+                        onAddressFound={(result) => {
+                          setForm((prev) => ({
+                            ...prev,
+                            prefecture: result.prefecture,
+                            city: result.city + (result.town || ''),
+                          }));
+                        }}
+                        label={t('postalCode')}
+                        required
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         label={t('prefecture')}
                         fullWidth

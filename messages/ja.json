@@ -323,6 +323,12 @@
     "paymentAmount": "お支払い金額:",
     "paymentShipNotice": "商品の発送準備が整い次第、発送完了のお知らせをお送りします。"
   },
+  "postalCodeLookup": {
+    "search": "検索",
+    "notFound": "該当する住所が見つかりませんでした",
+    "rateLimited": "しばらく時間をおいてから再度お試しください",
+    "lookupFailed": "住所検索に失敗しました。手動で入力してください"
+  },
   "languageSwitcher": {
     "ja": "日本語",
     "zh-tw": "繁體中文"

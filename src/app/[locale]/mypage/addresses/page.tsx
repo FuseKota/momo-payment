@@ -26,7 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
-import { Layout } from '@/components/common';
+import { Layout, PostalCodeField } from '@/components/common';
 import { useAuth } from '@/contexts/AuthContext';
 import type { CustomerAddress } from '@/types/database';
 
@@ -292,17 +292,22 @@ export default function AddressesPage() {
                   placeholder={t('phonePlaceholder')}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  label={t('postalCode')}
-                  fullWidth
-                  required
+              <Grid size={{ xs: 12, md: 6 }}>
+                <PostalCodeField
                   value={form.postalCode}
-                  onChange={(e) => setForm((f) => ({ ...f, postalCode: e.target.value }))}
-                  placeholder={t('postalCodePlaceholder')}
+                  onChange={(val) => setForm((f) => ({ ...f, postalCode: val }))}
+                  onAddressFound={(result) => {
+                    setForm((f) => ({
+                      ...f,
+                      pref: result.prefecture,
+                      city: result.city + (result.town || ''),
+                    }));
+                  }}
+                  label={t('postalCode')}
+                  required
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 8 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label={t('prefecture')}
                   fullWidth

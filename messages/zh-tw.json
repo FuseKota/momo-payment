@@ -323,6 +323,12 @@
     "paymentAmount": "付款金額：",
     "paymentShipNotice": "商品準備出貨後，我們將發送出貨通知。"
   },
+  "postalCodeLookup": {
+    "search": "搜尋",
+    "notFound": "找不到對應的地址",
+    "rateLimited": "請稍後再試",
+    "lookupFailed": "地址搜尋失敗，請手動輸入"
+  },
   "languageSwitcher": {
     "ja": "日本語",
     "zh-tw": "繁體中文"
