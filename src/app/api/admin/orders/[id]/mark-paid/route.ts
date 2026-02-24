@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
-import { requireAdmin } from '@/lib/auth/require-admin';
-import { checkAdminRateLimit, getClientIP } from '@/lib/security/rate-limit';
+import { adminWriteGuard } from '@/lib/api/admin-guards';
 
 interface MarkPaidRequest {
   note?: string;
@@ -12,16 +11,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
-
-  const rateLimit = checkAdminRateLimit(getClientIP(request));
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { ok: false, error: 'rate_limit_exceeded' },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
-    );
-  }
+  const guard = await adminWriteGuard(request);
+  if (!guard.ok) return guard.response;
 
   try {
     const { id: orderId } = await params;
@@ -78,8 +69,6 @@ export async function POST(
       .from('payments')
       .update({ status: 'SUCCEEDED' })
       .eq('order_id', orderId);
-
-    // TODO: 購入者へメール通知（入金完了）
 
     return NextResponse.json({
       ok: true,

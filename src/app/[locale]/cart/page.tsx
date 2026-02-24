@@ -12,17 +12,15 @@ import {
   Divider,
   Grid,
   Chip,
-  Alert,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
-import { Layout } from '@/components/common';
+import { Layout, QuantityControl, OrderSummary } from '@/components/common';
+import type { OrderSummaryItem } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
 import { getLocalizedName } from '@/lib/utils/localize-product';
@@ -36,6 +34,7 @@ export default function CartPage() {
   const { items, updateQty, removeItem, clearCart, subtotal, itemCount, cartMode } = useCart();
 
   const isPickupMode = cartMode === 'pickup';
+  const shippingFee = isPickupMode ? undefined : (items.length > 0 ? SHIPPING_FEE_YEN : 0);
   const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE_YEN : 0);
 
   if (items.length === 0) {
@@ -64,22 +63,10 @@ export default function CartPage() {
             {t('emptyMessage')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button
-              component={Link}
-              href="/shop"
-              variant="contained"
-              size="large"
-              startIcon={<LocalShippingIcon />}
-            >
+            <Button component={Link} href="/shop" variant="contained" size="large" startIcon={<LocalShippingIcon />}>
               {t('viewShippingProducts')}
             </Button>
-            <Button
-              component={Link}
-              href="/pickup"
-              variant="outlined"
-              size="large"
-              startIcon={<StorefrontIcon />}
-            >
+            <Button component={Link} href="/pickup" variant="outlined" size="large" startIcon={<StorefrontIcon />}>
               {t('viewPickupProducts')}
             </Button>
           </Box>
@@ -87,6 +74,14 @@ export default function CartPage() {
       </Layout>
     );
   }
+
+  const summaryItems: OrderSummaryItem[] = items.map((item) => ({
+    key: item.variant?.id ? `${item.product.id}:${item.variant.id}` : item.product.id,
+    name: getLocalizedName(item.product, locale),
+    suffix: item.variant?.size ?? undefined,
+    qty: item.qty,
+    totalPrice: (item.variant?.price_yen ?? item.product.price_yen) * item.qty,
+  }));
 
   return (
     <Layout cartItemCount={itemCount}>
@@ -97,26 +92,12 @@ export default function CartPage() {
               {t('title')}
             </Typography>
             {isPickupMode ? (
-              <Chip
-                icon={<StorefrontIcon />}
-                label={t('pickupMode')}
-                color="secondary"
-                variant="outlined"
-              />
+              <Chip icon={<StorefrontIcon />} label={t('pickupMode')} color="secondary" variant="outlined" />
             ) : (
-              <Chip
-                icon={<LocalShippingIcon />}
-                label={t('shippingMode')}
-                color="primary"
-                variant="outlined"
-              />
+              <Chip icon={<LocalShippingIcon />} label={t('shippingMode')} color="primary" variant="outlined" />
             )}
           </Box>
-          <Button
-            startIcon={<DeleteSweepIcon />}
-            color="error"
-            onClick={clearCart}
-          >
+          <Button startIcon={<DeleteSweepIcon />} color="error" onClick={clearCart}>
             {t('clearCart')}
           </Button>
         </Box>
@@ -135,7 +116,6 @@ export default function CartPage() {
                   <Box key={itemKey}>
                     {index > 0 && <Divider sx={{ my: 3 }} />}
                     <Box sx={{ display: 'flex', gap: 3 }}>
-                      {/* Product Image */}
                       {item.product.image_url ? (
                         <Box
                           component="img"
@@ -168,33 +148,24 @@ export default function CartPage() {
                         </Box>
                       )}
 
-                      {/* Product Info */}
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                          <Box>
-                            <Link
-                              href={`/shop/${item.product.slug}`}
-                              style={{ textDecoration: 'none' }}
+                          <Link href={`/shop/${item.product.slug}`} style={{ textDecoration: 'none' }}>
+                            <Typography
+                              variant="h6"
+                              sx={{ color: 'text.primary', '&:hover': { color: 'primary.main' } }}
                             >
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  color: 'text.primary',
-                                  '&:hover': { color: 'primary.main' },
-                                }}
-                              >
-                                {getLocalizedName(item.product, locale)}
-                                {item.variant?.size && (
-                                  <Typography
-                                    component="span"
-                                    sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
-                                  >
-                                    ({item.variant.size})
-                                  </Typography>
-                                )}
-                              </Typography>
-                            </Link>
-                          </Box>
+                              {getLocalizedName(item.product, locale)}
+                              {item.variant?.size && (
+                                <Typography
+                                  component="span"
+                                  sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+                                >
+                                  ({item.variant.size})
+                                </Typography>
+                              )}
+                            </Typography>
+                          </Link>
                           <IconButton
                             onClick={() => removeItem(item.product.id, item.variant?.id)}
                             sx={{ color: 'text.secondary' }}
@@ -203,43 +174,15 @@ export default function CartPage() {
                           </IconButton>
                         </Box>
 
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mt: 2,
-                          }}
-                        >
-                          {/* Quantity Controls */}
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              border: '1px solid',
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={() => updateQty(item.product.id, item.qty - 1, item.variant?.id)}
-                            >
-                              <RemoveIcon fontSize="small" />
-                            </IconButton>
-                            <Typography sx={{ px: 2, minWidth: 32, textAlign: 'center' }}>
-                              {item.qty}
-                            </Typography>
-                            <IconButton
-                              size="small"
-                              onClick={() => updateQty(item.product.id, Math.min(MAX_ITEM_QUANTITY, item.qty + 1), item.variant?.id)}
-                              disabled={item.qty >= MAX_ITEM_QUANTITY}
-                            >
-                              <AddIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-
-                          {/* Price */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                          <QuantityControl
+                            qty={item.qty}
+                            onDecrement={() => updateQty(item.product.id, item.qty - 1, item.variant?.id)}
+                            onIncrement={() => updateQty(item.product.id, Math.min(MAX_ITEM_QUANTITY, item.qty + 1), item.variant?.id)}
+                            disableIncrement={item.qty >= MAX_ITEM_QUANTITY}
+                            variant="standard"
+                            size="small"
+                          />
                           <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                             ¥{formatPrice(unitPrice * item.qty)}
                           </Typography>
@@ -263,37 +206,20 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, position: 'sticky', top: 100 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
-                {t('orderSummary')}
-              </Typography>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography color="text.secondary">{tc('subtotal')}</Typography>
-                <Typography>¥{formatPrice(subtotal)}</Typography>
-              </Box>
-
-              {!isPickupMode && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocalShippingIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                    <Typography color="text.secondary">{tc('shippingFee')}</Typography>
-                  </Box>
-                  <Typography>¥{formatPrice(SHIPPING_FEE_YEN)}</Typography>
-                </Box>
-              )}
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  {tc('total')}
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                  ¥{formatPrice(total)}
-                </Typography>
-              </Box>
-
+            <OrderSummary
+              items={summaryItems}
+              subtotal={subtotal}
+              shippingFee={shippingFee}
+              total={total}
+              labels={{
+                title: t('orderSummary'),
+                subtotal: tc('subtotal'),
+                shippingFee: !isPickupMode ? tc('shippingFee') : undefined,
+                total: tc('total'),
+                quantity: tc('quantity'),
+              }}
+              showItemDetails={false}
+            >
               <Button
                 variant="contained"
                 size="large"
@@ -322,7 +248,7 @@ export default function CartPage() {
                   </Typography>
                 </Box>
               )}
-            </Paper>
+            </OrderSummary>
           </Grid>
         </Grid>
       </Container>

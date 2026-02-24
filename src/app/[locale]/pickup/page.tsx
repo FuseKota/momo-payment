@@ -11,23 +11,18 @@ import {
   Grid,
   Card,
   CardContent,
-  CardMedia,
-  Chip,
   CircularProgress,
   Snackbar,
   Alert,
-  IconButton,
 } from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PaymentIcon from '@mui/icons-material/Payment';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import { Layout } from '@/components/common';
+import { Layout, ProductCard } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
-import { formatPrice } from '@/lib/utils/format';
-import { getLocalizedName, getLocalizedDescription } from '@/lib/utils/localize-product';
+import { useSnackbar } from '@/hooks/useSnackbar';
+import { getLocalizedName } from '@/lib/utils/localize-product';
 import type { Product } from '@/types/database';
 
 export default function PickupPage() {
@@ -37,30 +32,14 @@ export default function PickupPage() {
   const locale = useLocale();
 
   const steps = [
-    {
-      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
-      title: 'Step 1',
-      description: t('step1'),
-    },
-    {
-      icon: <PaymentIcon sx={{ fontSize: 40 }} />,
-      title: 'Step 2',
-      description: t('step2'),
-    },
-    {
-      icon: <StorefrontIcon sx={{ fontSize: 40 }} />,
-      title: 'Step 3',
-      description: t('step3'),
-    },
+    { icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />, title: 'Step 1', description: t('step1') },
+    { icon: <PaymentIcon sx={{ fontSize: 40 }} />, title: 'Step 2', description: t('step2') },
+    { icon: <StorefrontIcon sx={{ fontSize: 40 }} />, title: 'Step 3', description: t('step3') },
   ];
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const { snackbar, showSnackbar, closeSnackbar } = useSnackbar();
   const { addItem, canAddProduct, getIncompatibleModeMessage, itemCount, items, updateQty, cartMode } = useCart();
 
   useEffect(() => {
@@ -81,33 +60,49 @@ export default function PickupPage() {
   const handleAddToCart = (product: Product) => {
     const messageKey = getIncompatibleModeMessage(product);
     if (messageKey) {
-      setSnackbar({ open: true, message: tRoot(messageKey), severity: 'error' });
+      showSnackbar(tRoot(messageKey), 'error');
       return;
     }
     const success = addItem(product, 1);
     if (success) {
-      setSnackbar({ open: true, message: t('addedToCart', { name: getLocalizedName(product, locale) }), severity: 'success' });
+      showSnackbar(t('addedToCart', { name: getLocalizedName(product, locale) }));
     }
   };
 
   const getCartQty = (productId: string): number => {
-    const item = items.find((i) => i.product.id === productId);
-    return item?.qty || 0;
+    return items.find((i) => i.product.id === productId)?.qty || 0;
   };
 
   const handleUpdateQty = (productId: string, delta: number) => {
-    const currentQty = getCartQty(productId);
-    const newQty = currentQty + delta;
-    if (newQty <= 0) {
-      updateQty(productId, 0);
-    } else {
-      updateQty(productId, newQty);
-    }
+    const newQty = getCartQty(productId) + delta;
+    updateQty(productId, newQty <= 0 ? 0 : newQty);
   };
 
-  // Group products by type
   const foodProducts = products.filter((p) => p.kind === 'FROZEN_FOOD');
   const goodsProducts = products.filter((p) => p.kind === 'GOODS');
+
+  const renderProductGrid = (productList: Product[]) => (
+    <Grid container spacing={3} sx={{ mb: 6 }}>
+      {productList.map((product) => {
+        const isOutOfStock = product.stock_qty !== null && product.stock_qty <= 0;
+        return (
+          <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <ProductCard
+              product={product}
+              locale={locale}
+              cartQty={getCartQty(product.id)}
+              onAdd={() => handleAddToCart(product)}
+              onUpdateQty={(delta) => handleUpdateQty(product.id, delta)}
+              disabled={!canAddProduct(product)}
+              addLabel={tc('add')}
+              isOutOfStock={isOutOfStock}
+              outOfStockLabel={isOutOfStock ? tc('outOfStock') : undefined}
+            />
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
 
   return (
     <Layout cartItemCount={itemCount}>
@@ -133,11 +128,7 @@ export default function PickupPage() {
             >
               {t('title')}
             </Typography>
-            <Typography
-              variant="h5"
-              color="text.secondary"
-              sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
-            >
+            <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
               {t('subtitle')}
             </Typography>
             {itemCount > 0 && (
@@ -157,7 +148,6 @@ export default function PickupPage() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 6 }}>
-        {/* Cart mode warning */}
         {cartMode === 'shipping' && (
           <Alert severity="warning" sx={{ mb: 3 }}>
             {t('shippingInCartWarning')}
@@ -165,10 +155,7 @@ export default function PickupPage() {
         )}
 
         {/* How it works */}
-        <Typography
-          variant="h4"
-          sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}
-        >
+        <Typography variant="h4" sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}>
           {t('howItWorks')}
         </Typography>
 
@@ -183,10 +170,7 @@ export default function PickupPage() {
                   boxShadow: 'none',
                   border: '1px solid',
                   borderColor: 'divider',
-                  '&:hover': {
-                    boxShadow: 'none',
-                    transform: 'none',
-                  },
+                  '&:hover': { boxShadow: 'none', transform: 'none' },
                 }}
               >
                 <CardContent sx={{ py: 4 }}>
@@ -206,265 +190,40 @@ export default function PickupPage() {
                   >
                     {step.icon}
                   </Box>
-                  <Typography
-                    variant="h6"
-                    sx={{ mb: 1, fontWeight: 700, color: 'primary.main' }}
-                  >
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 700, color: 'primary.main' }}>
                     {step.title}
                   </Typography>
-                  <Typography color="text.secondary">
-                    {step.description}
-                  </Typography>
+                  <Typography color="text.secondary">{step.description}</Typography>
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
 
-        {/* Loading */}
         {isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress />
           </Box>
         )}
 
-        {/* Food Menu */}
         {!isLoading && foodProducts.length > 0 && (
           <>
-            <Typography
-              variant="h4"
-              sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}
-            >
+            <Typography variant="h4" sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}>
               {t('foodMenu')}
             </Typography>
-
-            <Grid container spacing={3} sx={{ mb: 6 }}>
-              {foodProducts.map((product) => {
-                const cartQty = getCartQty(product.id);
-                return (
-                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                      {product.image_url ? (
-                        <CardMedia
-                          component="img"
-                          image={product.image_url}
-                          alt={getLocalizedName(product, locale)}
-                          sx={{ height: 180, objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <CardMedia
-                          sx={{
-                            height: 180,
-                            backgroundColor: '#FFF0F3',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Typography sx={{ fontSize: '4rem' }}>🍚</Typography>
-                        </CardMedia>
-                      )}
-                      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                          {getLocalizedName(product, locale)}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            mb: 2,
-                            flex: 1,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {getLocalizedDescription(product, locale)}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Typography
-                            variant="h6"
-                            sx={{ color: 'primary.main', fontWeight: 700 }}
-                          >
-                            ¥{formatPrice(product.price_yen)}
-                          </Typography>
-                          {cartQty > 0 ? (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                border: '2px solid',
-                                borderColor: 'primary.main',
-                                borderRadius: 2,
-                              }}
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => handleUpdateQty(product.id, -1)}
-                                sx={{ color: 'primary.main' }}
-                              >
-                                <RemoveIcon fontSize="small" />
-                              </IconButton>
-                              <Typography sx={{ px: 1, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
-                                {cartQty}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleUpdateQty(product.id, 1)}
-                                sx={{ color: 'primary.main' }}
-                              >
-                                <AddIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
-                          ) : (
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<AddIcon />}
-                              onClick={() => handleAddToCart(product)}
-                              disabled={!canAddProduct(product)}
-                            >
-                              {tc('add')}
-                            </Button>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
+            {renderProductGrid(foodProducts)}
           </>
         )}
 
-        {/* Goods */}
         {!isLoading && goodsProducts.length > 0 && (
           <>
-            <Typography
-              variant="h4"
-              sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}
-            >
+            <Typography variant="h4" sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#1a1a1a' }}>
               {t('goodsTitle')}
             </Typography>
-
-            <Grid container spacing={3} sx={{ mb: 6 }}>
-              {goodsProducts.map((product) => {
-                const cartQty = getCartQty(product.id);
-                const isOutOfStock = product.stock_qty !== null && product.stock_qty <= 0;
-                return (
-                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                      {product.image_url ? (
-                        <CardMedia
-                          component="img"
-                          image={product.image_url}
-                          alt={getLocalizedName(product, locale)}
-                          sx={{ height: 180, objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <CardMedia
-                          sx={{
-                            height: 180,
-                            backgroundColor: '#FFF0F3',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Typography sx={{ fontSize: '4rem' }}>🎁</Typography>
-                        </CardMedia>
-                      )}
-                      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        {isOutOfStock && (
-                          <Chip label={tc('outOfStock')} color="error" size="small" sx={{ mb: 1, alignSelf: 'flex-start' }} />
-                        )}
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                          {getLocalizedName(product, locale)}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            mb: 2,
-                            flex: 1,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {getLocalizedDescription(product, locale)}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Typography
-                            variant="h6"
-                            sx={{ color: 'primary.main', fontWeight: 700 }}
-                          >
-                            ¥{formatPrice(product.price_yen)}
-                          </Typography>
-                          {cartQty > 0 ? (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                border: '2px solid',
-                                borderColor: 'primary.main',
-                                borderRadius: 2,
-                              }}
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => handleUpdateQty(product.id, -1)}
-                                sx={{ color: 'primary.main' }}
-                              >
-                                <RemoveIcon fontSize="small" />
-                              </IconButton>
-                              <Typography sx={{ px: 1, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
-                                {cartQty}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleUpdateQty(product.id, 1)}
-                                sx={{ color: 'primary.main' }}
-                              >
-                                <AddIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
-                          ) : (
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<AddIcon />}
-                              onClick={() => handleAddToCart(product)}
-                              disabled={isOutOfStock || !canAddProduct(product)}
-                            >
-                              {tc('add')}
-                            </Button>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
+            {renderProductGrid(goodsProducts)}
           </>
         )}
 
-        {/* Checkout Button */}
         {itemCount > 0 && cartMode === 'pickup' && (
           <Box sx={{ textAlign: 'center', mb: 6 }}>
             <Button
@@ -479,21 +238,15 @@ export default function PickupPage() {
             </Button>
           </Box>
         )}
-
       </Container>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

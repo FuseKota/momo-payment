@@ -4,58 +4,22 @@ import { stripe, getStripeEnvironmentName } from '@/lib/stripe/client';
 import crypto from 'crypto';
 import { env } from '@/lib/env';
 import { shippingOrderSchema, formatValidationErrors } from '@/lib/validation/schemas';
-import { checkOrderRateLimit, getClientIP } from '@/lib/security/rate-limit';
-import { validateOrigin } from '@/lib/security/csrf';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
-import { toInt } from '@/lib/utils/format';
-import { createClient } from '@/lib/supabase/server';
+import { orderGuard } from '@/lib/api/order-guards';
+import { fetchAndValidateProducts } from '@/lib/api/product-helpers';
+import { calculateOrderItems, calculateSubtotal } from '@/lib/api/price-calc';
+import { localizedProductName } from '@/lib/api/localize';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const clientIP = getClientIP(request);
-
   try {
-    // 1. レート制限チェック
-    const rateLimit = checkOrderRateLimit(clientIP);
-    if (!rateLimit.allowed) {
-      secureLog('warn', 'Rate limit exceeded', { ip: clientIP });
-      return NextResponse.json(
-        { ok: false, error: 'rate_limit_exceeded', retryAfter: rateLimit.resetIn },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(rateLimit.resetIn),
-            'X-RateLimit-Remaining': '0',
-          },
-        }
-      );
-    }
+    // 1. セキュリティガード（レート制限 + CSRF + ユーザーID取得）
+    const guard = await orderGuard(request);
+    if (!guard.ok) return guard.response;
 
-    // 2. CSRF保護（Origin検証）
-    const originCheck = validateOrigin(request);
-    if (!originCheck.valid) {
-      secureLog('warn', 'CSRF check failed', { ip: clientIP, reason: originCheck.reason });
-      return NextResponse.json(
-        { ok: false, error: 'invalid_origin' },
-        { status: 403 }
-      );
-    }
-
-    // 3. ログインユーザーの場合、user_idを取得（オプション）
-    let userId: string | null = null;
-    try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id ?? null;
-    } catch {
-      // ゲスト購入の場合は無視
-    }
-
-    // 4. リクエストボディのパース
+    // 2. リクエストボディのパース + バリデーション
     const rawBody = await request.json();
-
-    // 5. zodスキーマでバリデーション
     const parseResult = shippingOrderSchema.safeParse(rawBody);
     if (!parseResult.success) {
       const errors = formatValidationErrors(parseResult.error);
@@ -69,39 +33,13 @@ export async function POST(request: NextRequest) {
     const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : 'ja') as string;
     const shippingFeeYen = env.SHIPPING_FEE_YEN;
 
-    // 1. 商品をDBから取得（改ざん防止）
+    // 3. 商品取得 + 検証
     const productIds = body.items.map((i) => i.productId);
-    const { data: products, error: productError } = await supabaseAdmin
-      .from('products')
-      .select('id, name, name_zh_tw, kind, temp_zone, price_yen, can_ship, is_active')
-      .in('id', productIds);
+    const productResult = await fetchAndValidateProducts(productIds, 'shipping');
+    if (!productResult.ok) return productResult.response;
+    const products = productResult.products;
 
-    if (productError) {
-      secureLog('error', 'DB error', safeErrorLog(productError));
-      return NextResponse.json(
-        { ok: false, error: 'db_error' },
-        { status: 500 }
-      );
-    }
-
-    if (!products || products.length !== productIds.length) {
-      return NextResponse.json(
-        { ok: false, error: 'product_not_found' },
-        { status: 400 }
-      );
-    }
-
-    // 配送可能チェック
-    for (const p of products) {
-      if (!p.is_active || !p.can_ship) {
-        return NextResponse.json(
-          { ok: false, error: 'product_not_shippable', productId: p.id },
-          { status: 400 }
-        );
-      }
-    }
-
-    // バリエーション取得（variantIdがある場合）
+    // 4. バリエーション取得（variantIdがある場合）
     const variantIds = body.items
       .map((i) => i.variantId)
       .filter((id): id is string => !!id);
@@ -123,7 +61,6 @@ export async function POST(request: NextRequest) {
 
       variants = variantData || [];
 
-      // Validate all requested variants exist
       if (variants.length !== variantIds.length) {
         return NextResponse.json(
           { ok: false, error: 'variant_not_found' },
@@ -145,7 +82,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 温度帯混在チェック（MVP: 混在不可）
+    // 5. 温度帯混在チェック（MVP: 混在不可）
     const tempZone = products[0].temp_zone;
     if (products.some((p) => p.temp_zone !== tempZone)) {
       return NextResponse.json(
@@ -154,30 +91,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 金額計算
-    const items = body.items.map((i) => {
-      const p = products.find((x) => x.id === i.productId)!;
-      const v = i.variantId ? variants.find((x) => x.id === i.variantId) : undefined;
-      const qty = toInt(i.qty);
-      if (qty <= 0 || qty > 99) {
-        throw new Error('qty out of range');
-      }
-      // Use variant price if available, otherwise use product price
-      const unitPrice = v?.price_yen ?? p.price_yen;
-      const lineTotal = unitPrice * qty;
-      return {
-        product: p,
-        variant: v,
-        qty,
-        unitPrice,
-        lineTotal,
-      };
-    });
-
-    const subtotal = items.reduce((sum, x) => sum + x.lineTotal, 0);
+    // 6. 金額計算
+    const items = calculateOrderItems(body.items, products, variants);
+    const subtotal = calculateSubtotal(items);
     const total = subtotal + shippingFeeYen;
 
-    // 2. orders作成
+    // 7. orders作成
     const { data: orderRow, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
@@ -192,7 +111,7 @@ export async function POST(request: NextRequest) {
         customer_phone: body.customer.phone,
         customer_email: body.customer.email ?? null,
         agreement_accepted: true,
-        user_id: userId,
+        user_id: guard.userId,
         locale,
       })
       .select('id, order_no')
@@ -206,7 +125,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. order_items作成
+    // 8. order_items作成
     const { error: itemsError } = await supabaseAdmin.from('order_items').insert(
       items.map((x) => ({
         order_id: orderRow.id,
@@ -215,9 +134,7 @@ export async function POST(request: NextRequest) {
         qty: x.qty,
         unit_price_yen: x.unitPrice,
         line_total_yen: x.lineTotal,
-        product_name: locale === 'zh-tw' && x.product.name_zh_tw
-          ? x.product.name_zh_tw
-          : x.product.name,
+        product_name: localizedProductName(x.product, locale),
         product_kind: x.product.kind,
         product_temp_zone: x.product.temp_zone,
         product_size: x.variant?.size ?? null,
@@ -233,7 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. shipping_addresses作成
+    // 9. shipping_addresses作成
     const { error: addressError } = await supabaseAdmin.from('shipping_addresses').insert({
       order_id: orderRow.id,
       postal_code: body.address.postalCode,
@@ -254,7 +171,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. payments作成
+    // 10. payments作成
     const idempotencyKey = crypto.randomUUID();
     const { data: paymentRow, error: paymentError } = await supabaseAdmin
       .from('payments')
@@ -277,17 +194,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Stripe Checkout Session作成
-    const localizedName = (p: typeof items[0]['product']) =>
-      locale === 'zh-tw' && p.name_zh_tw ? p.name_zh_tw : p.name;
-
+    // 11. Stripe Checkout Session作成
     const lineItems = items.map((x) => ({
       price_data: {
         currency: 'jpy',
         product_data: {
           name: x.variant?.size
-            ? `${localizedName(x.product)} (${x.variant.size})`
-            : localizedName(x.product),
+            ? `${localizedProductName(x.product, locale)} (${x.variant.size})`
+            : localizedProductName(x.product, locale),
         },
         unit_amount: x.unitPrice,
       },
@@ -331,7 +245,7 @@ export async function POST(request: NextRequest) {
     const checkoutUrl = session.url ?? '';
     const stripeSessionId = session.id;
 
-    // 7. paymentsを更新
+    // 12. paymentsを更新
     if (paymentRow) {
       await supabaseAdmin
         .from('payments')
@@ -342,8 +256,6 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', paymentRow.id);
     }
-
-    // TODO: 管理者へメール通知
 
     return NextResponse.json({
       ok: true,

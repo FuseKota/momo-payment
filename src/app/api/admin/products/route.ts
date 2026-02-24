@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminProductCreateSchema, formatValidationErrors } from '@/lib/validation/schemas';
-import { checkAdminRateLimit, getClientIP } from '@/lib/security/rate-limit';
+import { adminWriteGuard } from '@/lib/api/admin-guards';
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -30,16 +30,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
-
-  const rateLimit = checkAdminRateLimit(getClientIP(request));
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'rate_limit_exceeded' },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
-    );
-  }
+  const guard = await adminWriteGuard(request);
+  if (!guard.ok) return guard.response;
 
   const supabase = getSupabaseAdmin();
   const rawBody = await request.json();

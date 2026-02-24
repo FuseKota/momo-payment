@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Product, ProductVariant, TempZone } from '@/types/database';
 
 export type CartMode = 'pickup' | 'shipping' | null;
@@ -42,8 +42,7 @@ interface StoredCart {
   mode: CartMode;
 }
 
-function getInitialCart(): StoredCart {
-  if (typeof window === 'undefined') return { items: [], mode: null };
+function loadCartFromStorage(): StoredCart {
   try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
     if (stored) {
@@ -68,6 +67,8 @@ function getInitialCart(): StoredCart {
   return { items: [], mode: null };
 }
 
+const EMPTY_CART: StoredCart = { items: [], mode: null };
+
 function getProductMode(product: Product): CartMode {
   if (product.can_pickup && !product.can_ship) {
     return 'pickup';
@@ -83,20 +84,25 @@ function getProductMode(product: Product): CartMode {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<StoredCart>(getInitialCart);
-  const isInitialMount = useRef(true);
+  // Always start with empty cart to avoid hydration mismatch
+  const [cart, setCart] = useState<StoredCart>(EMPTY_CART);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const items = cart.items;
   const cartMode = cart.mode;
 
-  // Save cart to localStorage on change (skip initial mount)
+  // Hydrate cart from localStorage after mount (client only)
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
+    const stored = loadCartFromStorage();
+    setCart(stored);
+    setIsHydrated(true);
+  }, []);
+
+  // Save cart to localStorage on change (skip until hydrated)
+  useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-  }, [cart]);
+  }, [cart, isHydrated]);
 
   const canAddProduct = (product: Product): boolean => {
     const productMode = getProductMode(product);

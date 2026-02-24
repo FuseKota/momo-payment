@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminProductUpdateSchema, formatValidationErrors } from '@/lib/validation/schemas';
-import { checkAdminRateLimit, getClientIP } from '@/lib/security/rate-limit';
+import { adminWriteGuard } from '@/lib/api/admin-guards';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -36,16 +36,8 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
-
-  const rateLimit = checkAdminRateLimit(getClientIP(request));
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'rate_limit_exceeded' },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
-    );
-  }
+  const guard = await adminWriteGuard(request);
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();
@@ -81,16 +73,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
-
-  const rateLimit = checkAdminRateLimit(getClientIP(request));
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'rate_limit_exceeded' },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
-    );
-  }
+  const guard = await adminWriteGuard(request);
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();

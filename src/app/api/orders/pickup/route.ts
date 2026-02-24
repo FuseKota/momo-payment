@@ -5,58 +5,22 @@ import crypto from 'crypto';
 import { env } from '@/lib/env';
 import { sendOrderConfirmationEmail } from '@/lib/email/resend';
 import { pickupOrderSchema, formatValidationErrors } from '@/lib/validation/schemas';
-import { checkOrderRateLimit, getClientIP } from '@/lib/security/rate-limit';
-import { validateOrigin } from '@/lib/security/csrf';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
-import { toInt } from '@/lib/utils/format';
-import { createClient } from '@/lib/supabase/server';
+import { orderGuard } from '@/lib/api/order-guards';
+import { fetchAndValidateProducts } from '@/lib/api/product-helpers';
+import { calculateOrderItems, calculateSubtotal } from '@/lib/api/price-calc';
+import { localizedProductName } from '@/lib/api/localize';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const clientIP = getClientIP(request);
-
   try {
-    // 1. レート制限チェック
-    const rateLimit = checkOrderRateLimit(clientIP);
-    if (!rateLimit.allowed) {
-      secureLog('warn', 'Rate limit exceeded', { ip: clientIP });
-      return NextResponse.json(
-        { ok: false, error: 'rate_limit_exceeded', retryAfter: rateLimit.resetIn },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(rateLimit.resetIn),
-            'X-RateLimit-Remaining': '0',
-          },
-        }
-      );
-    }
+    // 1. セキュリティガード（レート制限 + CSRF + ユーザーID取得）
+    const guard = await orderGuard(request);
+    if (!guard.ok) return guard.response;
 
-    // 2. CSRF保護（Origin検証）
-    const originCheck = validateOrigin(request);
-    if (!originCheck.valid) {
-      secureLog('warn', 'CSRF check failed', { ip: clientIP, reason: originCheck.reason });
-      return NextResponse.json(
-        { ok: false, error: 'invalid_origin' },
-        { status: 403 }
-      );
-    }
-
-    // 3. ログインユーザーの場合、user_idを取得（オプション）
-    let userId: string | null = null;
-    try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id ?? null;
-    } catch {
-      // ゲスト購入の場合は無視
-    }
-
-    // 4. リクエストボディのパース
+    // 2. リクエストボディのパース + バリデーション
     const rawBody = await request.json();
-
-    // 5. zodスキーマでバリデーション
     const parseResult = pickupOrderSchema.safeParse(rawBody);
     if (!parseResult.success) {
       const errors = formatValidationErrors(parseResult.error);
@@ -70,63 +34,27 @@ export async function POST(request: NextRequest) {
     const paymentMethod = body.paymentMethod;
     const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : 'ja') as string;
 
-    // 1. 商品をDBから取得
+    // 3. 商品取得 + 検証
     const productIds = body.items.map((i) => i.productId);
-    const { data: products, error: productError } = await supabaseAdmin
-      .from('products')
-      .select('id, name, name_zh_tw, kind, temp_zone, price_yen, can_pickup, is_active')
-      .in('id', productIds);
+    const productResult = await fetchAndValidateProducts(productIds, 'pickup');
+    if (!productResult.ok) return productResult.response;
 
-    if (productError) {
-      secureLog('error', 'DB error', safeErrorLog(productError));
-      return NextResponse.json(
-        { ok: false, error: 'db_error' },
-        { status: 500 }
-      );
-    }
-
-    if (!products || products.length !== productIds.length) {
-      return NextResponse.json(
-        { ok: false, error: 'product_not_found' },
-        { status: 400 }
-      );
-    }
-
-    // 店頭受け取り可能チェック
-    for (const p of products) {
-      if (!p.is_active || !p.can_pickup) {
-        return NextResponse.json(
-          { ok: false, error: 'product_not_available', productId: p.id },
-          { status: 400 }
-        );
-      }
-    }
-
-    // 金額計算
-    const items = body.items.map((i) => {
-      const p = products.find((x) => x.id === i.productId)!;
-      const qty = toInt(i.qty);
-      if (qty <= 0 || qty > 99) {
-        throw new Error('qty out of range');
-      }
-      const lineTotal = p.price_yen * qty;
-      return { product: p, qty, lineTotal };
-    });
-
-    const subtotal = items.reduce((sum, x) => sum + x.lineTotal, 0);
+    // 4. 金額計算
+    const items = calculateOrderItems(body.items, productResult.products);
+    const subtotal = calculateSubtotal(items);
     const total = subtotal; // 店頭受け取りは送料なし
 
-    // 初期ステータス
+    // 5. 初期ステータス
     const initialStatus = paymentMethod === 'PAY_AT_PICKUP' ? 'RESERVED' : 'PENDING_PAYMENT';
 
-    // 2. orders作成
+    // 6. orders作成
     const { data: orderRow, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         order_type: 'PICKUP',
         status: initialStatus,
         payment_method: paymentMethod,
-        temp_zone: null, // PICKUPは温度帯不要
+        temp_zone: null,
         subtotal_yen: subtotal,
         shipping_fee_yen: 0,
         total_yen: total,
@@ -136,7 +64,7 @@ export async function POST(request: NextRequest) {
         pickup_date: body.pickupDate ?? null,
         pickup_time: body.pickupTime ?? null,
         agreement_accepted: true,
-        user_id: userId,
+        user_id: guard.userId,
         locale,
       })
       .select('id, order_no')
@@ -150,17 +78,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. order_items作成
+    // 7. order_items作成
     const { error: itemsError } = await supabaseAdmin.from('order_items').insert(
       items.map((x) => ({
         order_id: orderRow.id,
         product_id: x.product.id,
         qty: x.qty,
-        unit_price_yen: x.product.price_yen,
+        unit_price_yen: x.unitPrice,
         line_total_yen: x.lineTotal,
-        product_name: locale === 'zh-tw' && x.product.name_zh_tw
-          ? x.product.name_zh_tw
-          : x.product.name,
+        product_name: localizedProductName(x.product, locale),
         product_kind: x.product.kind,
         product_temp_zone: x.product.temp_zone,
       }))
@@ -177,7 +103,6 @@ export async function POST(request: NextRequest) {
 
     // 店頭払いの場合はここで完了
     if (paymentMethod === 'PAY_AT_PICKUP') {
-      // payments作成（on_site）
       await supabaseAdmin.from('payments').insert({
         order_id: orderRow.id,
         provider: 'on_site',
@@ -185,7 +110,6 @@ export async function POST(request: NextRequest) {
         amount_yen: total,
       });
 
-      // 確認メールを送信
       if (body.customer.email) {
         try {
           await sendOrderConfirmationEmail({
@@ -194,11 +118,9 @@ export async function POST(request: NextRequest) {
             customerEmail: body.customer.email,
             orderType: 'PICKUP',
             items: items.map((x) => ({
-              name: locale === 'zh-tw' && x.product.name_zh_tw
-                ? x.product.name_zh_tw
-                : x.product.name,
+              name: localizedProductName(x.product, locale),
               qty: x.qty,
-              unitPrice: x.product.price_yen,
+              unitPrice: x.unitPrice,
               subtotal: x.lineTotal,
             })),
             subtotal,
@@ -240,17 +162,13 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single();
 
-    // Stripe Checkout Session作成
-    const localizedName = (p: typeof items[0]['product']) =>
-      locale === 'zh-tw' && p.name_zh_tw ? p.name_zh_tw : p.name;
-
     const lineItems = items.map((x) => ({
       price_data: {
         currency: 'jpy',
         product_data: {
-          name: localizedName(x.product),
+          name: localizedProductName(x.product, locale),
         },
-        unit_amount: x.product.price_yen,
+        unit_amount: x.unitPrice,
       },
       quantity: x.qty,
     }));
@@ -280,7 +198,6 @@ export async function POST(request: NextRequest) {
     const checkoutUrl = session.url ?? '';
     const stripeSessionId = session.id;
 
-    // payments更新
     if (paymentRow) {
       await supabaseAdmin
         .from('payments')
@@ -291,8 +208,6 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', paymentRow.id);
     }
-
-    // TODO: 管理者へメール通知
 
     return NextResponse.json({
       ok: true,

@@ -50,7 +50,7 @@ export interface Product {
   temp_zone: TempZone;
   stock_qty: number | null;
   image_url: string | null;
-  images: string[]; // Array of image URLs for product gallery
+  images: string[] | null; // Array of image URLs for product gallery (nullable in Supabase)
   food_label: FoodLabel | null;
   name_zh_tw: string | null;
   description_zh_tw: string | null;

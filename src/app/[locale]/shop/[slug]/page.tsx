@@ -9,7 +9,6 @@ import {
   Typography,
   Button,
   Chip,
-  IconButton,
   Paper,
   Divider,
   Breadcrumbs,
@@ -17,11 +16,9 @@ import {
   CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InfoIcon from '@mui/icons-material/Info';
-import { Layout } from '@/components/common';
+import { Layout, QuantityControl } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
 import { getLocalizedName, getLocalizedDescription, getLocalizedFoodLabel } from '@/lib/utils/localize-product';
@@ -297,39 +294,15 @@ export default function ProductDetailPage({ params }: Props) {
                 <Typography variant="body1" sx={{ mr: 3, color: '#1a1a1a' }}>
                   {t('quantity')}
                 </Typography>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    border: '2px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                  }}
-                >
-                  <IconButton
-                    onClick={() => setQty(Math.max(1, qty - 1))}
-                    disabled={qty <= 1}
-                  >
-                    <RemoveIcon />
-                  </IconButton>
-                  <Typography
-                    sx={{
-                      px: 3,
-                      fontWeight: 600,
-                      minWidth: 40,
-                      textAlign: 'center',
-                      color: '#1a1a1a',
-                    }}
-                  >
-                    {qty}
-                  </Typography>
-                  <IconButton
-                    onClick={() => setQty(Math.min(MAX_ITEM_QUANTITY, qty + 1))}
-                    disabled={qty >= MAX_ITEM_QUANTITY}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Box>
+                <QuantityControl
+                  qty={qty}
+                  onDecrement={() => setQty(Math.max(1, qty - 1))}
+                  onIncrement={() => setQty(Math.min(MAX_ITEM_QUANTITY, qty + 1))}
+                  disableDecrement={qty <= 1}
+                  disableIncrement={qty >= MAX_ITEM_QUANTITY}
+                  variant="inline"
+                  size="medium"
+                />
               </Box>
 
               <Button
