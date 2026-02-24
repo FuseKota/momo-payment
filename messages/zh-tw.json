@@ -141,7 +141,14 @@
     "cartEmpty": "購物車是空的",
     "backToPickupMenu": "返回餐車菜單",
     "reservationFailed": "預約建立失敗",
-    "orderFailed": "訂單處理失敗"
+    "orderFailed": "訂單處理失敗",
+    "validation": {
+      "nameRequired": "請輸入姓名",
+      "emailRequired": "請輸入電子信箱",
+      "emailInvalid": "電子信箱格式不正確",
+      "phoneRequired": "請輸入電話號碼",
+      "phoneInvalid": "電話號碼格式不正確"
+    }
   },
   "checkoutShipping": {
     "backToCart": "返回購物車",
@@ -179,6 +186,18 @@
       "agreementRequired": "需要同意使用條款。",
       "orderFailed": "訂單建立失敗",
       "checkoutUrlFailed": "無法取得付款連結"
+    },
+    "validation": {
+      "nameRequired": "請輸入姓名",
+      "emailRequired": "請輸入電子信箱",
+      "emailInvalid": "電子信箱格式不正確",
+      "phoneRequired": "請輸入電話號碼",
+      "phoneInvalid": "電話號碼格式不正確",
+      "postalCodeRequired": "請輸入郵遞區號",
+      "postalCodeInvalid": "郵遞區號格式不正確",
+      "prefectureRequired": "請輸入都道府縣",
+      "cityRequired": "請輸入市區町村",
+      "address1Required": "請輸入地址"
     }
   },
   "complete": {
@@ -270,7 +289,17 @@
     "deleteConfirm": "確定要刪除此地址嗎？",
     "fetchError": "地址取得失敗",
     "saveFailed": "儲存失敗",
-    "deleteFailed": "刪除失敗"
+    "deleteFailed": "刪除失敗",
+    "validation": {
+      "recipientNameRequired": "請輸入收件人姓名",
+      "phoneRequired": "請輸入電話號碼",
+      "phoneInvalid": "電話號碼格式不正確",
+      "postalCodeRequired": "請輸入郵遞區號",
+      "postalCodeInvalid": "郵遞區號格式不正確",
+      "prefRequired": "請輸入都道府縣",
+      "cityRequired": "請輸入市區町村",
+      "address1Required": "請輸入地址"
+    }
   },
   "legal": {
     "tokushohoTitle": "特定商業交易法標示",

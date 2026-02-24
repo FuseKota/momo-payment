@@ -141,7 +141,14 @@
     "cartEmpty": "カートが空です",
     "backToPickupMenu": "キッチンカーメニューに戻る",
     "reservationFailed": "予約の作成に失敗しました",
-    "orderFailed": "注文処理に失敗しました"
+    "orderFailed": "注文処理に失敗しました",
+    "validation": {
+      "nameRequired": "お名前を入力してください",
+      "emailRequired": "メールアドレスを入力してください",
+      "emailInvalid": "メールアドレスの形式が正しくありません",
+      "phoneRequired": "電話番号を入力してください",
+      "phoneInvalid": "電話番号の形式が正しくありません"
+    }
   },
   "checkoutShipping": {
     "backToCart": "カートに戻る",
@@ -179,6 +186,18 @@
       "agreementRequired": "利用規約への同意が必要です。",
       "orderFailed": "注文の作成に失敗しました",
       "checkoutUrlFailed": "決済URLの取得に失敗しました"
+    },
+    "validation": {
+      "nameRequired": "お名前を入力してください",
+      "emailRequired": "メールアドレスを入力してください",
+      "emailInvalid": "メールアドレスの形式が正しくありません",
+      "phoneRequired": "電話番号を入力してください",
+      "phoneInvalid": "電話番号の形式が正しくありません",
+      "postalCodeRequired": "郵便番号を入力してください",
+      "postalCodeInvalid": "郵便番号の形式が正しくありません",
+      "prefectureRequired": "都道府県を入力してください",
+      "cityRequired": "市区町村を入力してください",
+      "address1Required": "番地を入力してください"
     }
   },
   "complete": {
@@ -270,7 +289,17 @@
     "deleteConfirm": "この住所を削除しますか？",
     "fetchError": "住所の取得に失敗しました",
     "saveFailed": "保存に失敗しました",
-    "deleteFailed": "削除に失敗しました"
+    "deleteFailed": "削除に失敗しました",
+    "validation": {
+      "recipientNameRequired": "宛名を入力してください",
+      "phoneRequired": "電話番号を入力してください",
+      "phoneInvalid": "電話番号の形式が正しくありません",
+      "postalCodeRequired": "郵便番号を入力してください",
+      "postalCodeInvalid": "郵便番号の形式が正しくありません",
+      "prefRequired": "都道府県を入力してください",
+      "cityRequired": "市区町村を入力してください",
+      "address1Required": "番地を入力してください"
+    }
   },
   "legal": {
     "tokushohoTitle": "特定商取引法に基づく表記",

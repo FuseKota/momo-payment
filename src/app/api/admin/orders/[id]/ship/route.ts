@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { requireAdmin } from '@/lib/auth/require-admin';
+import { checkAdminRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 interface ShipRequest {
   carrier: string;
@@ -14,6 +15,14 @@ export async function POST(
 ) {
   const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
+
+  const rateLimit = checkAdminRateLimit(getClientIP(request));
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limit_exceeded' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
+    );
+  }
 
   try {
     const { id: orderId } = await params;

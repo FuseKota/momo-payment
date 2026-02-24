@@ -91,6 +91,9 @@ export default function LoginPage() {
     }
 
     setSuccess(t('signupSuccess'));
+    setEmail('');
+    setPassword('');
+    setName('');
     setIsLoading(false);
   };
 

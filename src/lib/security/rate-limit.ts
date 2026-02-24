@@ -75,6 +75,14 @@ export function checkWebhookRateLimit(ip: string): ReturnType<typeof checkRateLi
 }
 
 /**
+ * 管理者API用レート制限チェック
+ * 30リクエスト/分（書き込み操作用）
+ */
+export function checkAdminRateLimit(ip: string): ReturnType<typeof checkRateLimit> {
+  return checkRateLimit(`admin:${ip}`, 30, 60 * 1000);
+}
+
+/**
  * リクエストからIPアドレスを取得
  */
 export function getClientIP(request: Request): string {

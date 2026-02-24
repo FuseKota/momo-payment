@@ -1,3 +1,9 @@
+/** 送料（円） */
+export const SHIPPING_FEE_YEN = 1200;
+
+/** カート内の1商品あたりの最大数量 */
+export const MAX_ITEM_QUANTITY = 10;
+
 export const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
   RESERVED: { label: '予約済', color: 'info' },
   PENDING_PAYMENT: { label: '決済待ち', color: 'warning' },

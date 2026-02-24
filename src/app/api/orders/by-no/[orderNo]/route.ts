@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { checkRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -9,6 +10,23 @@ export async function GET(
   { params }: { params: Promise<{ orderNo: string }> }
 ) {
   try {
+    // レート制限チェック
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`order-lookup:${clientIP}`, 10, 60000);
+    if (!rateLimit.allowed) {
+      secureLog('warn', 'Order lookup rate limit exceeded', { ip: clientIP });
+      return NextResponse.json(
+        { ok: false, error: 'rate_limit_exceeded', retryAfter: rateLimit.resetIn },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.resetIn),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      );
+    }
+
     const { orderNo } = await params;
 
     if (!orderNo) {

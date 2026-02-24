@@ -3,10 +3,19 @@ import { uploadProductImage, deleteProductImage } from '@/lib/storage/upload';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { requireAdmin } from '@/lib/auth/require-admin';
+import { checkAdminRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
+
+  const rateLimit = checkAdminRateLimit(getClientIP(request));
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limit_exceeded' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
+    );
+  }
 
   try {
     const formData = await request.formData();
@@ -63,6 +72,14 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
+
+  const rateLimitDel = checkAdminRateLimit(getClientIP(request));
+  if (!rateLimitDel.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limit_exceeded' },
+      { status: 429, headers: { 'Retry-After': String(rateLimitDel.resetIn) } }
+    );
+  }
 
   try {
     const { searchParams } = new URL(request.url);
