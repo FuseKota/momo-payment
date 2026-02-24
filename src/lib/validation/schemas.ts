@@ -127,5 +127,34 @@ export function formatValidationErrors(error: z.ZodError): Record<string, string
   return errors;
 }
 
+/**
+ * 管理者：商品作成スキーマ
+ */
+export const adminProductCreateSchema = z.object({
+  name: z.string().min(1, '商品名を入力してください').max(200),
+  slug: z.string().min(1, 'スラッグを入力してください').max(100).regex(/^[a-z0-9-]+$/, 'スラッグは小文字英数字とハイフンのみ使用できます'),
+  description: z.string().max(2000).optional(),
+  kind: z.enum(['FROZEN_FOOD', 'GOODS']),
+  temp_zone: z.enum(['FROZEN', 'AMBIENT']).nullable().optional(),
+  price_yen: z.number().int().min(0).max(1000000),
+  can_pickup: z.boolean().optional(),
+  can_ship: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+  image_url: z.string().url().nullable().optional(),
+  images: z.array(z.string().url()).optional(),
+  stock_qty: z.number().int().min(0).nullable().optional(),
+  sort_order: z.number().int().optional(),
+  has_variants: z.boolean().optional(),
+  food_label: z.record(z.string(), z.unknown()).nullable().optional(),
+  name_zh_tw: z.string().nullable().optional(),
+  description_zh_tw: z.string().nullable().optional(),
+  food_label_zh_tw: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+/**
+ * 管理者：商品更新スキーマ（全フィールドオプション）
+ */
+export const adminProductUpdateSchema = adminProductCreateSchema.partial();
+
 export type PickupOrderInput = z.infer<typeof pickupOrderSchema>;
 export type ShippingOrderInput = z.infer<typeof shippingOrderSchema>;

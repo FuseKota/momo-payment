@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const productIds = body.items.map((i) => i.productId);
     const { data: products, error: productError } = await supabaseAdmin
       .from('products')
-      .select('id, name, kind, temp_zone, price_yen, can_pickup, is_active')
+      .select('id, name, name_zh_tw, kind, temp_zone, price_yen, can_pickup, is_active')
       .in('id', productIds);
 
     if (productError) {
@@ -151,18 +151,29 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. order_items作成
-    await supabaseAdmin.from('order_items').insert(
+    const { error: itemsError } = await supabaseAdmin.from('order_items').insert(
       items.map((x) => ({
         order_id: orderRow.id,
         product_id: x.product.id,
         qty: x.qty,
         unit_price_yen: x.product.price_yen,
         line_total_yen: x.lineTotal,
-        product_name: x.product.name,
+        product_name: locale === 'zh-tw' && x.product.name_zh_tw
+          ? x.product.name_zh_tw
+          : x.product.name,
         product_kind: x.product.kind,
         product_temp_zone: x.product.temp_zone,
       }))
     );
+
+    if (itemsError) {
+      secureLog('error', 'Order items create error', safeErrorLog(itemsError));
+      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      return NextResponse.json(
+        { ok: false, error: 'order_items_create_failed' },
+        { status: 500 }
+      );
+    }
 
     // 店頭払いの場合はここで完了
     if (paymentMethod === 'PAY_AT_PICKUP') {
@@ -183,7 +194,9 @@ export async function POST(request: NextRequest) {
             customerEmail: body.customer.email,
             orderType: 'PICKUP',
             items: items.map((x) => ({
-              name: x.product.name,
+              name: locale === 'zh-tw' && x.product.name_zh_tw
+                ? x.product.name_zh_tw
+                : x.product.name,
               qty: x.qty,
               unitPrice: x.product.price_yen,
               subtotal: x.lineTotal,
@@ -228,11 +241,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Stripe Checkout Session作成
+    const localizedName = (p: typeof items[0]['product']) =>
+      locale === 'zh-tw' && p.name_zh_tw ? p.name_zh_tw : p.name;
+
     const lineItems = items.map((x) => ({
       price_data: {
         currency: 'jpy',
         product_data: {
-          name: x.product.name,
+          name: localizedName(x.product),
         },
         unit_amount: x.product.price_yen,
       },

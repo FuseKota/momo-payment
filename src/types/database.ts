@@ -52,6 +52,9 @@ export interface Product {
   image_url: string | null;
   images: string[]; // Array of image URLs for product gallery
   food_label: FoodLabel | null;
+  name_zh_tw: string | null;
+  description_zh_tw: string | null;
+  food_label_zh_tw: FoodLabel | null;
   is_active: boolean;
   sort_order: number;
   has_variants: boolean; // When true, inventory is tracked per variant

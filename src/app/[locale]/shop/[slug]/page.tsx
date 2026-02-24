@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import {
   Box,
@@ -24,6 +24,8 @@ import InfoIcon from '@mui/icons-material/Info';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
+import { getLocalizedName, getLocalizedDescription, getLocalizedFoodLabel } from '@/lib/utils/localize-product';
+import { MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
 import type { Product, ProductVariant, ProductWithVariants } from '@/types/database';
 
 interface Props {
@@ -34,6 +36,7 @@ export default function ProductDetailPage({ params }: Props) {
   const { slug } = use(params);
   const t = useTranslations('productDetail');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const router = useRouter();
   const [product, setProduct] = useState<ProductWithVariants | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,7 +133,7 @@ export default function ProductDetailPage({ params }: Props) {
           <Link href="/shop" style={{ textDecoration: 'none', color: 'inherit' }}>
             {t('breadcrumbShop')}
           </Link>
-          <Typography color="text.primary">{product.name}</Typography>
+          <Typography color="text.primary">{getLocalizedName(product, locale)}</Typography>
         </Breadcrumbs>
 
         <Grid container spacing={4}>
@@ -170,7 +173,7 @@ export default function ProductDetailPage({ params }: Props) {
                     <Box
                       component="img"
                       src={allImages[selectedImageIndex]}
-                      alt={`${product.name} - 画像${selectedImageIndex + 1}`}
+                      alt={`${getLocalizedName(product, locale)} - 画像${selectedImageIndex + 1}`}
                       sx={{
                         width: '100%',
                         height: '100%',
@@ -203,7 +206,7 @@ export default function ProductDetailPage({ params }: Props) {
                           <Box
                             component="img"
                             src={img}
-                            alt={`${product.name} - サムネイル${index + 1}`}
+                            alt={`${getLocalizedName(product, locale)} - サムネイル${index + 1}`}
                             sx={{
                               width: '100%',
                               height: '100%',
@@ -223,7 +226,7 @@ export default function ProductDetailPage({ params }: Props) {
           <Grid size={{ xs: 12, md: 6 }}>
             <Box>
               <Typography variant="h3" sx={{ mb: 2, fontWeight: 700, color: '#1a1a1a' }}>
-                {product.name}
+                {getLocalizedName(product, locale)}
               </Typography>
 
               <Typography
@@ -245,7 +248,7 @@ export default function ProductDetailPage({ params }: Props) {
                 color="text.secondary"
                 sx={{ mb: 4, lineHeight: 1.8 }}
               >
-                {product.description}
+                {getLocalizedDescription(product, locale)}
               </Typography>
 
               {/* Size Selector */}
@@ -321,8 +324,8 @@ export default function ProductDetailPage({ params }: Props) {
                     {qty}
                   </Typography>
                   <IconButton
-                    onClick={() => setQty(Math.min(10, qty + 1))}
-                    disabled={qty >= 10}
+                    onClick={() => setQty(Math.min(MAX_ITEM_QUANTITY, qty + 1))}
+                    disabled={qty >= MAX_ITEM_QUANTITY}
                   >
                     <AddIcon />
                   </IconButton>
@@ -346,146 +349,150 @@ export default function ProductDetailPage({ params }: Props) {
         </Grid>
 
         {/* Food Label (for frozen food) */}
-        {product.food_label && (
-          <Paper sx={{ mt: 4, p: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <InfoIcon sx={{ color: 'primary.main' }} />
-              <Typography variant="h5">{t('productInfo')}</Typography>
-            </Box>
+        {(() => {
+          const foodLabel = getLocalizedFoodLabel(product, locale);
+          if (!foodLabel) return null;
+          return (
+            <Paper sx={{ mt: 4, p: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <InfoIcon sx={{ color: 'primary.main' }} />
+                <Typography variant="h5">{t('productInfo')}</Typography>
+              </Box>
 
-            <Divider sx={{ mb: 3 }} />
+              <Divider sx={{ mb: 3 }} />
 
-            <Grid container spacing={3}>
-              {product.food_label.ingredients && (
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {t('ingredients')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.food_label.ingredients}
-                  </Typography>
-                </Grid>
-              )}
+              <Grid container spacing={3}>
+                {foodLabel.ingredients && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {t('ingredients')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {foodLabel.ingredients}
+                    </Typography>
+                  </Grid>
+                )}
 
-              {product.food_label.allergens && (
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {t('allergens')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.food_label.allergens}
-                  </Typography>
-                </Grid>
-              )}
+                {foodLabel.allergens && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {t('allergens')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {foodLabel.allergens}
+                    </Typography>
+                  </Grid>
+                )}
 
-              {product.food_label.net_weight_grams && (
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {t('netWeight')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.food_label.net_weight_grams}g
-                  </Typography>
-                </Grid>
-              )}
+                {foodLabel.net_weight_grams && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {t('netWeight')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {foodLabel.net_weight_grams}g
+                    </Typography>
+                  </Grid>
+                )}
 
-              {product.food_label.expiry_info && (
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {t('expiryInfo')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.food_label.expiry_info}
-                  </Typography>
-                </Grid>
-              )}
+                {foodLabel.expiry_info && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {t('expiryInfo')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {foodLabel.expiry_info}
+                    </Typography>
+                  </Grid>
+                )}
 
-              {product.food_label.storage_method && (
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {t('storageMethod')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.food_label.storage_method}
-                  </Typography>
-                </Grid>
-              )}
+                {foodLabel.storage_method && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {t('storageMethod')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {foodLabel.storage_method}
+                    </Typography>
+                  </Grid>
+                )}
 
-              {product.food_label.manufacturer && (
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {t('manufacturer')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.food_label.manufacturer}
-                  </Typography>
-                </Grid>
-              )}
+                {foodLabel.manufacturer && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {t('manufacturer')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {foodLabel.manufacturer}
+                    </Typography>
+                  </Grid>
+                )}
 
-              {product.food_label.nutrition && (
-                <Grid size={12}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 2 }}
-                  >
-                    {t('nutrition')}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 2,
-                    }}
-                  >
-                    <Chip
-                      label={t('calories', { value: product.food_label.nutrition.calories ?? 0 })}
-                      variant="outlined"
-                      size="small"
-                    />
-                    <Chip
-                      label={t('protein', { value: product.food_label.nutrition.protein ?? 0 })}
-                      variant="outlined"
-                      size="small"
-                    />
-                    <Chip
-                      label={t('fat', { value: product.food_label.nutrition.fat ?? 0 })}
-                      variant="outlined"
-                      size="small"
-                    />
-                    <Chip
-                      label={t('carbohydrates', { value: product.food_label.nutrition.carbohydrates ?? 0 })}
-                      variant="outlined"
-                      size="small"
-                    />
-                    <Chip
-                      label={t('sodium', { value: (product.food_label.nutrition.sodium ?? 0) / 1000 })}
-                      variant="outlined"
-                      size="small"
-                    />
-                  </Box>
-                </Grid>
-              )}
-            </Grid>
-          </Paper>
-        )}
+                {foodLabel.nutrition && (
+                  <Grid size={12}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 2 }}
+                    >
+                      {t('nutrition')}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 2,
+                      }}
+                    >
+                      <Chip
+                        label={t('calories', { value: foodLabel.nutrition.calories ?? 0 })}
+                        variant="outlined"
+                        size="small"
+                      />
+                      <Chip
+                        label={t('protein', { value: foodLabel.nutrition.protein ?? 0 })}
+                        variant="outlined"
+                        size="small"
+                      />
+                      <Chip
+                        label={t('fat', { value: foodLabel.nutrition.fat ?? 0 })}
+                        variant="outlined"
+                        size="small"
+                      />
+                      <Chip
+                        label={t('carbohydrates', { value: foodLabel.nutrition.carbohydrates ?? 0 })}
+                        variant="outlined"
+                        size="small"
+                      />
+                      <Chip
+                        label={t('sodium', { value: (foodLabel.nutrition.sodium ?? 0) / 1000 })}
+                        variant="outlined"
+                        size="small"
+                      />
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+            </Paper>
+          );
+        })()}
 
         {/* Back Button */}
         <Box sx={{ mt: 4, textAlign: 'center' }}>

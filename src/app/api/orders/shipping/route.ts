@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     const productIds = body.items.map((i) => i.productId);
     const { data: products, error: productError } = await supabaseAdmin
       .from('products')
-      .select('id, name, kind, temp_zone, price_yen, can_ship, is_active')
+      .select('id, name, name_zh_tw, kind, temp_zone, price_yen, can_ship, is_active')
       .in('id', productIds);
 
     if (productError) {
@@ -129,6 +129,19 @@ export async function POST(request: NextRequest) {
           { ok: false, error: 'variant_not_found' },
           { status: 400 }
         );
+      }
+
+      // バリアント-商品紐付け検証（価格操作攻撃の防止）
+      for (const item of body.items) {
+        if (item.variantId) {
+          const variant = variants.find((v) => v.id === item.variantId);
+          if (variant && variant.product_id !== item.productId) {
+            return NextResponse.json(
+              { ok: false, error: 'variant_product_mismatch' },
+              { status: 400 }
+            );
+          }
+        }
       }
     }
 
@@ -202,7 +215,9 @@ export async function POST(request: NextRequest) {
         qty: x.qty,
         unit_price_yen: x.unitPrice,
         line_total_yen: x.lineTotal,
-        product_name: x.product.name,
+        product_name: locale === 'zh-tw' && x.product.name_zh_tw
+          ? x.product.name_zh_tw
+          : x.product.name,
         product_kind: x.product.kind,
         product_temp_zone: x.product.temp_zone,
         product_size: x.variant?.size ?? null,
@@ -211,6 +226,11 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) {
       secureLog('error', 'Order items create error', safeErrorLog(itemsError));
+      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      return NextResponse.json(
+        { ok: false, error: 'order_items_create_failed' },
+        { status: 500 }
+      );
     }
 
     // 4. shipping_addresses作成
@@ -227,6 +247,11 @@ export async function POST(request: NextRequest) {
 
     if (addressError) {
       secureLog('error', 'Address create error', safeErrorLog(addressError));
+      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      return NextResponse.json(
+        { ok: false, error: 'address_create_failed' },
+        { status: 500 }
+      );
     }
 
     // 5. payments作成
@@ -245,16 +270,24 @@ export async function POST(request: NextRequest) {
 
     if (paymentError) {
       secureLog('error', 'Payment create error', safeErrorLog(paymentError));
+      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      return NextResponse.json(
+        { ok: false, error: 'payment_create_failed' },
+        { status: 500 }
+      );
     }
 
     // 6. Stripe Checkout Session作成
+    const localizedName = (p: typeof items[0]['product']) =>
+      locale === 'zh-tw' && p.name_zh_tw ? p.name_zh_tw : p.name;
+
     const lineItems = items.map((x) => ({
       price_data: {
         currency: 'jpy',
         product_data: {
           name: x.variant?.size
-            ? `${x.product.name} (${x.variant.size})`
-            : x.product.name,
+            ? `${localizedName(x.product)} (${x.variant.size})`
+            : localizedName(x.product),
         },
         unit_amount: x.unitPrice,
       },
@@ -266,7 +299,7 @@ export async function POST(request: NextRequest) {
       price_data: {
         currency: 'jpy',
         product_data: {
-          name: '送料',
+          name: locale === 'zh-tw' ? '運費' : '送料',
         },
         unit_amount: shippingFeeYen,
       },

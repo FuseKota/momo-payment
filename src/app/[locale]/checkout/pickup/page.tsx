@@ -29,6 +29,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
+import { getLocalizedName } from '@/lib/utils/localize-product';
 
 interface PickupForm {
   name: string;
@@ -54,6 +55,7 @@ export default function PickupCheckoutPage() {
     paymentMethod: 'STRIPE',
     notes: '',
   });
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'name' | 'email' | 'phone', string>>>({});
 
   const steps = [t('stepCustomerInfo'), t('stepPayment')];
 
@@ -61,15 +63,29 @@ export default function PickupCheckoutPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { value: string } }
   ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    if (field in fieldErrors) {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const required: (keyof PickupForm)[] = [
-      'name',
-      'email',
-      'phone',
-    ];
-    return required.every((field) => form[field].trim() !== '');
+    const errors: Partial<Record<'name' | 'email' | 'phone', string>> = {};
+    const tv = (key: string) => t(`validation.${key}`);
+
+    if (!form.name.trim()) errors.name = tv('nameRequired');
+    if (!form.email.trim()) {
+      errors.email = tv('emailRequired');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = tv('emailInvalid');
+    }
+    if (!form.phone.trim()) {
+      errors.phone = tv('phoneRequired');
+    } else if (!/^0[0-9\-]{9,13}$/.test(form.phone)) {
+      errors.phone = tv('phoneInvalid');
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleNext = () => {
@@ -202,6 +218,8 @@ export default function PickupCheckoutPage() {
                     required
                     value={form.name}
                     onChange={handleInputChange('name')}
+                    error={!!fieldErrors.name}
+                    helperText={fieldErrors.name}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -212,6 +230,8 @@ export default function PickupCheckoutPage() {
                     required
                     value={form.email}
                     onChange={handleInputChange('email')}
+                    error={!!fieldErrors.email}
+                    helperText={fieldErrors.email}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -222,6 +242,8 @@ export default function PickupCheckoutPage() {
                     value={form.phone}
                     onChange={handleInputChange('phone')}
                     placeholder={t('phonePlaceholder')}
+                    error={!!fieldErrors.phone}
+                    helperText={fieldErrors.phone}
                   />
                 </Grid>
 
@@ -393,7 +415,7 @@ export default function PickupCheckoutPage() {
                   sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}
                 >
                   <Box>
-                    <Typography variant="body2">{item.product.name}</Typography>
+                    <Typography variant="body2">{getLocalizedName(item.product, locale)}</Typography>
                     <Typography variant="body2" color="text.secondary">
                       {tc('quantity')} {item.qty}
                     </Typography>

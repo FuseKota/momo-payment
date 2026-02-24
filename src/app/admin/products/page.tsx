@@ -38,24 +38,28 @@ import type { Product } from '@/types/database';
 
 interface ProductFormData {
   name: string;
+  name_zh_tw: string;
   slug: string;
   kind: 'FROZEN_FOOD' | 'GOODS';
   temp_zone: 'FROZEN' | 'AMBIENT';
   price_yen: number;
   stock_qty: number;
   description: string;
+  description_zh_tw: string;
   is_active: boolean;
   image_url: string | null;
 }
 
 const defaultFormData: ProductFormData = {
   name: '',
+  name_zh_tw: '',
   slug: '',
   kind: 'FROZEN_FOOD',
   temp_zone: 'FROZEN',
   price_yen: 0,
   stock_qty: 0,
   description: '',
+  description_zh_tw: '',
   is_active: true,
   image_url: null,
 };
@@ -116,12 +120,14 @@ export default function AdminProductsPage() {
       setEditingProduct(product);
       setFormData({
         name: product.name,
+        name_zh_tw: product.name_zh_tw || '',
         slug: product.slug,
         kind: product.kind,
         temp_zone: product.temp_zone,
         price_yen: product.price_yen,
         stock_qty: product.stock_qty ?? 0,
         description: product.description || '',
+        description_zh_tw: product.description_zh_tw || '',
         is_active: product.is_active,
         image_url: product.image_url,
       });
@@ -469,6 +475,15 @@ export default function AdminProductsPage() {
                 onChange={(e) => handleFormChange('name', e.target.value)}
               />
             </Grid>
+            <Grid size={12}>
+              <TextField
+                label="商品名（繁体字中国語）"
+                fullWidth
+                value={formData.name_zh_tw}
+                onChange={(e) => handleFormChange('name_zh_tw', e.target.value)}
+                placeholder="未入力の場合は日本語名が表示されます"
+              />
+            </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="スラッグ"
@@ -520,6 +535,17 @@ export default function AdminProductsPage() {
                 rows={3}
                 value={formData.description}
                 onChange={(e) => handleFormChange('description', e.target.value)}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="説明（繁体字中国語）"
+                fullWidth
+                multiline
+                rows={3}
+                value={formData.description_zh_tw}
+                onChange={(e) => handleFormChange('description_zh_tw', e.target.value)}
+                placeholder="未入力の場合は日本語の説明が表示されます"
               />
             </Grid>
           </Grid>

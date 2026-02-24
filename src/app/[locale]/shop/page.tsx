@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
   Box,
@@ -26,6 +26,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
+import { getLocalizedName, getLocalizedDescription } from '@/lib/utils/localize-product';
 import type { Product, ProductWithVariants } from '@/types/database';
 
 type TabValue = 'all' | 'frozen' | 'goods';
@@ -34,6 +35,7 @@ export default function ShopPage() {
   const t = useTranslations('shop');
   const tc = useTranslations('common');
   const tRoot = useTranslations();
+  const locale = useLocale();
 
   const [tab, setTab] = useState<TabValue>('all');
   const [products, setProducts] = useState<ProductWithVariants[]>([]);
@@ -84,7 +86,7 @@ export default function ShopPage() {
     }
     const success = addItem(product, 1);
     if (success) {
-      setSnackbar({ open: true, message: t('addedToCart', { name: product.name }), severity: 'success' });
+      setSnackbar({ open: true, message: t('addedToCart', { name: getLocalizedName(product, locale) }), severity: 'success' });
     }
   };
 
@@ -191,7 +193,7 @@ export default function ShopPage() {
                         <CardMedia
                           component="img"
                           image={product.image_url}
-                          alt={product.name}
+                          alt={getLocalizedName(product, locale)}
                           sx={{
                             height: 200,
                             objectFit: 'cover',
@@ -224,7 +226,7 @@ export default function ShopPage() {
                             '&:hover': { color: 'primary.main' },
                           }}
                         >
-                          {product.name}
+                          {getLocalizedName(product, locale)}
                         </Typography>
                       </Link>
 
@@ -240,7 +242,7 @@ export default function ShopPage() {
                           overflow: 'hidden',
                         }}
                       >
-                        {product.description}
+                        {getLocalizedDescription(product, locale)}
                       </Typography>
 
                       <Box

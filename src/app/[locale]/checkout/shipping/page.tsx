@@ -29,9 +29,9 @@ import { Layout, PostalCodeField } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice } from '@/lib/utils/format';
+import { getLocalizedName } from '@/lib/utils/localize-product';
+import { SHIPPING_FEE_YEN } from '@/lib/utils/constants';
 import type { CustomerAddress } from '@/types/database';
-
-const SHIPPING_FEE = 1200;
 
 interface ShippingForm {
   name: string;
@@ -65,9 +65,10 @@ export default function ShippingCheckoutPage() {
     address1: '',
     address2: '',
   });
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ShippingForm, string>>>({});
 
   const steps = [t('stepAddress'), t('stepPayment')];
-  const total = subtotal + SHIPPING_FEE;
+  const total = subtotal + SHIPPING_FEE_YEN;
 
   // ログインユーザーの保存済み住所を取得
   useEffect(() => {
@@ -118,19 +119,37 @@ export default function ShippingCheckoutPage() {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const required: (keyof ShippingForm)[] = [
-      'name',
-      'email',
-      'phone',
-      'postalCode',
-      'prefecture',
-      'city',
-      'address1',
-    ];
-    return required.every((field) => form[field].trim() !== '');
+    const errors: Partial<Record<keyof ShippingForm, string>> = {};
+    const tv = (key: string) => t(`validation.${key}`);
+
+    if (!form.name.trim()) errors.name = tv('nameRequired');
+    if (!form.email.trim()) {
+      errors.email = tv('emailRequired');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = tv('emailInvalid');
+    }
+    if (!form.phone.trim()) {
+      errors.phone = tv('phoneRequired');
+    } else if (!/^0[0-9\-]{9,13}$/.test(form.phone)) {
+      errors.phone = tv('phoneInvalid');
+    }
+    if (!form.postalCode.trim()) {
+      errors.postalCode = tv('postalCodeRequired');
+    } else if (!/^\d{3}-?\d{4}$/.test(form.postalCode)) {
+      errors.postalCode = tv('postalCodeInvalid');
+    }
+    if (!form.prefecture.trim()) errors.prefecture = tv('prefectureRequired');
+    if (!form.city.trim()) errors.city = tv('cityRequired');
+    if (!form.address1.trim()) errors.address1 = tv('address1Required');
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleNext = () => {
@@ -294,6 +313,8 @@ export default function ShippingCheckoutPage() {
                         required
                         value={form.name}
                         onChange={handleInputChange('name')}
+                        error={!!fieldErrors.name}
+                        helperText={fieldErrors.name}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
@@ -304,6 +325,8 @@ export default function ShippingCheckoutPage() {
                         required
                         value={form.email}
                         onChange={handleInputChange('email')}
+                        error={!!fieldErrors.email}
+                        helperText={fieldErrors.email}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
@@ -313,19 +336,25 @@ export default function ShippingCheckoutPage() {
                         required
                         value={form.phone}
                         onChange={handleInputChange('phone')}
-                        placeholder="090-1234-5678"
+                        placeholder={t('phonePlaceholder')}
+                        error={!!fieldErrors.phone}
+                        helperText={fieldErrors.phone}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <PostalCodeField
                         value={form.postalCode}
-                        onChange={(val) => setForm((prev) => ({ ...prev, postalCode: val }))}
+                        onChange={(val) => {
+                          setForm((prev) => ({ ...prev, postalCode: val }));
+                          if (fieldErrors.postalCode) setFieldErrors((prev) => ({ ...prev, postalCode: undefined }));
+                        }}
                         onAddressFound={(result) => {
                           setForm((prev) => ({
                             ...prev,
                             prefecture: result.prefecture,
                             city: result.city + (result.town || ''),
                           }));
+                          setFieldErrors((prev) => ({ ...prev, prefecture: undefined, city: undefined }));
                         }}
                         label={t('postalCode')}
                         required
@@ -338,6 +367,8 @@ export default function ShippingCheckoutPage() {
                         required
                         value={form.prefecture}
                         onChange={handleInputChange('prefecture')}
+                        error={!!fieldErrors.prefecture}
+                        helperText={fieldErrors.prefecture}
                       />
                     </Grid>
                     <Grid size={12}>
@@ -347,6 +378,8 @@ export default function ShippingCheckoutPage() {
                         required
                         value={form.city}
                         onChange={handleInputChange('city')}
+                        error={!!fieldErrors.city}
+                        helperText={fieldErrors.city}
                       />
                     </Grid>
                     <Grid size={12}>
@@ -356,6 +389,8 @@ export default function ShippingCheckoutPage() {
                         required
                         value={form.address1}
                         onChange={handleInputChange('address1')}
+                        error={!!fieldErrors.address1}
+                        helperText={fieldErrors.address1}
                       />
                     </Grid>
                     <Grid size={12}>
@@ -449,7 +484,7 @@ export default function ShippingCheckoutPage() {
                   >
                     <Box>
                       <Typography variant="body2">
-                        {item.product.name}
+                        {getLocalizedName(item.product, locale)}
                         {item.variant?.size && ` (${item.variant.size})`}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -472,7 +507,7 @@ export default function ShippingCheckoutPage() {
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography color="text.secondary">{tc('shippingFee')}</Typography>
-                <Typography>¥{formatPrice(SHIPPING_FEE)}</Typography>
+                <Typography>¥{formatPrice(SHIPPING_FEE_YEN)}</Typography>
               </Box>
 
               <Divider sx={{ my: 2 }} />

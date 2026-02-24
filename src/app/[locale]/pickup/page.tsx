@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
   Box,
@@ -27,12 +27,14 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
+import { getLocalizedName, getLocalizedDescription } from '@/lib/utils/localize-product';
 import type { Product } from '@/types/database';
 
 export default function PickupPage() {
   const t = useTranslations('pickup');
   const tc = useTranslations('common');
   const tRoot = useTranslations();
+  const locale = useLocale();
 
   const steps = [
     {
@@ -84,7 +86,7 @@ export default function PickupPage() {
     }
     const success = addItem(product, 1);
     if (success) {
-      setSnackbar({ open: true, message: t('addedToCart', { name: product.name }), severity: 'success' });
+      setSnackbar({ open: true, message: t('addedToCart', { name: getLocalizedName(product, locale) }), severity: 'success' });
     }
   };
 
@@ -104,12 +106,8 @@ export default function PickupPage() {
   };
 
   // Group products by type
-  const foodProducts = products.filter((p) =>
-    ['karaage-5pc', 'tapioca-milk-tea', 'rurohan-single', 'rurohan-set', 'jirohan-single', 'jirohan-set', 'taiwan-beer', 'pineapple-cake'].includes(p.slug)
-  );
-  const goodsProducts = products.filter((p) =>
-    ['tshirt-light', 'tshirt-heavy', 'keychain'].includes(p.slug)
-  );
+  const foodProducts = products.filter((p) => p.kind === 'FROZEN_FOOD');
+  const goodsProducts = products.filter((p) => p.kind === 'GOODS');
 
   return (
     <Layout cartItemCount={itemCount}>
@@ -250,7 +248,7 @@ export default function PickupPage() {
                         <CardMedia
                           component="img"
                           image={product.image_url}
-                          alt={product.name}
+                          alt={getLocalizedName(product, locale)}
                           sx={{ height: 180, objectFit: 'cover' }}
                         />
                       ) : (
@@ -268,7 +266,7 @@ export default function PickupPage() {
                       )}
                       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                          {product.name}
+                          {getLocalizedName(product, locale)}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -282,7 +280,7 @@ export default function PickupPage() {
                             overflow: 'hidden',
                           }}
                         >
-                          {product.description}
+                          {getLocalizedDescription(product, locale)}
                         </Typography>
                         <Box
                           sx={{
@@ -367,7 +365,7 @@ export default function PickupPage() {
                         <CardMedia
                           component="img"
                           image={product.image_url}
-                          alt={product.name}
+                          alt={getLocalizedName(product, locale)}
                           sx={{ height: 180, objectFit: 'cover' }}
                         />
                       ) : (
@@ -388,7 +386,7 @@ export default function PickupPage() {
                           <Chip label={tc('outOfStock')} color="error" size="small" sx={{ mb: 1, alignSelf: 'flex-start' }} />
                         )}
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                          {product.name}
+                          {getLocalizedName(product, locale)}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -402,7 +400,7 @@ export default function PickupPage() {
                             overflow: 'hidden',
                           }}
                         >
-                          {product.description}
+                          {getLocalizedDescription(product, locale)}
                         </Typography>
                         <Box
                           sx={{

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import {
   Box,
@@ -25,17 +25,18 @@ import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { Layout } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
-
-const SHIPPING_FEE = 1200;
+import { getLocalizedName } from '@/lib/utils/localize-product';
+import { SHIPPING_FEE_YEN, MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
 
 export default function CartPage() {
   const t = useTranslations('cart');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const router = useRouter();
   const { items, updateQty, removeItem, clearCart, subtotal, itemCount, cartMode } = useCart();
 
   const isPickupMode = cartMode === 'pickup';
-  const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE : 0);
+  const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE_YEN : 0);
 
   if (items.length === 0) {
     return (
@@ -139,7 +140,7 @@ export default function CartPage() {
                         <Box
                           component="img"
                           src={item.product.image_url}
-                          alt={item.product.name}
+                          alt={getLocalizedName(item.product, locale)}
                           sx={{
                             width: 100,
                             height: 100,
@@ -182,7 +183,7 @@ export default function CartPage() {
                                   '&:hover': { color: 'primary.main' },
                                 }}
                               >
-                                {item.product.name}
+                                {getLocalizedName(item.product, locale)}
                                 {item.variant?.size && (
                                   <Typography
                                     component="span"
@@ -231,8 +232,8 @@ export default function CartPage() {
                             </Typography>
                             <IconButton
                               size="small"
-                              onClick={() => updateQty(item.product.id, Math.min(10, item.qty + 1), item.variant?.id)}
-                              disabled={item.qty >= 10}
+                              onClick={() => updateQty(item.product.id, Math.min(MAX_ITEM_QUANTITY, item.qty + 1), item.variant?.id)}
+                              disabled={item.qty >= MAX_ITEM_QUANTITY}
                             >
                               <AddIcon fontSize="small" />
                             </IconButton>
@@ -278,7 +279,7 @@ export default function CartPage() {
                     <LocalShippingIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                     <Typography color="text.secondary">{tc('shippingFee')}</Typography>
                   </Box>
-                  <Typography>¥{formatPrice(SHIPPING_FEE)}</Typography>
+                  <Typography>¥{formatPrice(SHIPPING_FEE_YEN)}</Typography>
                 </Box>
               )}
 
