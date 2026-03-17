@@ -115,10 +115,10 @@
   font-size: 3rem;
   text-align: center;
   margin-bottom: 70px;
-  color: #ff5252;
+  color: #ffffff;
   position: relative;
   display: block;
-  text-shadow: 0 0 15px rgba(211,47,47,0.4);
+  text-shadow: none;
 }
 
 .sectionTitle::after {
