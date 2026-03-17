@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 /**
  * POST /api/auth/signup
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
       });
 
     if (profileError) {
-      console.error('Profile insert error:', profileError);
+      secureLog('error', 'Profile insert error', safeErrorLog(profileError));
       return NextResponse.json({ error: 'profile_save_failed' }, { status: 500 });
     }
 
@@ -66,14 +67,14 @@ export async function POST(request: Request) {
         });
 
       if (addressError) {
-        console.error('Address insert error:', addressError);
+        secureLog('error', 'Address insert error', safeErrorLog(addressError));
         return NextResponse.json({ error: 'address_save_failed' }, { status: 500 });
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Signup API error:', error);
+    secureLog('error', 'Signup API error', safeErrorLog(error));
     return NextResponse.json({ error: 'internal_error' }, { status: 500 });
   }
 }
