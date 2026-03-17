@@ -1,7 +1,23 @@
 {
   "metadata": {
-    "title": "桃娘 - 線上訂購",
-    "description": "桃娘線上訂購網站。支援餐車取餐與宅配服務。"
+    "title": "桃娘 - 福島正宗台灣料理・餐車服務",
+    "description": "福島桃娘線上訂購網站。正宗台灣料理冷凍食品及桃娘周邊商品宅配到府。提供餐車取餐服務。",
+    "home": {
+      "title": "桃娘 - 福島正宗台灣料理・餐車服務",
+      "description": "福島桃娘線上訂購網站。正宗台灣料理冷凍食品及桃娘周邊商品宅配到府。提供餐車取餐服務。"
+    },
+    "shop": {
+      "title": "台灣料理網購・冷凍食品宅配 | 桃娘",
+      "description": "滷肉飯等正宗台灣料理冷凍食品及周邊商品，全國宅配到府。使用福島在地食材的桃娘線上商店。"
+    },
+    "legal": {
+      "title": "特定商業交易法標示 | 桃娘",
+      "description": "桃娘特定商業交易法標示頁面。商家資訊及銷售條件等。"
+    },
+    "taiwanNightMarket": {
+      "title": "台灣夜市 福島 | 桃娘台灣夜市美食通販",
+      "description": "來自福島的台灣夜市攤位料理，全國宅配到府。滷肉飯、台灣甜點等，在家就能享用台灣夜市美食。桃娘線上商店。"
+    }
   },
   "common": {
     "siteName": "福島桃娘商品網站",
@@ -30,7 +46,8 @@
     "outOfStock": "缺貨",
     "yen": "¥{price}",
     "requiredFieldsError": "請填寫必填欄位",
-    "unexpectedError": "發生了意外的錯誤"
+    "unexpectedError": "發生了意外的錯誤",
+    "taiwanNightMarket": "台灣夜市"
   },
   "home": {
     "heroTitle": "歡迎來到\n福島桃娘商品網站",
@@ -176,6 +193,7 @@
     "orderSummary": "訂單摘要",
     "cartEmpty": "購物車是空的",
     "backToShop": "返回商品列表",
+    "loginRequired": "宅配訂購需要登入",
     "errors": {
       "tempZoneMixed": "冷凍食品與周邊商品無法同時訂購。請分開下單。",
       "productNotShippable": "包含無法配送的商品。",
@@ -231,6 +249,24 @@
     "password": "密碼",
     "passwordHint": "6個字元以上",
     "name": "姓名",
+    "phone": "電話號碼",
+    "phonePlaceholder": "090-1234-5678",
+    "phoneRequired": "請輸入電話號碼。",
+    "phoneInvalid": "電話號碼格式不正確。",
+    "stepAccount": "帳號資訊",
+    "stepAddress": "配送地址",
+    "next": "下一步",
+    "back": "返回",
+    "postalCode": "郵遞區號",
+    "prefecture": "都道府縣",
+    "city": "市區町村",
+    "address1": "地址",
+    "address2": "其他（選填）",
+    "postalCodeRequired": "請輸入郵遞區號。",
+    "postalCodeInvalid": "郵遞區號格式不正確。",
+    "prefectureRequired": "請輸入都道府縣。",
+    "cityRequired": "請輸入市區町村。",
+    "address1Required": "請輸入地址。",
     "loginButton": "登入",
     "loggingIn": "登入中...",
     "signupButton": "註冊",
@@ -361,5 +397,16 @@
   "languageSwitcher": {
     "ja": "日本語",
     "zh-tw": "繁體中文"
+  },
+  "taiwanNightMarket": {
+    "heroTitle": "歡迎來到台灣夜市",
+    "heroSubtitle": "桃娘帶您體驗\n台灣夜市的世界",
+    "eventTitle": "活動資訊",
+    "eventDate": "舉辦日期",
+    "eventLocation": "地點",
+    "eventDetail": "詳細內容",
+    "menuTitle": "攤位菜單",
+    "ctaShop": "線上訂購",
+    "ctaPickup": "預約餐車取餐"
   }
 }

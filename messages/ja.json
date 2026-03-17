@@ -1,7 +1,23 @@
 {
   "metadata": {
-    "title": "もも娘 - オンライン注文",
-    "description": "もも娘のオンライン注文サイト。キッチンカー販売・配送に対応。"
+    "title": "もも娘 - 福島の本格台湾料理・キッチンカー販売",
+    "description": "福島もも娘のオンライン注文サイト。本格台湾料理の冷凍食品・グッズのお取り寄せ。キッチンカー販売も対応。",
+    "home": {
+      "title": "もも娘 - 福島の本格台湾料理・キッチンカー販売",
+      "description": "福島もも娘のオンライン注文サイト。本格台湾料理の冷凍食品・グッズのお取り寄せ。キッチンカー販売も対応。"
+    },
+    "shop": {
+      "title": "台湾料理の通販・冷凍お取り寄せ | もも娘",
+      "description": "魯肉飯（ルーローファン）など本格台湾料理の冷凍食品・グッズをオンラインで全国配送。福島産食材使用のもも娘オンラインショップ。"
+    },
+    "legal": {
+      "title": "特定商取引法に基づく表記 | もも娘",
+      "description": "もも娘の特定商取引法に基づく表記ページ。事業者情報・販売条件等を掲載。"
+    },
+    "taiwanNightMarket": {
+      "title": "台湾夜市 福島 | もも娘の台湾夜市フード通販",
+      "description": "台湾夜市の屋台料理を福島から全国にお届け。魯肉飯・台湾スイーツなどをおうちで台湾夜市気分を楽しめる。もも娘オンラインショップ。"
+    }
   },
   "common": {
     "siteName": "福島もも娘物販サイト",
@@ -30,7 +46,8 @@
     "outOfStock": "在庫切れ",
     "yen": "¥{price}",
     "requiredFieldsError": "必須項目を入力してください",
-    "unexpectedError": "予期しないエラーが発生しました"
+    "unexpectedError": "予期しないエラーが発生しました",
+    "taiwanNightMarket": "台湾夜市"
   },
   "home": {
     "heroTitle": "福島もも娘物販サイトへ\nようこそ",
@@ -176,6 +193,7 @@
     "orderSummary": "注文内容",
     "cartEmpty": "カートが空です",
     "backToShop": "商品一覧に戻る",
+    "loginRequired": "配送注文にはログインが必要です",
     "errors": {
       "tempZoneMixed": "冷凍食品とグッズは同時に注文できません。別々にご注文ください。",
       "productNotShippable": "配送できない商品が含まれています。",
@@ -231,6 +249,24 @@
     "password": "パスワード",
     "passwordHint": "6文字以上",
     "name": "お名前",
+    "phone": "電話番号",
+    "phonePlaceholder": "090-1234-5678",
+    "phoneRequired": "電話番号を入力してください。",
+    "phoneInvalid": "電話番号の形式が正しくありません。",
+    "stepAccount": "アカウント情報",
+    "stepAddress": "配送先住所",
+    "next": "次へ",
+    "back": "戻る",
+    "postalCode": "郵便番号",
+    "prefecture": "都道府県",
+    "city": "市区町村",
+    "address1": "番地・建物名",
+    "address2": "その他（任意）",
+    "postalCodeRequired": "郵便番号を入力してください。",
+    "postalCodeInvalid": "郵便番号の形式が正しくありません。",
+    "prefectureRequired": "都道府県を入力してください。",
+    "cityRequired": "市区町村を入力してください。",
+    "address1Required": "番地を入力してください。",
     "loginButton": "ログイン",
     "loggingIn": "ログイン中...",
     "signupButton": "新規登録",
@@ -361,5 +397,16 @@
   "languageSwitcher": {
     "ja": "日本語",
     "zh-tw": "繁體中文"
+  },
+  "taiwanNightMarket": {
+    "heroTitle": "台湾夜市へようこそ",
+    "heroSubtitle": "もも娘が贈る\n台湾夜市の世界",
+    "eventTitle": "開催情報",
+    "eventDate": "開催日時",
+    "eventLocation": "場所",
+    "eventDetail": "詳細",
+    "menuTitle": "屋台メニュー",
+    "ctaShop": "オンラインで注文する",
+    "ctaPickup": "店頭受け取りを予約"
   }
 }
