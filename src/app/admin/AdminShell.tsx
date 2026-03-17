@@ -21,6 +21,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import ArticleIcon from '@mui/icons-material/Article';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -29,6 +30,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: '注文管理', icon: <ShoppingCartIcon />, href: '/admin/orders' },
   { text: '商品管理', icon: <InventoryIcon />, href: '/admin/products' },
+  { text: 'ニュース管理', icon: <ArticleIcon />, href: '/admin/news' },
 ];
 
 export default function AdminShell({

@@ -6,3 +6,4 @@ export { default as QuantityControl } from './QuantityControl';
 export { default as ProductCard } from './ProductCard';
 export { default as OrderSummary } from './OrderSummary';
 export type { OrderSummaryItem } from './OrderSummary';
+export { default as NewsSection } from './NewsSection';
