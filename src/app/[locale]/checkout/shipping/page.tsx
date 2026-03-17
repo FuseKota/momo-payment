@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import {
   Box,
   Container,
@@ -29,7 +29,7 @@ import type { OrderSummaryItem } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFormField } from '@/hooks/useFormField';
-import { validateCustomerFields, POSTAL_CODE_REGEX } from '@/lib/utils/form-validators';
+import { validateCustomerFields, validateAddressFields } from '@/lib/utils/form-validators';
 import { getLocalizedName } from '@/lib/utils/localize-product';
 import { SHIPPING_FEE_YEN } from '@/lib/utils/constants';
 import type { CustomerAddress } from '@/types/database';
@@ -38,8 +38,9 @@ export default function ShippingCheckoutPage() {
   const t = useTranslations('checkoutShipping');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,9 +60,21 @@ export default function ShippingCheckoutPage() {
   const steps = [t('stepAddress'), t('stepPayment')];
   const total = subtotal + SHIPPING_FEE_YEN;
 
-  // ログインユーザーの保存済み住所を取得
+  // 認証ゲート: 未ログインならログインページへリダイレクト
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login?callbackUrl=/checkout/shipping' as '/login');
+    }
+  }, [user, authLoading, router]);
+
+  // ログインユーザーの保存済み住所を取得 + メールプリフィル
   useEffect(() => {
     if (!user) return;
+
+    // メールをプリフィル
+    if (user.email) {
+      setValues({ email: user.email });
+    }
 
     const fetchAddresses = async () => {
       try {
@@ -106,16 +119,8 @@ export default function ShippingCheckoutPage() {
     const tv = (key: string) => t(`validation.${key}`);
     const errors: Partial<Record<string, string>> = {
       ...validateCustomerFields(form, tv),
+      ...validateAddressFields(form, tv),
     };
-
-    if (!form.postalCode.trim()) {
-      errors.postalCode = tv('postalCodeRequired');
-    } else if (!POSTAL_CODE_REGEX.test(form.postalCode)) {
-      errors.postalCode = tv('postalCodeInvalid');
-    }
-    if (!form.prefecture.trim()) errors.prefecture = tv('prefectureRequired');
-    if (!form.city.trim()) errors.city = tv('cityRequired');
-    if (!form.address1.trim()) errors.address1 = tv('address1Required');
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -188,6 +193,17 @@ export default function ShippingCheckoutPage() {
       setIsLoading(false);
     }
   };
+
+  // 認証チェック中はローディング表示
+  if (authLoading || !user) {
+    return (
+      <Layout>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </Layout>
+    );
+  }
 
   if (items.length === 0) {
     return (

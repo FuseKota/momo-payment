@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
   applySecurityHeaders(response);
 
   // /[locale]/mypage, /[locale]/login のセッションリフレッシュ
-  const localePattern = /^\/(ja|zh-tw)\/(mypage|login)(\/|$)/;
+  const localePattern = /^\/(ja|zh-tw)\/(mypage|login|checkout\/shipping)(\/|$)/;
   if (localePattern.test(pathname)) {
     await refreshSupabaseSession(request, response);
     applySecurityHeaders(response);
