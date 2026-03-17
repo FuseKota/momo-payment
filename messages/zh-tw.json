@@ -409,6 +409,27 @@
     "eventDetail": "詳細內容",
     "menuTitle": "攤位菜單",
     "ctaShop": "線上訂購",
-    "ctaPickup": "預約餐車取餐"
+    "ctaPickup": "預約餐車取餐",
+    "guideTitle": "台灣夜市指南",
+    "guideSubtitle": "感受充滿活力的美食世界",
+    "popularTitle": "熱門夜市",
+    "shilinTitle": "士林夜市",
+    "shilinDesc": "台北規模最大的夜市，從美食到流行服飾、遊樂設施一應俱全的必訪景點。",
+    "raoheTitle": "饒河街觀光夜市",
+    "raoheDesc": "一條街的簡單構造，胡椒餅攤位大排長龍不容錯過。充滿懷舊氛圍是其魅力所在。",
+    "ningxiaTitle": "寧夏夜市",
+    "ningxiaDesc": "被稱為「胃的夜市」，以美食為主題。深受當地人喜愛的美食攤位雲集。",
+    "gourmetTitle": "必吃美食",
+    "dajipaiTitle": "大雞排",
+    "dajipaiDesc": "比臉還大的巨型炸雞排。酥脆的麵衣加上五香粉的香氣令人食慾大開。",
+    "xiaolongbaoTitle": "小籠包",
+    "xiaolongbaoDesc": "薄皮包裹著滿滿的熱湯汁。在夜市攤位也能享受到道地的美味。",
+    "stinkyTofuTitle": "臭豆腐",
+    "stinkyTofuDesc": "以獨特的氣味為特徵，但一吃就上癮。炸臭豆腐是初次嘗試者的推薦選擇。",
+    "footerTagline": "為您送上美味滷肉飯與可愛商品",
+    "footerOrder": "訂購",
+    "footerSupport": "支援",
+    "footerLegal": "根據特定商交易法的標示",
+    "footerBackToTop": "回到頁面頂端"
   }
 }

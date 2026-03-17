@@ -409,6 +409,27 @@
     "eventDetail": "詳細",
     "menuTitle": "屋台メニュー",
     "ctaShop": "オンラインで注文する",
-    "ctaPickup": "店頭受け取りを予約"
+    "ctaPickup": "店頭受け取りを予約",
+    "guideTitle": "台湾夜市ガイド",
+    "guideSubtitle": "圧倒的な活気と美食の世界へ",
+    "popularTitle": "人気夜市",
+    "shilinTitle": "士林夜市 (シーリン)",
+    "shilinDesc": "台北最大規模を誇る夜市。B級グルメからファッション、ゲームまで何でも揃う定番スポットです。",
+    "raoheTitle": "饒河街観光夜市 (ラオホー)",
+    "raoheDesc": "一本道の分かりやすい構造。胡椒餅の行列は必見。ノスタルジックな雰囲気が魅力です。",
+    "ningxiaTitle": "寧夏夜市 (ニンシャー)",
+    "ningxiaDesc": "「胃袋の夜市」と呼ばれるほどグルメに特化。地元民にも愛される美味しい屋台が密集しています。",
+    "gourmetTitle": "必食グルメ",
+    "dajipaiTitle": "大鶏排 (ダージーパイ)",
+    "dajipaiDesc": "顔の大きさほどある巨大なフライドチキン。サクサクの衣と五香粉のスパイシーな香りが食欲をそそります。",
+    "xiaolongbaoTitle": "小籠包 (ショウロンポウ)",
+    "xiaolongbaoDesc": "薄い皮の中に熱々の肉汁がたっぷり。夜市の屋台でも本格的な味わいが楽しめます。",
+    "stinkyTofuTitle": "臭豆腐 (チョウドウフ)",
+    "stinkyTofuDesc": "独特の香りが特徴ですが、食べるとやみつきになる美味しさ。揚げたものが初心者にはおすすめです。",
+    "footerTagline": "おいしい魯肉飯とかわいいグッズをお届けします",
+    "footerOrder": "ご注文",
+    "footerSupport": "サポート",
+    "footerLegal": "特定商取引法に基づく表記",
+    "footerBackToTop": "ページトップへ戻る"
   }
 }
