@@ -102,11 +102,6 @@ export default function TaiwanNightMarketFooter() {
                 {t('footerOrder')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link href="/pickup" style={{ textDecoration: 'none' }}>
-                  <Typography variant="body2" sx={linkSx}>
-                    {tc('pickup')}
-                  </Typography>
-                </Link>
                 <Link href="/shop" style={{ textDecoration: 'none' }}>
                   <Typography variant="body2" sx={linkSx}>
                     {tc('shipping')}

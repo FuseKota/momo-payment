@@ -10,9 +10,7 @@ import {
   Grid,
   Chip,
 } from '@mui/material';
-import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Layout } from '@/components/common';
 
 export default function HomeClient() {
@@ -92,18 +90,8 @@ export default function HomeClient() {
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 component={Link}
-                href="/pickup"
-                variant="contained"
-                size="large"
-                startIcon={<StorefrontIcon />}
-                sx={{ minWidth: 180 }}
-              >
-                {t('pickupButton')}
-              </Button>
-              <Button
-                component={Link}
                 href="/shop"
-                variant="outlined"
+                variant="contained"
                 size="large"
                 startIcon={<LocalShippingIcon />}
                 sx={{ minWidth: 180 }}
@@ -126,74 +114,6 @@ export default function HomeClient() {
         </Typography>
 
         <Grid container spacing={4}>
-          {/* キッチンカー販売 */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              component={Link}
-              href="/pickup"
-              sx={{
-                display: 'block',
-                height: '100%',
-                textDecoration: 'none',
-                border: '3px solid #FF6680',
-                borderRadius: '12px',
-                backgroundColor: '#fff',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(255, 102, 128, 0.2)',
-                },
-              }}
-            >
-              <Box sx={{ p: 4 }}>
-                <Box
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #FFF0F3 0%, #FFE0E6 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 3,
-                  }}
-                >
-                  <StorefrontIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-                </Box>
-
-                <Typography variant="h4" sx={{ mb: 2, color: 'text.primary' }}>
-                  {t('pickupTitle')}
-                </Typography>
-
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                  {t('pickupDescription').split('\n').map((line, i) => (
-                    <span key={i}>
-                      {i > 0 && <br />}
-                      {line}
-                    </span>
-                  ))}
-                </Typography>
-
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Chip
-                    icon={<AccessTimeIcon />}
-                    label={t('preOrder')}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={t('payAtPickupOk')}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                </Box>
-              </Box>
-            </Box>
-          </Grid>
-
           {/* 配送注文 */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box

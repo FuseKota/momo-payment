@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
@@ -51,7 +50,6 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
 
   const navItems = [
     { label: t('home'), href: '/' as const, icon: <HomeIcon /> },
-    { label: t('pickup'), href: '/pickup' as const, icon: <StorefrontIcon /> },
     { label: t('shipping'), href: '/shop' as const, icon: <LocalShippingIcon /> },
     { label: t('taiwanNightMarket'), href: '/taiwan-night-market' as const, icon: <NightlifeIcon /> },
   ];
