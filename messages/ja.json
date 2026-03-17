@@ -47,7 +47,8 @@
     "yen": "¥{price}",
     "requiredFieldsError": "必須項目を入力してください",
     "unexpectedError": "予期しないエラーが発生しました",
-    "taiwanNightMarket": "台湾夜市"
+    "taiwanNightMarket": "台湾夜市",
+    "news": "ニュース"
   },
   "home": {
     "heroTitle": "福島もも娘物販サイトへ\nようこそ",

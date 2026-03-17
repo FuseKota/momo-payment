@@ -47,7 +47,8 @@
     "yen": "¥{price}",
     "requiredFieldsError": "請填寫必填欄位",
     "unexpectedError": "發生了意外的錯誤",
-    "taiwanNightMarket": "台灣夜市"
+    "taiwanNightMarket": "台灣夜市",
+    "news": "最新消息"
   },
   "home": {
     "heroTitle": "歡迎來到\n福島桃娘商品網站",

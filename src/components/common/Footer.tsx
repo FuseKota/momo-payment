@@ -104,6 +104,17 @@ export default function Footer() {
               ご注文
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Link href="/news" style={{ textDecoration: 'none' }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  ニュース
+                </Typography>
+              </Link>
               <Link href="/shop" style={{ textDecoration: 'none' }}>
                 <Typography
                   variant="body2"

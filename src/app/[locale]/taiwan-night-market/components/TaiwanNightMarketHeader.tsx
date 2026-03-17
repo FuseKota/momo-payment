@@ -22,6 +22,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
+import ArticleIcon from '@mui/icons-material/Article';
 import NightlifeIcon from '@mui/icons-material/Nightlife';
 import LanguageIcon from '@mui/icons-material/Language';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -49,6 +50,7 @@ export default function TaiwanNightMarketHeader() {
 
   const navItems = [
     { label: t('home'), href: '/' as const, icon: <HomeIcon /> },
+    { label: t('news'), href: '/news' as const, icon: <ArticleIcon /> },
     { label: t('shipping'), href: '/shop' as const, icon: <LocalShippingIcon /> },
     { label: t('taiwanNightMarket'), href: '/taiwan-night-market' as const, icon: <NightlifeIcon /> },
   ];
