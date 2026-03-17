@@ -34,3 +34,31 @@ export function validateCustomerFields(
 
   return errors;
 }
+
+interface AddressFields {
+  postalCode: string;
+  prefecture: string;
+  city: string;
+  address1: string;
+}
+
+/**
+ * 住所フィールドの共通バリデーション
+ */
+export function validateAddressFields(
+  form: AddressFields,
+  getErrorMessage: (key: string) => string
+): Partial<Record<string, string>> {
+  const errors: Partial<Record<string, string>> = {};
+
+  if (!form.postalCode.trim()) {
+    errors.postalCode = getErrorMessage('postalCodeRequired');
+  } else if (!POSTAL_CODE_REGEX.test(form.postalCode)) {
+    errors.postalCode = getErrorMessage('postalCodeInvalid');
+  }
+  if (!form.prefecture.trim()) errors.prefecture = getErrorMessage('prefectureRequired');
+  if (!form.city.trim()) errors.city = getErrorMessage('cityRequired');
+  if (!form.address1.trim()) errors.address1 = getErrorMessage('address1Required');
+
+  return errors;
+}

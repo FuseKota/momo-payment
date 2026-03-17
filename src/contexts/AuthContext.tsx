@@ -4,6 +4,15 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
+export interface SignUpAddress {
+  phone: string;
+  postalCode: string;
+  pref: string;
+  city: string;
+  address1: string;
+  address2?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -11,7 +20,7 @@ interface AuthContextType {
   isCustomer: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, address?: SignUpAddress) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -78,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, address?: SignUpAddress) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -89,12 +98,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) return { error };
 
-    // customer_profiles にプロフィール作成
+    // 重複サインアップ検知: identities が空なら既存ユーザー
+    if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+      return { error: new Error('signup_duplicate') };
+    }
+
+    // service_role 経由でプロフィール+住所を保存
     if (data.user) {
-      await supabase.from('customer_profiles').insert({
-        user_id: data.user.id,
-        display_name: name,
-      });
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.user.id,
+            name,
+            phone: address?.phone || '',
+            address: address ? {
+              postalCode: address.postalCode,
+              pref: address.pref,
+              city: address.city,
+              address1: address.address1,
+              address2: address.address2,
+            } : undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          console.error('Failed to save profile/address via API:', res.status, body);
+        }
+      } catch (err) {
+        console.error('Signup API call failed:', err);
+      }
     }
 
     return { error: null };
