@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
@@ -57,19 +58,14 @@ export default function TaiwanNightMarketFooter() {
             {/* Brand */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #fbc02d, #ff5252)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mr: 1.5,
-                  }}
-                >
-                  <Typography sx={{ fontSize: '1rem' }}>🍑</Typography>
+                <Box sx={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', mr: 1.5, flexShrink: 0 }}>
+                  <Image
+                    src="/images/sakura-sisters-logo.png"
+                    alt="Sakura Sisters"
+                    width={40}
+                    height={40}
+                    style={{ objectFit: 'cover' }}
+                  />
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: gold }}>
                   福島もも娘
