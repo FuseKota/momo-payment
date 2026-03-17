@@ -275,7 +275,9 @@
     "loginError": "ログイン処理中にエラーが発生しました。",
     "passwordTooShort": "パスワードは6文字以上で入力してください。",
     "nameRequired": "お名前を入力してください。",
+    "emailRequired": "メールアドレスを入力してください。",
     "signupFailed": "登録に失敗しました。別のメールアドレスをお試しください。",
+    "signupDuplicate": "このメールアドレスはすでに登録されています。ログインしてください。",
     "signupSuccess": "登録が完了しました。確認メールをご確認ください。"
   },
   "mypage": {

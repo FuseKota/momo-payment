@@ -1,19 +1,29 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * POST /api/auth/signup
  * サインアップ後のプロフィール・住所保存（service_role 経由）
  *
- * Body: { userId, name, phone, address? }
+ * Body: { name, phone, address? }
+ * userId はセッションから取得（クライアントから受け取らない）
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { userId, name, phone, address } = body;
+    // セッションから userId を取得（ボディの userId は信頼しない）
+    const supabaseClient = await createClient();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
-    if (!userId || !name) {
-      return NextResponse.json({ error: 'userId and name are required' }, { status: 400 });
+    if (authError || !user) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { name, phone, address } = body;
+
+    if (!name) {
+      return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -22,7 +32,7 @@ export async function POST(request: Request) {
     const { error: profileError } = await supabase
       .from('customer_profiles')
       .insert({
-        user_id: userId,
+        user_id: user.id,
         display_name: name,
         phone: phone || null,
       });
@@ -43,7 +53,7 @@ export async function POST(request: Request) {
       const { error: addressError } = await supabase
         .from('customer_addresses')
         .insert({
-          user_id: userId,
+          user_id: user.id,
           label: '自宅',
           postal_code: postalCode,
           pref,

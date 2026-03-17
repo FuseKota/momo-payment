@@ -30,7 +30,8 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
-  const safeCallbackUrl = callbackUrl?.startsWith('/') ? callbackUrl : '/mypage';
+  // // で始まるプロトコル相対URLによるオープンリダイレクトを防ぐ
+  const safeCallbackUrl = callbackUrl && /^\/[^/]/.test(callbackUrl) ? callbackUrl : '/mypage';
 
   const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAuth();
   const [tab, setTab] = useState(0);
@@ -89,7 +90,7 @@ export default function LoginPage() {
     const errors: Partial<Record<string, string>> = {};
 
     if (!name.trim()) errors.name = t('nameRequired');
-    if (!email.trim()) errors.email = t('loginFailed');
+    if (!email.trim()) errors.email = t('emailRequired');
     if (password.length < 6) errors.password = t('passwordTooShort');
     if (!phone.trim()) {
       errors.phone = t('phoneRequired');
@@ -134,7 +135,11 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(t('signupFailed'));
+      if (error.message === 'signup_duplicate') {
+        setError(t('signupDuplicate'));
+      } else {
+        setError(t('signupFailed'));
+      }
       setIsLoading(false);
       return;
     }

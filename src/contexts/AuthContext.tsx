@@ -103,14 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('signup_duplicate') };
     }
 
-    // service_role 経由でプロフィール+住所を保存
+    // service_role 経由でプロフィール+住所を保存（userId はサーバー側でセッションから取得）
     if (data.user) {
       try {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: data.user.id,
             name,
             phone: address?.phone || '',
             address: address ? {
@@ -126,9 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) {
           const body = await res.json().catch(() => null);
           console.error('Failed to save profile/address via API:', res.status, body);
+          return { error: new Error('profile_save_failed') };
         }
       } catch (err) {
         console.error('Signup API call failed:', err);
+        return { error: new Error('profile_save_failed') };
       }
     }
 

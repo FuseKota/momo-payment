@@ -275,7 +275,9 @@
     "loginError": "登入時發生錯誤。",
     "passwordTooShort": "密碼需要6個字元以上。",
     "nameRequired": "請輸入姓名。",
+    "emailRequired": "請輸入電子信箱。",
     "signupFailed": "註冊失敗。請嘗試其他電子信箱。",
+    "signupDuplicate": "此電子信箱已被註冊。請直接登入。",
     "signupSuccess": "註冊完成。請確認驗證信件。"
   },
   "mypage": {
