@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
   verifyStripeWebhookSignature,
   isCheckoutSessionCompleted,
+  isCheckoutSessionExpired,
   extractSessionInfo,
 } from '@/lib/stripe/webhook';
 import { getStripeEnvironmentName } from '@/lib/stripe/client';
@@ -31,6 +32,17 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. 冪等性チェック（同じevent_idは二度処理しない）
+  const { data: existingEvent } = await supabaseAdmin
+    .from('stripe_webhook_events')
+    .select('id')
+    .eq('event_id', event.id)
+    .maybeSingle();
+
+  if (existingEvent) {
+    secureLog('info', 'Stripe webhook: duplicate event, skipping');
+    return NextResponse.json({ ok: true, message: 'already processed' });
+  }
+
   const { error: insertError } = await supabaseAdmin
     .from('stripe_webhook_events')
     .insert({
@@ -40,22 +52,39 @@ export async function POST(request: NextRequest) {
     });
 
   if (insertError) {
-    // unique違反 = 既に処理済み
-    if (insertError.message.includes('duplicate key')) {
-      secureLog('info', 'Stripe webhook: duplicate event, skipping');
-      return NextResponse.json({ ok: true, message: 'already processed' });
-    }
     secureLog('error', 'Stripe webhook: insert error', safeErrorLog(insertError));
-    // 他のエラーでも200を返す（Stripeの無限再送を防ぐ）
+    return new NextResponse('Database error', { status: 500 });
   }
 
-  // 4. checkout.session.completed 以外は無視
+  // 4. checkout.session.expired: orderをCANCELLEDに更新
+  if (isCheckoutSessionExpired(event)) {
+    const sessionInfo = extractSessionInfo(event);
+    if (sessionInfo) {
+      const { data: expiredPayment } = await supabaseAdmin
+        .from('payments')
+        .select('id, order_id')
+        .eq('stripe_session_id', sessionInfo.sessionId)
+        .maybeSingle();
+
+      if (expiredPayment) {
+        await supabaseAdmin
+          .from('orders')
+          .update({ status: 'CANCELLED' })
+          .eq('id', expiredPayment.order_id);
+
+        secureLog('info', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
+      }
+    }
+    return NextResponse.json({ ok: true, message: 'session expired handled' });
+  }
+
+  // 5. checkout.session.completed 以外は無視
   if (!isCheckoutSessionCompleted(event)) {
     secureLog('info', `Stripe webhook: ignoring event type ${event.type}`);
     return NextResponse.json({ ok: true, message: 'ignored' });
   }
 
-  // 5. セッション情報を抽出
+  // 6. セッション情報を抽出
   const sessionInfo = extractSessionInfo(event);
   if (!sessionInfo) {
     secureLog('error', 'Stripe webhook: no session info in event');
@@ -64,7 +93,7 @@ export async function POST(request: NextRequest) {
 
   const { sessionId, paymentIntentId } = sessionInfo;
 
-  // 6. paymentsテーブルからinternal orderを特定
+  // 7. paymentsテーブルからinternal orderを特定
   const { data: paymentRow, error: paymentError } = await supabaseAdmin
     .from('payments')
     .select('id, order_id')
@@ -76,7 +105,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: 'payment not found' });
   }
 
-  // 7. paymentsを更新
+  // 8. paymentsを更新
   const { error: updatePaymentError } = await supabaseAdmin
     .from('payments')
     .update({
@@ -91,7 +120,7 @@ export async function POST(request: NextRequest) {
     secureLog('error', 'Stripe webhook: failed to update payment', safeErrorLog(updatePaymentError));
   }
 
-  // 8. ordersを更新（PAID）
+  // 9. ordersを更新（PAID）
   const { data: orderData, error: updateOrderError } = await supabaseAdmin
     .from('orders')
     .update({ status: 'PAID', paid_at: new Date().toISOString() })
@@ -105,7 +134,7 @@ export async function POST(request: NextRequest) {
 
   secureLog('info', `Stripe webhook: order ${paymentRow.order_id} marked as PAID`);
 
-  // 9. メール通知を送信
+  // 10. メール通知を送信
   if (orderData && orderData.customer_email) {
     const orderLocale = orderData.locale || 'ja';
     try {
