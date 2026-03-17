@@ -11,9 +11,14 @@ import {
   Chip,
 } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { Layout } from '@/components/common';
+import { Layout, NewsSection } from '@/components/common';
+import type { News } from '@/types/database';
 
-export default function HomeClient() {
+interface Props {
+  news: News[];
+}
+
+export default function HomeClient({ news }: Props) {
   const t = useTranslations('home');
 
   return (
@@ -103,6 +108,9 @@ export default function HomeClient() {
         </Container>
       </Box>
 
+      {/* News Section */}
+      <NewsSection items={news} />
+
       {/* Features Section */}
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
         <Typography
@@ -176,6 +184,7 @@ export default function HomeClient() {
           </Grid>
         </Grid>
       </Container>
+
 
     </Layout>
   );

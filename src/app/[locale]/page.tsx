@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import HomeClient from './HomeClient';
 
 export async function generateMetadata({
@@ -31,6 +32,14 @@ export async function generateMetadata({
   };
 }
 
-export default function Home() {
-  return <HomeClient />;
+export default async function Home() {
+  const supabase = getSupabaseAdmin();
+  const { data: news } = await supabase
+    .from('news')
+    .select('*')
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(3);
+
+  return <HomeClient news={news ?? []} />;
 }
