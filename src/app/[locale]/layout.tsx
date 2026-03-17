@@ -37,10 +37,31 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://momomusume.com";
 
   return {
-    title: t("title"),
+    metadataBase: new URL(appUrl),
+    title: {
+      default: t("title"),
+      template: "%s | もも娘",
+    },
     description: t("description"),
+    alternates: {
+      canonical: `${appUrl}/${locale}`,
+      languages: {
+        ja: `${appUrl}/ja`,
+        "zh-TW": `${appUrl}/zh-tw`,
+        "x-default": `${appUrl}/ja`,
+      },
+    },
+    openGraph: {
+      siteName: "もも娘",
+      locale: locale === "zh-tw" ? "zh_TW" : "ja_JP",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
   };
 }
 

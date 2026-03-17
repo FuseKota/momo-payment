@@ -11,6 +11,7 @@ const notoSansJP = Noto_Sans_JP({
 
 export const metadata = {
   title: "管理画面 | 福島もも娘",
+  robots: { index: false, follow: false },
 };
 
 export default function AdminLayout({
