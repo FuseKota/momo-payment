@@ -105,10 +105,8 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </Typography>
           </Link>
 
-          <Box sx={{ flexGrow: 1 }} />
-
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 0.5, ml: 2, flexShrink: 0 }}>
               {navItems.map((item) => (
                 <Button
                   key={item.href}
@@ -116,12 +114,14 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   href={item.href}
                   color="inherit"
                   startIcon={item.icon}
-                  size="large"
+                  size="small"
                   sx={{
                     color: 'text.secondary',
-                    fontSize: '1rem',
-                    px: 2.5,
-                    py: 1,
+                    fontSize: '0.85rem',
+                    px: 1.2,
+                    py: 0.5,
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
                     '&:hover': {
                       color: 'primary.main',
                       backgroundColor: 'rgba(255, 102, 128, 0.08)',
@@ -134,9 +134,11 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </Box>
           )}
 
-          {/* Social Links - Desktop only */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Social Links - lg以上のみ表示 */}
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 0.5, ml: 2 }}>
+            <Box sx={{ display: { md: 'none', lg: 'flex' }, gap: 0.5, ml: 1 }}>
               {socialLinks.map((link) => (
                 <IconButton
                   key={link.href}
