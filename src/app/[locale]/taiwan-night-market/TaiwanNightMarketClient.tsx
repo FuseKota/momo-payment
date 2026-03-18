@@ -17,6 +17,7 @@ export default function TaiwanNightMarketClient({ news }: Props) {
   const t = useTranslations('taiwanNightMarket');
 
   useEffect(() => {
+    // スクロールアニメーション
     const faders = document.querySelectorAll('.fade-in-up');
     const observer = new IntersectionObserver(
       (entries) => {
@@ -30,7 +31,24 @@ export default function TaiwanNightMarketClient({ news }: Props) {
       { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
     );
     faders.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+
+    // ヒーロー順番演出: 1.両端ランタン → 2.内側ランタン → 3.門 → 4.テキスト(CSS)
+    const timers = [
+      setTimeout(() => {
+        document.querySelectorAll('[data-hero="outer"]').forEach((el) => el.classList.add('appear'));
+      }, 100),
+      setTimeout(() => {
+        document.querySelectorAll('[data-hero="inner"]').forEach((el) => el.classList.add('appear'));
+      }, 600),
+      setTimeout(() => {
+        document.querySelector('[data-hero="gate"]')?.classList.add('appear');
+      }, 1100),
+    ];
+
+    return () => {
+      observer.disconnect();
+      timers.forEach(clearTimeout);
+    };
   }, []);
 
   return (
@@ -39,11 +57,15 @@ export default function TaiwanNightMarketClient({ news }: Props) {
       <div className={styles.pageWrapper}>
         {/* Hero */}
         <header className={styles.hero}>
+          {/* 3. 門（ランタンの後に表示） */}
+          <div className={styles.gateLayer} data-hero="gate" />
           <div className={styles.lanternContainer}>
-            <Lantern size="sm" positionClass={styles.l6} />
-            <Lantern size="md" positionClass={styles.l1} />
-            <Lantern size="lg" positionClass={styles.l7} />
-            <Lantern size="lg" positionClass={styles.l8} />
+            {/* 1. 両端のランタン */}
+            <Lantern size="lg" positionClass={styles.l7} heroGroup="outer" />
+            <Lantern size="lg" positionClass={styles.l8} heroGroup="outer" />
+            {/* 2. 内側のランタン */}
+            <Lantern size="md" positionClass={styles.l1} heroGroup="inner" />
+            <Lantern size="sm" positionClass={styles.l6} heroGroup="inner" />
           </div>
           <div className={styles.heroContent}>
             <h1 className={styles.heroTitle}>{t('guideTitle')}</h1>
