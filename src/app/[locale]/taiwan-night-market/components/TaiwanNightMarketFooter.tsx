@@ -23,6 +23,7 @@ const goldHover = 'rgba(251, 192, 45, 0.12)';
 export default function TaiwanNightMarketFooter() {
   const t = useTranslations('taiwanNightMarket');
   const tc = useTranslations('common');
+  const tl = useTranslations('legal');
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
@@ -124,6 +125,11 @@ export default function TaiwanNightMarketFooter() {
                 <Link href="/legal/tokushoho" style={{ textDecoration: 'none' }}>
                   <Typography variant="body2" sx={linkSx}>
                     {t('footerLegal')}
+                  </Typography>
+                </Link>
+                <Link href="/legal/privacy" style={{ textDecoration: 'none' }}>
+                  <Typography variant="body2" sx={linkSx}>
+                    {tl('footerPrivacy')}
                   </Typography>
                 </Link>
               </Box>

@@ -145,6 +145,17 @@ export default function Footer() {
                   特定商取引法に基づく表記
                 </Typography>
               </Link>
+              <Link href="/legal/privacy" style={{ textDecoration: 'none' }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  プライバシーポリシー
+                </Typography>
+              </Link>
             </Box>
           </Grid>
         </Grid>
