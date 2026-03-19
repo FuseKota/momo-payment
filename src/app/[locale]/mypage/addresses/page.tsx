@@ -43,7 +43,7 @@ interface AddressForm {
 }
 
 const emptyForm: AddressForm = {
-  label: '自宅',
+  label: '',
   postalCode: '',
   pref: '',
   city: '',
@@ -92,7 +92,7 @@ export default function AddressesPage() {
   }, [user, fetchAddresses]);
 
   const openNewDialog = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, label: t('defaultLabel') });
     setEditingId(null);
     setDialogOpen(true);
   };

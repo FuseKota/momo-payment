@@ -329,6 +329,7 @@
     "fetchError": "地址取得失敗",
     "saveFailed": "儲存失敗",
     "deleteFailed": "刪除失敗",
+    "defaultLabel": "住家",
     "validation": {
       "recipientNameRequired": "請輸入收件人姓名",
       "phoneRequired": "請輸入電話號碼",
@@ -381,6 +382,12 @@
     "privacyContactBusiness": "業者名稱：○○",
     "privacyContactEmail": "電子信箱：○○@example.com",
     "footerPrivacy": "隱私權政策"
+  },
+  "news": {
+    "heading": "最新消息",
+    "noItems": "目前沒有新聞",
+    "backToList": "回新聞一覧",
+    "noContent": "本文暫無內容"
   },
   "status": {
     "RESERVED": "已預約",

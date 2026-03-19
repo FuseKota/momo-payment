@@ -3,23 +3,18 @@
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Chip, Divider, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useTranslations } from 'next-intl';
 import { Layout } from '@/components/common';
 import type { News } from '@/types/database';
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}.${m}.${day}`;
-}
+import { formatNewsDate } from '@/lib/utils/format';
 
 interface Props {
   news: News;
 }
 
 export default function NewsDetailClient({ news }: Props) {
+  const t = useTranslations('news');
+
   return (
     <Layout>
       <Box sx={{ background: 'linear-gradient(180deg, #FFF0F3 0%, #FFFBFC 100%)', py: { xs: 4, md: 6 } }}>
@@ -30,7 +25,7 @@ export default function NewsDetailClient({ news }: Props) {
             startIcon={<ArrowBackIcon />}
             sx={{ mb: 3, color: 'text.secondary' }}
           >
-            ニュース一覧
+            {t('backToList')}
           </Button>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -46,7 +41,7 @@ export default function NewsDetailClient({ news }: Props) {
               }}
             />
             <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-              {formatDate(news.published_at)}
+              {formatNewsDate(news.published_at)}
             </Typography>
           </Box>
 
@@ -75,7 +70,7 @@ export default function NewsDetailClient({ news }: Props) {
             {news.content}
           </Typography>
         ) : (
-          <Typography color="text.secondary">本文はありません</Typography>
+          <Typography color="text.secondary">{t('noContent')}</Typography>
         )}
       </Container>
     </Layout>

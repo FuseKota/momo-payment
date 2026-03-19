@@ -2,21 +2,16 @@
 
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Divider, Chip } from '@mui/material';
+import { useTranslations } from 'next-intl';
 import { Layout } from '@/components/common';
 import type { News } from '@/types/database';
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}.${m}.${day}`;
-}
+import { formatNewsDate } from '@/lib/utils/format';
 
 function truncate(text: string | null, max = 80): string {
   if (!text) return '';
-  return text.length > max ? text.slice(0, max) + '…' : text;
+  // サロゲートペア（絵文字等）を考慮した文字数カウント
+  const chars = Array.from(text);
+  return chars.length > max ? chars.slice(0, max).join('') + '…' : text;
 }
 
 interface Props {
@@ -24,6 +19,8 @@ interface Props {
 }
 
 export default function NewsListClient({ items }: Props) {
+  const t = useTranslations('news');
+
   return (
     <Layout>
       <Box sx={{ background: 'linear-gradient(180deg, #FFF0F3 0%, #FFFBFC 100%)', py: { xs: 4, md: 6 } }}>
@@ -42,7 +39,7 @@ export default function NewsListClient({ items }: Props) {
             NEWS
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            新着情報
+            {t('heading')}
           </Typography>
         </Container>
       </Box>
@@ -50,7 +47,7 @@ export default function NewsListClient({ items }: Props) {
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
         {items.length === 0 ? (
           <Typography color="text.secondary" sx={{ py: 8, textAlign: 'center' }}>
-            ニュースはまだありません
+            {t('noItems')}
           </Typography>
         ) : (
           <Box>
@@ -97,7 +94,7 @@ export default function NewsListClient({ items }: Props) {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {formatDate(item.published_at)}
+                        {formatNewsDate(item.published_at)}
                       </Typography>
                     </Box>
 

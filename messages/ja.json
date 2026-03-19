@@ -329,6 +329,7 @@
     "fetchError": "住所の取得に失敗しました",
     "saveFailed": "保存に失敗しました",
     "deleteFailed": "削除に失敗しました",
+    "defaultLabel": "自宅",
     "validation": {
       "recipientNameRequired": "宛名を入力してください",
       "phoneRequired": "電話番号を入力してください",
@@ -381,6 +382,12 @@
     "privacyContactBusiness": "事業者名：○○",
     "privacyContactEmail": "メールアドレス：○○@example.com",
     "footerPrivacy": "プライバシーポリシー"
+  },
+  "news": {
+    "heading": "新着情報",
+    "noItems": "ニュースはまだありません",
+    "backToList": "ニュース一覧",
+    "noContent": "本文はありません"
   },
   "status": {
     "RESERVED": "予約済",
