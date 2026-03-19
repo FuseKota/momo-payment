@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import Lantern from './components/Lantern';
 import TaiwanNightMarketHeader from './components/TaiwanNightMarketHeader';
@@ -75,6 +76,20 @@ export default function TaiwanNightMarketClient({ news }: Props) {
 
         {/* News Section */}
         <NewsSection items={news} variant="dark" />
+
+        {/* 赤べこセクション */}
+        <section className={styles.akabekoSection}>
+          <div className={`${styles.akabekoWrapper} fade-in-up`}>
+            <Image
+              src="/images/akabeko.gif"
+              alt="赤べこ"
+              width={240}
+              height={200}
+              unoptimized
+            />
+            <p className={styles.akabekoLabel}>AKABEKO</p>
+          </div>
+        </section>
 
         {/* 人気夜市 */}
         <section id="popular" className={styles.section}>
