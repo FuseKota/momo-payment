@@ -84,20 +84,22 @@ export function checkAdminRateLimit(ip: string): ReturnType<typeof checkRateLimi
 
 /**
  * リクエストからIPアドレスを取得
+ * x-real-ip を優先する（Vercel等の信頼できるインフラが設定するヘッダー）
+ * x-forwarded-for はクライアントに偽装される可能性があるため後回し
  */
 export function getClientIP(request: Request): string {
-  // Vercel/Cloudflare等のプロキシ対応
+  // x-real-ip: Vercel Edge Network 等の信頼できるプロキシが設定するIP（偽装不可）
+  const realIP = request.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP.trim();
+  }
+
+  // x-forwarded-for: 複数プロキシを経由した場合のIPリスト（最初のIPはクライアントだが偽装可能）
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
 
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP;
-  }
-
-  // フォールバック
   return 'unknown';
 }
 

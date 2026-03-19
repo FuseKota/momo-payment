@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { checkRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
@@ -36,6 +37,16 @@ export async function GET(
       );
     }
 
+    // 認証済みユーザーのIDを取得（省略可 - ゲスト注文に対応するため）
+    let currentUserId: string | null = null;
+    try {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUserId = user?.id ?? null;
+    } catch {
+      // 認証エラーは無視（ゲスト注文に対応するため）
+    }
+
     // 注文を取得
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -53,6 +64,7 @@ export async function GET(
         pickup_date,
         pickup_time,
         created_at,
+        user_id,
         order_items (
           id,
           product_name,
@@ -71,9 +83,21 @@ export async function GET(
       );
     }
 
+    // 認証済みユーザーの場合: user_idが一致することを確認（他人の注文閲覧防止）
+    if (order.user_id && currentUserId && order.user_id !== currentUserId) {
+      secureLog('warn', 'Order access denied: user_id mismatch', { ip: clientIP });
+      return NextResponse.json(
+        { ok: false, error: 'order_not_found' },
+        { status: 404 }
+      );
+    }
+
+    // レスポンスから内部フィールド(user_id)を除外
+    const { user_id: _uid, ...orderData } = order;
+
     return NextResponse.json({
       ok: true,
-      data: order,
+      data: orderData,
     });
   } catch (err) {
     secureLog('error', 'Get order error', safeErrorLog(err));

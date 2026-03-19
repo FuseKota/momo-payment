@@ -30,8 +30,8 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
-  // // で始まるプロトコル相対URLによるオープンリダイレクトを防ぐ
-  const safeCallbackUrl = callbackUrl && /^\/[^/]/.test(callbackUrl) ? callbackUrl : '/mypage';
+  // // や /\ で始まるプロトコル相対URL・バックスラッシュによるオープンリダイレクトを防ぐ
+  const safeCallbackUrl = callbackUrl && /^\/(?![\/\\])/.test(callbackUrl) ? callbackUrl : '/mypage';
 
   const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAuth();
   const [tab, setTab] = useState(0);
