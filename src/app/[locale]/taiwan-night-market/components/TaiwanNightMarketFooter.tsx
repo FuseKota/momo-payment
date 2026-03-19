@@ -59,12 +59,12 @@ export default function TaiwanNightMarketFooter() {
             {/* Brand */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', mr: 1.5, flexShrink: 0 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: '50%', mr: 1.5, flexShrink: 0, backgroundColor: 'rgba(255, 182, 193, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Image
                     src="/images/sakura-sisters-logo.png"
                     alt="Sakura Sisters"
-                    width={40}
-                    height={40}
+                    width={90}
+                    height={90}
                     style={{ objectFit: 'cover' }}
                   />
                 </Box>

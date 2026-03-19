@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -92,7 +93,13 @@ export default function TaiwanNightMarketHeader() {
           )}
 
           {/* Logo */}
-          <Link href="/taiwan-night-market" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+          <Link href="/taiwan-night-market" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Image
+              src="/images/sakura-sisters-logo.png"
+              alt="Sakura Sisters"
+              width={52}
+              height={52}
+            />
             <Typography
               variant="h5"
               component="span"
@@ -107,7 +114,7 @@ export default function TaiwanNightMarketHeader() {
                 whiteSpace: 'nowrap',
               }}
             >
-              🏮福島もも娘台湾夜市サイト
+              福島もも娘台湾夜市サイト
             </Typography>
           </Link>
 
@@ -173,7 +180,13 @@ export default function TaiwanNightMarketHeader() {
         PaperProps={{ sx: { backgroundColor: '#0a0005', color: '#f5f5f5', width: 280 } }}
       >
         <Box sx={{ pt: 2 }}>
-          <Box sx={{ px: 2, pb: 2 }}>
+          <Box sx={{ px: 2, pb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Image
+              src="/images/sakura-sisters-logo.png"
+              alt="Sakura Sisters"
+              width={60}
+              height={60}
+            />
             <Typography
               variant="h6"
               sx={{
@@ -185,7 +198,7 @@ export default function TaiwanNightMarketHeader() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              🏮福島もも娘台湾夜市サイト
+              福島もも娘台湾夜市サイト
             </Typography>
           </Box>
           <List>
