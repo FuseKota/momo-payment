@@ -28,6 +28,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!/^[a-z0-9-]+$/.test(productSlug)) {
+      return NextResponse.json(
+        { error: 'Invalid product slug' },
+        { status: 400 }
+      );
+    }
+
     const result = await uploadProductImage(file, productSlug);
 
     if (!result.success) {

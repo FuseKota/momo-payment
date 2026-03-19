@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { nameSchema, phoneSchema, addressSchema } from '@/lib/validation/schemas';
 
 /**
  * POST /api/auth/signup
@@ -21,11 +22,19 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, phone, address } = body;
+    const { name: rawName, phone: rawPhone, address } = body;
 
-    if (!name) {
+    const nameResult = nameSchema.safeParse(rawName);
+    if (!nameResult.success) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
+    const name = nameResult.data;
+
+    const phoneResult = rawPhone ? phoneSchema.safeParse(rawPhone) : null;
+    if (rawPhone && !phoneResult?.success) {
+      return NextResponse.json({ error: 'invalid phone format' }, { status: 400 });
+    }
+    const phone = phoneResult?.data ?? null;
 
     const supabase = getSupabaseAdmin();
 
@@ -35,7 +44,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         display_name: name,
-        phone: phone || null,
+        phone,
       });
 
     if (profileError) {
@@ -45,11 +54,11 @@ export async function POST(request: Request) {
 
     // 住所が指定されていれば customer_addresses に INSERT
     if (address) {
-      const { postalCode, pref, city, address1, address2 } = address;
-
-      if (!postalCode || !pref || !city || !address1) {
+      const addressResult = addressSchema.safeParse(address);
+      if (!addressResult.success) {
         return NextResponse.json({ error: 'address fields incomplete' }, { status: 400 });
       }
+      const { postalCode, pref, city, address1, address2 } = addressResult.data;
 
       const { error: addressError } = await supabase
         .from('customer_addresses')
