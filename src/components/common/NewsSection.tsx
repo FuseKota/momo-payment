@@ -44,7 +44,7 @@ export default function NewsSection({ items, variant = 'light' }: NewsSectionPro
     <Box
       sx={{
         py: isDark ? { xs: 10, md: 15 } : { xs: 6, md: 8 },
-        background: isDark ? '#1e1e1e' : '#FFFBFC',
+        background: isDark ? '#0a0a0a' : '#FFFBFC',
       }}
     >
       <Container maxWidth="lg">
