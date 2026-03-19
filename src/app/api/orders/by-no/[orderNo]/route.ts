@@ -71,24 +71,9 @@ export async function GET(
       );
     }
 
-    // 配送注文の場合は住所も取得
-    let shippingAddress = null;
-    if (order.order_type === 'SHIPPING') {
-      const { data: address } = await supabaseAdmin
-        .from('shipping_addresses')
-        .select('postal_code, pref, city, address1, address2')
-        .eq('order_id', order.id)
-        .single();
-
-      shippingAddress = address;
-    }
-
     return NextResponse.json({
       ok: true,
-      data: {
-        ...order,
-        shippingAddress,
-      },
+      data: order,
     });
   } catch (err) {
     secureLog('error', 'Get order error', safeErrorLog(err));
