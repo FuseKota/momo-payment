@@ -40,6 +40,7 @@ export default function QuantityControl({
         size={size}
         onClick={onDecrement}
         disabled={disableDecrement}
+        aria-label="数量を減らす"
         sx={isInline ? { color: 'primary.main' } : undefined}
       >
         <RemoveIcon fontSize={size} />
@@ -51,6 +52,8 @@ export default function QuantityControl({
           minWidth: isInline ? 24 : 32,
           textAlign: 'center',
         }}
+        aria-live="polite"
+        aria-label={`数量: ${qty}`}
       >
         {qty}
       </Typography>
@@ -58,6 +61,7 @@ export default function QuantityControl({
         size={size}
         onClick={onIncrement}
         disabled={disableIncrement}
+        aria-label="数量を増やす"
         sx={isInline ? { color: 'primary.main' } : undefined}
       >
         <AddIcon fontSize={size} />
