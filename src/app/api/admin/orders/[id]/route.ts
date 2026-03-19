@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sendShippingNotificationEmail } from '@/lib/email/resend';
 import { requireAdmin } from '@/lib/auth/require-admin';
+import { adminWriteGuard } from '@/lib/api/admin-guards';
+import { uuidSchema } from '@/lib/validation/schemas';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -12,6 +14,11 @@ export async function GET(request: Request, { params }: RouteParams) {
   if (!auth.authorized) return auth.response;
 
   const { id } = await params;
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {
@@ -44,11 +51,16 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const guard = await adminWriteGuard(request);
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
   const body = await request.json();
 
@@ -90,7 +102,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     // Send shipping notification email when status changes to SHIPPED

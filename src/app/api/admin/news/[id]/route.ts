@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
-import { requireAdmin } from '@/lib/auth/require-admin';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await adminWriteGuard(request);
@@ -35,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json(data);
@@ -45,8 +44,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
+  const guard = await adminWriteGuard(request);
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();
@@ -55,7 +54,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { error } = await supabase.from('news').delete().eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

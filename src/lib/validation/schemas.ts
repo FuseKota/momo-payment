@@ -1,6 +1,25 @@
 import { z } from 'zod';
 
 /**
+ * 食品表示ラベルスキーマ（FoodLabel インターフェースに対応）
+ */
+const foodLabelSchema = z.object({
+  ingredients: z.string().max(1000).optional(),
+  allergens: z.string().max(500).optional(),
+  nutrition: z.object({
+    calories: z.number().min(0).optional(),
+    protein: z.number().min(0).optional(),
+    fat: z.number().min(0).optional(),
+    carbohydrates: z.number().min(0).optional(),
+    sodium: z.number().min(0).optional(),
+  }).optional(),
+  net_weight_grams: z.number().min(0).optional(),
+  expiry_info: z.string().max(200).optional(),
+  storage_method: z.string().max(200).optional(),
+  manufacturer: z.string().max(200).optional(),
+}).nullable().optional();
+
+/**
  * 日本の電話番号バリデーション
  * 形式: 090-1234-5678, 09012345678, 03-1234-5678 等
  */
@@ -145,10 +164,10 @@ export const adminProductCreateSchema = z.object({
   stock_qty: z.number().int().min(0).nullable().optional(),
   sort_order: z.number().int().optional(),
   has_variants: z.boolean().optional(),
-  food_label: z.record(z.string(), z.unknown()).nullable().optional(),
+  food_label: foodLabelSchema,
   name_zh_tw: z.string().nullable().optional(),
   description_zh_tw: z.string().nullable().optional(),
-  food_label_zh_tw: z.record(z.string(), z.unknown()).nullable().optional(),
+  food_label_zh_tw: foodLabelSchema,
 });
 
 /**

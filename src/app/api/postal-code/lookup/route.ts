@@ -52,7 +52,10 @@ async function lookupJapan(zipcode: string): Promise<NextResponse> {
   try {
     const res = await fetch(
       `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleaned}`,
-      { next: { revalidate: 86400 } }
+      {
+        next: { revalidate: 86400 },
+        signal: AbortSignal.timeout(5000), // 外部API障害によるハング防止（5秒タイムアウト）
+      }
     );
 
     if (!res.ok) {

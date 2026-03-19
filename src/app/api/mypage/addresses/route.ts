@@ -17,7 +17,7 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json(data || []);
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       .from('customer_addresses')
       .insert({
         user_id: auth.userId,
-        label: body.label || '自宅',
+        label: body.label || '',
         postal_code: body.postalCode,
         pref: body.pref,
         city: body.city,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json(data);

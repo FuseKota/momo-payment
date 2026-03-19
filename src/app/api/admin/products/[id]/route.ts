@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
-import { adminProductUpdateSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { adminProductUpdateSchema, formatValidationErrors, uuidSchema } from '@/lib/validation/schemas';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 
 interface RouteParams {
@@ -13,6 +13,10 @@ export async function GET(request: Request, { params }: RouteParams) {
   if (!auth.authorized) return auth.response;
 
   const { id } = await params;
+  if (!uuidSchema.safeParse(id).success) {
+    return NextResponse.json({ error: 'invalid_id' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {
@@ -27,7 +31,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -40,6 +44,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
+  if (!uuidSchema.safeParse(id).success) {
+    return NextResponse.json({ error: 'invalid_id' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
   const rawBody = await request.json();
 
@@ -60,11 +68,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -77,6 +85,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
+  if (!uuidSchema.safeParse(id).success) {
+    return NextResponse.json({ error: 'invalid_id' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {
@@ -86,11 +98,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

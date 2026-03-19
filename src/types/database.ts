@@ -97,6 +97,7 @@ export interface Order {
   admin_note: string | null;
   user_id: string | null;
   locale: string;
+  paid_at: string | null;
   created_at: string;
   updated_at: string;
 }
