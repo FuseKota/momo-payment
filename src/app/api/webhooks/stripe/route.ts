@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (existingEvent) {
-    secureLog('info', 'Stripe webhook: duplicate event, skipping');
+    secureLog('warn', 'Stripe webhook: duplicate event, skipping', { eventId: event.id });
     return NextResponse.json({ ok: true, message: 'already processed' });
   }
 
@@ -52,6 +52,11 @@ export async function POST(request: NextRequest) {
     });
 
   if (insertError) {
+    // 重複キーエラー（23505）は競合条件による重複処理→正常として扱う
+    if (insertError.code === '23505') {
+      secureLog('warn', 'Stripe webhook: duplicate event detected via DB constraint, skipping');
+      return NextResponse.json({ ok: true, message: 'already processed' });
+    }
     secureLog('error', 'Stripe webhook: insert error', safeErrorLog(insertError));
     return new NextResponse('Database error', { status: 500 });
   }
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
           .update({ status: 'CANCELLED' })
           .eq('id', expiredPayment.order_id);
 
-        secureLog('info', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
+        secureLog('warn', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
       }
     }
     return NextResponse.json({ ok: true, message: 'session expired handled' });
