@@ -223,24 +223,38 @@ export async function POST(request: NextRequest) {
     const successUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/complete?orderNo=${orderRow.order_no}`;
     const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/checkout/shipping?canceled=true`;
 
-    const session = await stripe.checkout.sessions.create(
-      {
-        mode: 'payment',
-        payment_method_types: ['card'],
-        line_items: lineItems,
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        metadata: {
-          order_no: orderRow.order_no,
-          order_id: orderRow.id,
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(
+        {
+          mode: 'payment',
+          payment_method_types: ['card'],
+          line_items: lineItems,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: {
+            order_no: orderRow.order_no,
+            order_id: orderRow.id,
+          },
+          locale: locale === 'zh-tw' ? 'zh' : 'ja',
+          customer_email: body.customer.email || undefined,
         },
-        locale: locale === 'zh-tw' ? 'zh' : 'ja',
-        customer_email: body.customer.email || undefined,
-      },
-      {
-        idempotencyKey,
+        {
+          idempotencyKey,
+        }
+      );
+    } catch (stripeErr) {
+      secureLog('error', 'Stripe session creation failed', safeErrorLog(stripeErr));
+      // 作成済みのpaymentsとordersをクリーンアップ
+      if (paymentRow) {
+        await supabaseAdmin.from('payments').delete().eq('id', paymentRow.id);
       }
-    );
+      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      return NextResponse.json(
+        { ok: false, error: 'payment_session_failed' },
+        { status: 500 }
+      );
+    }
 
     const checkoutUrl = session.url ?? '';
     const stripeSessionId = session.id;
