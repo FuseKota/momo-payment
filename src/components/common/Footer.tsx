@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Grid, IconButton } from '@mui/material';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -22,19 +23,23 @@ export default function Footer() {
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #FF859A 0%, #FF6680 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mr: 1.5,
-                }}
-              >
-                <Typography sx={{ fontSize: '1rem' }}>🍑</Typography>
+              <Box sx={{
+                mr: 1.5,
+                flexShrink: 0,
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 182, 193, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Image
+                  src="/images/momo-main-logo.png"
+                  alt="Sakura Sisters"
+                  width={100}
+                  height={100}
+                />
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                 福島もも娘

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import NextLink from 'next/link';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
@@ -88,7 +89,13 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </IconButton>
           )}
 
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Image
+              src="/images/momo-main-logo.png"
+              alt="Sakura Sisters"
+              width={70}
+              height={70}
+            />
             <Typography
               variant="h5"
               component="span"
