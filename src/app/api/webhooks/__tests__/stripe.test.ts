@@ -50,6 +50,7 @@ vi.mock('@/lib/supabase/admin', () => ({
 vi.mock('@/lib/stripe/webhook', () => ({
   verifyStripeWebhookSignature: vi.fn(),
   isCheckoutSessionCompleted: vi.fn(),
+  isCheckoutSessionExpired: vi.fn().mockReturnValue(false),
   extractSessionInfo: vi.fn(),
 }));
 
@@ -98,9 +99,12 @@ describe('POST /api/webhooks/stripe', () => {
       type: 'checkout.session.completed',
     } as any);
 
+    // イベント未登録（初回チェック）
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    // DB UNIQUE 制約違反エラー（競合条件）
     mockInsert.mockImplementation(() => ({
       data: null,
-      error: { message: 'duplicate key value violates unique constraint' },
+      error: { code: '23505', message: 'duplicate key value violates unique constraint' },
     }));
 
     const res = await POST(makeRequest());
@@ -115,6 +119,7 @@ describe('POST /api/webhooks/stripe', () => {
       type: 'payment_intent.succeeded',
     } as any);
 
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
     mockInsert.mockImplementation(() => ({ data: null, error: null }));
     vi.mocked(isCheckoutSessionCompleted).mockReturnValue(false);
 
@@ -130,6 +135,7 @@ describe('POST /api/webhooks/stripe', () => {
       type: 'checkout.session.completed',
     } as any);
 
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
     mockInsert.mockImplementation(() => ({ data: null, error: null }));
     vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
     vi.mocked(extractSessionInfo).mockReturnValue(null);
