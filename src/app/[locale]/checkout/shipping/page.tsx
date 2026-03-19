@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import {
@@ -67,6 +67,18 @@ export default function ShippingCheckoutPage() {
     }
   }, [user, authLoading, router]);
 
+  const applyAddress = useCallback((addr: CustomerAddress) => {
+    setValues({
+      name: addr.recipient_name,
+      phone: addr.recipient_phone,
+      postalCode: addr.postal_code,
+      prefecture: addr.pref,
+      city: addr.city,
+      address1: addr.address1,
+      address2: addr.address2 || '',
+    });
+  }, []);
+
   // ログインユーザーの保存済み住所を取得 + メールプリフィル
   useEffect(() => {
     if (!user) return;
@@ -94,19 +106,7 @@ export default function ShippingCheckoutPage() {
     };
 
     fetchAddresses();
-  }, [user]);
-
-  const applyAddress = (addr: CustomerAddress) => {
-    setValues({
-      name: addr.recipient_name,
-      phone: addr.recipient_phone,
-      postalCode: addr.postal_code,
-      prefecture: addr.pref,
-      city: addr.city,
-      address1: addr.address1,
-      address2: addr.address2 || '',
-    });
-  };
+  }, [user, applyAddress]);
 
   const handleAddressSelect = (addressId: string) => {
     setSelectedAddressId(addressId);
