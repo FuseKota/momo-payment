@@ -3,7 +3,7 @@
 :root {
   --tnm-primary-red: #d32f2f;
   --tnm-accent-gold: #fbc02d;
-  --tnm-bg-dark: #050505;
+  --tnm-bg-dark: #1a1a1a;
   --tnm-text-light: #f5f5f5;
 }
 
@@ -24,7 +24,7 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  background: #050505;
+  background: #050505; /* Hero は暗いまま維持 */
   overflow: hidden;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .sectionDark {
-  background-color: #0a0a0a;
+  background-color: #242424;
 }
 
 .sectionTitle {
