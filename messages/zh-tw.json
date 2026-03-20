@@ -89,6 +89,7 @@
     "selectSize": "選擇尺寸",
     "aboutShipping": "關於配送",
     "shippingFeeInfo": "• 運費：¥1,200（全國統一）",
+    "internationalShipping": "• 居住海外的顧客：可透過 <link>樂天Global Express</link> 將商品從日本轉運至海外。",
     "addedToCart": "已將{name}加入購物車"
   },
   "productDetail": {

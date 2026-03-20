@@ -188,6 +188,20 @@ export default function ShopClient() {
           <Typography variant="body2" color="text.secondary">
             {t('shippingFeeInfo')}
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {t.rich('internationalShipping', {
+              link: (chunks) => (
+                <a
+                  href="https://globalexpress.rakuten.co.jp/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'inherit', textDecoration: 'underline' }}
+                >
+                  {chunks}
+                </a>
+              ),
+            })}
+          </Typography>
         </Box>
       </Container>
 
