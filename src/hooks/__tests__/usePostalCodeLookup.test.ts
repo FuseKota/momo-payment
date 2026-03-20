@@ -147,6 +147,46 @@ describe('usePostalCodeLookup', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('passes 5-digit zipcode in query string', async () => {
+    const mockAddress = { prefecture: '臺北市', city: '中正區' };
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockAddress),
+    } as Response);
+
+    const { result } = renderHook(() => usePostalCodeLookup());
+
+    let lookupResult: any;
+    await act(async () => {
+      lookupResult = await result.current.lookup('10001');
+    });
+
+    expect(lookupResult).toEqual(mockAddress);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('zipcode=10001')
+    );
+  });
+
+  it('looks up Taiwan 6-digit postal code', async () => {
+    const mockAddress = { prefecture: '臺北市', city: '中正區' };
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockAddress),
+    } as Response);
+
+    const { result } = renderHook(() => usePostalCodeLookup());
+
+    let lookupResult: any;
+    await act(async () => {
+      lookupResult = await result.current.lookup('100001');
+    });
+
+    expect(lookupResult).toEqual(mockAddress);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('zipcode=100001')
+    );
+  });
+
   it('passes locale parameter in query string', async () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
