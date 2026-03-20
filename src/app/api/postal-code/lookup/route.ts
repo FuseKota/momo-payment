@@ -82,11 +82,14 @@ async function lookupJapan(zipcode: string): Promise<NextResponse> {
 }
 
 function lookupTaiwan(zipcode: string): NextResponse {
-  if (!/^\d{3}$/.test(zipcode)) {
+  // 3桁・5桁・6桁を許可
+  if (!/^\d{3}(\d{2}\d?)?$/.test(zipcode)) {
     return NextResponse.json({ error: 'INVALID_PARAMS' }, { status: 400 });
   }
 
-  const result = lookupTwZipcode(zipcode);
+  // 先頭3桁で地区を特定
+  const threeDigit = zipcode.slice(0, 3);
+  const result = lookupTwZipcode(threeDigit);
   if (!result) {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }

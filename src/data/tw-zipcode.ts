@@ -466,7 +466,7 @@ export const TW_ZIPCODE_MAP: Record<string, { county: string; district: string }
 
 /**
  * 郵遞區號から縣市・鄉鎮市區を検索する
- * @param zipcode 3桁の郵遞區號（文字列）
+ * @param zipcode 3桁の郵遞區號（文字列）。5桁・6桁の場合は呼び出し側で先頭3桁を渡すこと。
  * @returns 該当する { county, district } or null
  */
 export function lookupTwZipcode(

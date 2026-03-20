@@ -32,7 +32,7 @@ export default function PostalCodeField({
   const locale = useLocale();
   const { lookup, isLoading, error, clearError } = usePostalCodeLookup();
 
-  const defaultPlaceholder = locale === 'zh-tw' ? '100' : '123-4567';
+  const defaultPlaceholder = locale === 'zh-tw' ? '100 / 10001' : '123-4567';
 
   const errorMessages: Record<LookupErrorCode, string> = {
     NOT_FOUND: t('notFound'),
