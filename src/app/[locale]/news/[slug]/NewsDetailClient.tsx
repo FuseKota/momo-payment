@@ -5,7 +5,8 @@ import { Box, Container, Typography, Chip, Divider, Button } from '@mui/material
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTranslations } from 'next-intl';
 import ReactMarkdown from 'react-markdown';
-import { Layout } from '@/components/common';
+import TaiwanNightMarketHeader from '../../taiwan-night-market/components/TaiwanNightMarketHeader';
+import TaiwanNightMarketFooter from '../../taiwan-night-market/components/TaiwanNightMarketFooter';
 import type { News } from '@/types/database';
 import { formatNewsDate } from '@/lib/utils/format';
 import styles from '../news.module.css';
@@ -21,7 +22,8 @@ export default function NewsDetailClient({ news }: Props) {
   const t = useTranslations('news');
 
   return (
-    <Layout>
+    <>
+      <TaiwanNightMarketHeader />
       <div className={styles.pageContent}>
         {/* Hero */}
         <Box className={styles.detailHero}>
@@ -77,6 +79,7 @@ export default function NewsDetailClient({ news }: Props) {
           </Container>
         </Box>
       </div>
-    </Layout>
+      <TaiwanNightMarketFooter />
+    </>
   );
 }

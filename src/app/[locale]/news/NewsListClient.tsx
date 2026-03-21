@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Divider, Chip } from '@mui/material';
 import { useTranslations } from 'next-intl';
-import { Layout } from '@/components/common';
+import TaiwanNightMarketHeader from '../taiwan-night-market/components/TaiwanNightMarketHeader';
+import TaiwanNightMarketFooter from '../taiwan-night-market/components/TaiwanNightMarketFooter';
 import type { News } from '@/types/database';
 import { formatNewsDate } from '@/lib/utils/format';
 import styles from './news.module.css';
@@ -45,7 +46,8 @@ export default function NewsListClient({ items }: Props) {
   }, []);
 
   return (
-    <Layout>
+    <>
+      <TaiwanNightMarketHeader />
       <div className={styles.pageContent}>
         {/* Hero */}
         <Box className={styles.hero}>
@@ -138,6 +140,7 @@ export default function NewsListClient({ items }: Props) {
           </Container>
         </Box>
       </div>
-    </Layout>
+      <TaiwanNightMarketFooter />
+    </>
   );
 }
