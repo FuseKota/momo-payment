@@ -89,7 +89,6 @@
     "selectSize": "サイズを選択",
     "aboutShipping": "配送について",
     "shippingFeeInfo": "• 送料: ¥1,200（全国一律）",
-    "internationalShipping": "• 海外在住の方: <link>楽天グローバルエクスプレス</link> をご利用いただくと、日本国内への発送後に海外へ転送できます。",
     "addedToCart": "{name}をカートに追加しました"
   },
   "productDetail": {
