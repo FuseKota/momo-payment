@@ -4,9 +4,14 @@ import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Chip, Divider, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTranslations } from 'next-intl';
+import ReactMarkdown from 'react-markdown';
 import { Layout } from '@/components/common';
 import type { News } from '@/types/database';
 import { formatNewsDate } from '@/lib/utils/format';
+import styles from '../news.module.css';
+
+const gold = '#fbc02d';
+const dividerColor = 'rgba(251, 192, 45, 0.2)';
 
 interface Props {
   news: News;
@@ -17,62 +22,61 @@ export default function NewsDetailClient({ news }: Props) {
 
   return (
     <Layout>
-      <Box sx={{ background: 'linear-gradient(180deg, #FFF0F3 0%, #FFFBFC 100%)', py: { xs: 4, md: 6 } }}>
-        <Container maxWidth="md">
-          <Button
-            component={Link}
-            href="/news"
-            startIcon={<ArrowBackIcon />}
-            sx={{ mb: 3, color: 'text.secondary' }}
-          >
-            {t('backToList')}
-          </Button>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Chip
-              label={news.category}
-              size="small"
-              variant="outlined"
+      <div className={styles.pageContent}>
+        {/* Hero */}
+        <Box className={styles.detailHero}>
+          <Container maxWidth="md">
+            <Button
+              component={Link}
+              href="/news"
+              startIcon={<ArrowBackIcon />}
               sx={{
-                borderColor: 'text.secondary',
-                color: 'text.secondary',
-                borderRadius: 0,
-                fontSize: '0.75rem',
+                mb: 3,
+                color: gold,
+                '&:hover': { color: '#ffe082', backgroundColor: 'rgba(251,192,45,0.08)' },
               }}
-            />
-            <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-              {formatNewsDate(news.published_at)}
+            >
+              {t('backToList')}
+            </Button>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Chip
+                label={news.category}
+                size="small"
+                variant="outlined"
+                sx={{
+                  borderColor: 'rgba(255,255,255,0.4)',
+                  color: 'rgba(255,255,255,0.55)',
+                  borderRadius: 0,
+                  fontSize: '0.75rem',
+                }}
+              />
+              <Typography variant="body2" sx={{ color: gold, fontWeight: 600 }}>
+                {formatNewsDate(news.published_at)}
+              </Typography>
+            </Box>
+
+            <Typography component="h1" className={styles.detailTitle}>
+              {news.title}
             </Typography>
-          </Box>
+          </Container>
+        </Box>
 
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.5 }}
-          >
-            {news.title}
-          </Typography>
-        </Container>
-      </Box>
+        {/* Content */}
+        <Box className={styles.contentSection}>
+          <Container maxWidth="md">
+            <Divider sx={{ mb: 4, borderColor: dividerColor }} />
 
-      <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
-        <Divider sx={{ mb: 4, borderColor: 'rgba(255, 102, 128, 0.2)' }} />
-
-        {news.content ? (
-          <Typography
-            variant="body1"
-            sx={{
-              lineHeight: 2,
-              color: 'text.primary',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {news.content}
-          </Typography>
-        ) : (
-          <Typography color="text.secondary">{t('noContent')}</Typography>
-        )}
-      </Container>
+            {news.content ? (
+              <div className={styles.markdownContent}>
+                <ReactMarkdown>{news.content}</ReactMarkdown>
+              </div>
+            ) : (
+              <Typography sx={{ color: 'rgba(255,255,255,0.4)' }}>{t('noContent')}</Typography>
+            )}
+          </Container>
+        </Box>
+      </div>
     </Layout>
   );
 }

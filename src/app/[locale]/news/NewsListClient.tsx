@@ -1,15 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Divider, Chip } from '@mui/material';
 import { useTranslations } from 'next-intl';
 import { Layout } from '@/components/common';
 import type { News } from '@/types/database';
 import { formatNewsDate } from '@/lib/utils/format';
+import styles from './news.module.css';
+
+const gold = '#fbc02d';
+const dividerColor = 'rgba(251, 192, 45, 0.2)';
+const chipBorderColor = 'rgba(255,255,255,0.4)';
+const chipTextColor = 'rgba(255,255,255,0.55)';
 
 function truncate(text: string | null, max = 80): string {
   if (!text) return '';
-  // サロゲートペア（絵文字等）を考慮した文字数カウント
   const chars = Array.from(text);
   return chars.length > max ? chars.slice(0, max).join('') + '…' : text;
 }
@@ -21,109 +27,117 @@ interface Props {
 export default function NewsListClient({ items }: Props) {
   const t = useTranslations('news');
 
+  useEffect(() => {
+    const faders = document.querySelectorAll('.fade-in-up');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('appear');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+    );
+    faders.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <Layout>
-      <Box sx={{ background: 'linear-gradient(180deg, #FFF0F3 0%, #FFFBFC 100%)', py: { xs: 4, md: 6 } }}>
-        <Container maxWidth="lg">
-          <Typography
-            component="div"
-            sx={{
-              fontSize: { xs: '2rem', md: '2.5rem' },
-              fontWeight: 700,
-              letterSpacing: '0.15em',
-              color: 'primary.main',
-              lineHeight: 1,
-              mb: 1,
-            }}
-          >
-            NEWS
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            {t('heading')}
-          </Typography>
-        </Container>
-      </Box>
+      <div className={styles.pageContent}>
+        {/* Hero */}
+        <Box className={styles.hero}>
+          <p className={styles.heroTitle}>NEWS</p>
+          <p className={styles.heroSubtitle}>{t('heading')}</p>
+        </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
-        {items.length === 0 ? (
-          <Typography color="text.secondary" sx={{ py: 8, textAlign: 'center' }}>
-            {t('noItems')}
-          </Typography>
-        ) : (
-          <Box>
-            {items.map((item, index) => (
-              <Box key={item.id}>
-                <Divider sx={{ borderColor: 'rgba(255, 102, 128, 0.2)' }} />
-                <Link href={`/news/${item.slug}`} style={{ textDecoration: 'none' }}>
-                  <Box
-                    sx={{
-                      py: 3,
-                      display: 'flex',
-                      gap: { xs: 1.5, md: 3 },
-                      alignItems: 'flex-start',
-                      '&:hover': { opacity: 0.8 },
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', md: 'row' },
-                        alignItems: { xs: 'flex-start', md: 'center' },
-                        gap: { xs: 0.5, md: 2 },
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Chip
-                        label={item.category}
-                        size="small"
-                        variant="outlined"
+        {/* List */}
+        <Box className={styles.listSection}>
+          <Container maxWidth="lg">
+            {items.length === 0 ? (
+              <Typography sx={{ py: 8, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                {t('noItems')}
+              </Typography>
+            ) : (
+              <Box>
+                {items.map((item, index) => (
+                  <Box key={item.id} className="fade-in-up" style={{ transitionDelay: `${index * 0.05}s` }}>
+                    <Divider sx={{ borderColor: dividerColor }} />
+                    <Link href={`/news/${item.slug}`} style={{ textDecoration: 'none' }}>
+                      <Box
                         sx={{
-                          borderColor: 'text.secondary',
-                          color: 'text.secondary',
-                          borderRadius: 0,
-                          fontSize: '0.75rem',
-                          height: 24,
-                        }}
-                      />
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: index === 0 ? 'primary.main' : 'text.secondary',
-                          fontWeight: index === 0 ? 600 : 400,
-                          whiteSpace: 'nowrap',
+                          py: 3,
+                          display: 'flex',
+                          gap: { xs: 1.5, md: 3 },
+                          alignItems: 'flex-start',
+                          '&:hover': { opacity: 0.75 },
+                          cursor: 'pointer',
+                          transition: 'opacity 0.2s',
                         }}
                       >
-                        {formatNewsDate(item.published_at)}
-                      </Typography>
-                    </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: 'row' },
+                            alignItems: { xs: 'flex-start', md: 'center' },
+                            gap: { xs: 0.5, md: 2 },
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Chip
+                            label={item.category}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              borderColor: chipBorderColor,
+                              color: chipTextColor,
+                              borderRadius: 0,
+                              fontSize: '0.75rem',
+                              height: 24,
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: index === 0 ? gold : 'rgba(255,255,255,0.45)',
+                              fontWeight: index === 0 ? 600 : 400,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {formatNewsDate(item.published_at)}
+                          </Typography>
+                        </Box>
 
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontWeight: 600,
-                          color: index === 0 ? 'primary.main' : 'text.primary',
-                          mb: 0.5,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {item.title}
-                      </Typography>
-                      {item.excerpt && (
-                        <Typography variant="body2" color="text.secondary">
-                          {truncate(item.excerpt)}
-                        </Typography>
-                      )}
-                    </Box>
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontWeight: 600,
+                              color: index === 0 ? gold : 'rgba(255,255,255,0.9)',
+                              mb: 0.5,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {item.title}
+                          </Typography>
+                          {item.excerpt && (
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)' }}>
+                              {truncate(item.excerpt)}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Link>
                   </Box>
-                </Link>
+                ))}
+                <Divider sx={{ borderColor: dividerColor }} />
               </Box>
-            ))}
-            <Divider sx={{ borderColor: 'rgba(255, 102, 128, 0.2)' }} />
-          </Box>
-        )}
-      </Container>
+            )}
+          </Container>
+        </Box>
+      </div>
     </Layout>
   );
 }
