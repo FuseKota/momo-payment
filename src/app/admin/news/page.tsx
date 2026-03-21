@@ -23,6 +23,10 @@ import {
   Grid,
   CircularProgress,
   Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -37,6 +41,8 @@ interface NewsFormData {
   slug: string;
   is_published: boolean;
 }
+
+const NEWS_CATEGORIES = ['福島もも娘', '日本国内台湾夜市', 'お知らせ'] as const;
 
 const defaultFormData: NewsFormData = {
   title: '',
@@ -270,12 +276,18 @@ export default function AdminNewsPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="カテゴリ"
-                fullWidth
-                value={formData.category}
-                onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
-              />
+              <FormControl fullWidth>
+                <InputLabel>カテゴリ</InputLabel>
+                <Select
+                  label="カテゴリ"
+                  value={formData.category}
+                  onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
+                >
+                  {NEWS_CATEGORIES.map((cat) => (
+                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid size={12}>
               <TextField
