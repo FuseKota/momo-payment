@@ -114,7 +114,7 @@ export default function TaiwanNightMarketHeader() {
                 whiteSpace: 'nowrap',
               }}
             >
-              福島もも娘台湾夜市サイト
+              台湾夜市紹介サイト
             </Typography>
           </Link>
 
@@ -198,7 +198,7 @@ export default function TaiwanNightMarketHeader() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              福島もも娘台湾夜市サイト
+              台湾夜市紹介サイト
             </Typography>
           </Box>
           <List>

@@ -38,12 +38,22 @@ export default async function TaiwanNightMarketPage({ params }: Props) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://momomusume.com';
 
   const supabase = getSupabaseAdmin();
-  const { data: news } = await supabase
-    .from('news')
-    .select('*')
-    .eq('is_published', true)
-    .order('published_at', { ascending: false })
-    .limit(3);
+  const [{ data: momoNews }, { data: domesticNews }] = await Promise.all([
+    supabase
+      .from('news')
+      .select('*')
+      .eq('is_published', true)
+      .eq('category', '福島もも娘')
+      .order('published_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('news')
+      .select('*')
+      .eq('is_published', true)
+      .eq('category', '日本国内台湾夜市')
+      .order('published_at', { ascending: false })
+      .limit(5),
+  ]);
 
   const isJa = locale === 'ja';
 
@@ -70,11 +80,11 @@ export default async function TaiwanNightMarketPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: isJa
-      ? '台湾夜市ガイド - 人気夜市と必食グルメ'
-      : '台灣夜市指南 - 熱門夜市與必吃美食',
+      ? '台湾夜市ガイド - 本場台湾夜市とももむすめイベント情報'
+      : '台灣夜市指南 - 正宗台灣夜市與桃娘活動資訊',
     description: isJa
-      ? '士林・饒河街・寧夏の人気台湾夜市と大鶏排・小籠包・臭豆腐などの必食グルメを紹介'
-      : '介紹士林、饒河街、寧夏等熱門台灣夜市，以及大雞排、小籠包、臭豆腐等必吃美食',
+      ? '士林・饒河街・寧夏の本場台湾夜市情報と、福島ももむすめ・日本国内台湾夜市イベント情報を紹介'
+      : '介紹士林、饒河街、寧夏等正宗台灣夜市，以及福島桃娘與日本國內台灣夜市活動資訊',
     author: { '@type': 'Organization', name: isJa ? 'もも娘' : '桃娘' },
     publisher: {
       '@type': 'Organization',
@@ -116,7 +126,7 @@ export default async function TaiwanNightMarketPage({ params }: Props) {
       <JsonLd data={breadcrumbData} />
       <JsonLd data={articleData} />
       <JsonLd data={nightMarketListData} />
-      <TaiwanNightMarketClient news={news ?? []} />
+      <TaiwanNightMarketClient momoNews={momoNews ?? []} domesticNews={domesticNews ?? []} />
     </>
   );
 }

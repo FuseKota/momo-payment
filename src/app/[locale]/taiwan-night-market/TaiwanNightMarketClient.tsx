@@ -10,10 +10,11 @@ import styles from './taiwan-night-market.module.css';
 import type { News } from '@/types/database';
 
 interface Props {
-  news: News[];
+  momoNews: News[];
+  domesticNews: News[];
 }
 
-export default function TaiwanNightMarketClient({ news }: Props) {
+export default function TaiwanNightMarketClient({ momoNews, domesticNews }: Props) {
   const t = useTranslations('taiwanNightMarket');
 
   useEffect(() => {
@@ -73,12 +74,25 @@ export default function TaiwanNightMarketClient({ news }: Props) {
           </div>
         </header>
 
-        {/* News Section */}
-        <NewsSection items={news} variant="dark" />
+        {/* ① 福島ももむすめ イベント情報 */}
+        <NewsSection
+          items={momoNews}
+          variant="dark"
+          title={t('momoEventsTitle')}
+          showViewAll={false}
+        />
 
-        {/* 人気夜市 */}
+        {/* ② 日本国内 台湾夜市情報 */}
+        <NewsSection
+          items={domesticNews}
+          variant="dark"
+          title={t('domesticEventsTitle')}
+          showViewAll={false}
+        />
+
+        {/* ③ 本場台湾の夜市情報 */}
         <section id="popular" className={styles.section}>
-          <h2 className={`${styles.sectionTitle} fade-in-up`}>{t('popularTitle')}</h2>
+          <h2 className={`${styles.sectionTitle} fade-in-up`}>{t('taiwanNightMarketInfoTitle')}</h2>
           <div className={styles.gridContainer}>
             <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.1s' }}>
               <div
@@ -113,30 +127,7 @@ export default function TaiwanNightMarketClient({ news }: Props) {
           </div>
         </section>
 
-        {/* 必食グルメ */}
-        <section id="gourmet" className={`${styles.section} ${styles.sectionDark}`}>
-          <h2 className={`${styles.sectionTitle} fade-in-up`}>{t('gourmetTitle')}</h2>
-          <div className={styles.gridContainer}>
-            <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.1s' }}>
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardTitle}>{t('dajipaiTitle')}</h3>
-                <p className={styles.cardDesc}>{t('dajipaiDesc')}</p>
-              </div>
-            </div>
-            <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.2s' }}>
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardTitle}>{t('xiaolongbaoTitle')}</h3>
-                <p className={styles.cardDesc}>{t('xiaolongbaoDesc')}</p>
-              </div>
-            </div>
-            <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.3s' }}>
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardTitle}>{t('stinkyTofuTitle')}</h3>
-                <p className={styles.cardDesc}>{t('stinkyTofuDesc')}</p>
-              </div>
-            </div>
-          </div>
-        </section>
+
       </div>
       <TaiwanNightMarketFooter />
     </>
