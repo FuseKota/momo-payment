@@ -7,6 +7,8 @@ import type { News } from '@/types/database';
 interface NewsSectionProps {
   items: News[];
   variant?: 'light' | 'dark';
+  title?: string;
+  showViewAll?: boolean;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -25,8 +27,8 @@ function truncate(text: string | null, max = 60): string {
 
 const gold = '#fbc02d';
 
-export default function NewsSection({ items, variant = 'light' }: NewsSectionProps) {
-  if (items.length === 0) return null;
+export default function NewsSection({ items, variant = 'light', title, showViewAll }: NewsSectionProps) {
+  if (items.length === 0 && title === undefined) return null;
 
   const isDark = variant === 'dark';
   const dividerColor = isDark ? 'rgba(251, 192, 45, 0.2)' : 'rgba(255, 102, 128, 0.2)';
@@ -75,17 +77,29 @@ export default function NewsSection({ items, variant = 'light' }: NewsSectionPro
                 },
               }}
             >
-              新着情報
+              {title ?? '新着情報'}
             </Box>
           ) : (
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-              新着情報
+              {title ?? '新着情報'}
             </Typography>
           )}
         </Box>
 
         {/* News list */}
         <Box>
+          {items.length === 0 && (
+            <>
+              <Divider sx={{ borderColor: dividerColor }} />
+              <Typography
+                variant="body2"
+                sx={{ py: 4, textAlign: 'center', color: isDark ? 'rgba(255,255,255,0.4)' : 'text.secondary' }}
+              >
+                現在、情報はありません
+              </Typography>
+              <Divider sx={{ borderColor: dividerColor }} />
+            </>
+          )}
           {items.map((item, index) => (
             <Box key={item.id}>
               <Divider sx={{ borderColor: dividerColor }} />
@@ -157,23 +171,25 @@ export default function NewsSection({ items, variant = 'light' }: NewsSectionPro
               </Link>
             </Box>
           ))}
-          <Divider sx={{ borderColor: dividerColor }} />
+          {items.length > 0 && <Divider sx={{ borderColor: dividerColor }} />}
         </Box>
 
         {/* View all link */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Link href="/news" style={{ textDecoration: 'none' }}>
-            <Typography
-              variant="body2"
-              sx={{
-                color: viewAllColor,
-                '&:hover': { color: viewAllHover },
-              }}
-            >
-              一覧をみる
-            </Typography>
-          </Link>
-        </Box>
+        {showViewAll !== false && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Link href="/news" style={{ textDecoration: 'none' }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: viewAllColor,
+                  '&:hover': { color: viewAllHover },
+                }}
+              >
+                一覧をみる
+              </Typography>
+            </Link>
+          </Box>
+        )}
       </Container>
     </Box>
   );
