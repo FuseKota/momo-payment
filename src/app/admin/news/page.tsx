@@ -42,7 +42,7 @@ interface NewsFormData {
   is_published: boolean;
 }
 
-const NEWS_CATEGORIES = ['福島もも娘', '日本国内台湾夜市', 'お知らせ'] as const;
+const NEWS_CATEGORIES = ['福島もも娘', '日本国内台湾夜市', '本場台湾夜市', 'お知らせ'] as const;
 
 const defaultFormData: NewsFormData = {
   title: '',
