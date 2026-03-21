@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import Lantern from './components/Lantern';
 import TaiwanNightMarketHeader from './components/TaiwanNightMarketHeader';
 import TaiwanNightMarketFooter from './components/TaiwanNightMarketFooter';
@@ -9,12 +10,44 @@ import { NewsSection } from '@/components/common';
 import styles from './taiwan-night-market.module.css';
 import type { News } from '@/types/database';
 
+const NIGHT_MARKET_IMAGES: Record<string, string> = {
+  'shilin-night-market': 'https://images.unsplash.com/photo-1543088267-85b42d7b51b3?q=80&w=1000&auto=format&fit=crop',
+  'raohe-night-market': 'https://images.unsplash.com/photo-1577484462198-d19e917d0f95?q=80&w=1000&auto=format&fit=crop',
+  'ningxia-night-market': 'https://images.unsplash.com/photo-1506085183888-29be1900139e?q=80&w=1000&auto=format&fit=crop',
+  'fengjia-night-market': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop',
+  'liuhe-night-market': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1000&auto=format&fit=crop',
+  'ruifeng-night-market': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=1000&auto=format&fit=crop',
+};
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1543088267-85b42d7b51b3?q=80&w=1000&auto=format&fit=crop';
+
+const HARDCODED_CARDS = [
+  {
+    key: 'shilin',
+    img: NIGHT_MARKET_IMAGES['shilin-night-market'],
+    titleKey: 'shilinTitle' as const,
+    descKey: 'shilinDesc' as const,
+  },
+  {
+    key: 'raohe',
+    img: NIGHT_MARKET_IMAGES['raohe-night-market'],
+    titleKey: 'raoheTitle' as const,
+    descKey: 'raoheDesc' as const,
+  },
+  {
+    key: 'ningxia',
+    img: NIGHT_MARKET_IMAGES['ningxia-night-market'],
+    titleKey: 'ningxiaTitle' as const,
+    descKey: 'ningxiaDesc' as const,
+  },
+];
+
 interface Props {
   momoNews: News[];
   domesticNews: News[];
+  taiwanArticles: News[];
 }
 
-export default function TaiwanNightMarketClient({ momoNews, domesticNews }: Props) {
+export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwanArticles }: Props) {
   const t = useTranslations('taiwanNightMarket');
 
   useEffect(() => {
@@ -94,36 +127,50 @@ export default function TaiwanNightMarketClient({ momoNews, domesticNews }: Prop
         <section id="popular" className={styles.section}>
           <h2 className={`${styles.sectionTitle} fade-in-up`}>{t('taiwanNightMarketInfoTitle')}</h2>
           <div className={styles.gridContainer}>
-            <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.1s' }}>
-              <div
-                className={styles.cardImg}
-                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1543088267-85b42d7b51b3?q=80&w=1000&auto=format&fit=crop')" }}
-              />
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardTitle}>{t('shilinTitle')}</h3>
-                <p className={styles.cardDesc}>{t('shilinDesc')}</p>
-              </div>
-            </div>
-            <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.2s' }}>
-              <div
-                className={styles.cardImg}
-                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1577484462198-d19e917d0f95?q=80&w=1000&auto=format&fit=crop')" }}
-              />
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardTitle}>{t('raoheTitle')}</h3>
-                <p className={styles.cardDesc}>{t('raoheDesc')}</p>
-              </div>
-            </div>
-            <div className={`${styles.card} fade-in-up`} style={{ transitionDelay: '0.3s' }}>
-              <div
-                className={styles.cardImg}
-                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1506085183888-29be1900139e?q=80&w=1000&auto=format&fit=crop')" }}
-              />
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardTitle}>{t('ningxiaTitle')}</h3>
-                <p className={styles.cardDesc}>{t('ningxiaDesc')}</p>
-              </div>
-            </div>
+            {taiwanArticles.length > 0
+              ? taiwanArticles.map((article, index) => (
+                  <div
+                    key={article.id}
+                    className={`${styles.card} fade-in-up`}
+                    style={{ transitionDelay: `${(index % 3) * 0.1 + 0.1}s` }}
+                  >
+                    <div
+                      className={styles.cardImg}
+                      style={{ backgroundImage: `url('${NIGHT_MARKET_IMAGES[article.slug] ?? FALLBACK_IMAGE}')` }}
+                    />
+                    <div className={styles.cardContent}>
+                      <h3 className={styles.cardTitle}>{article.title}</h3>
+                      <p className={styles.cardDesc}>{article.excerpt}</p>
+                      <Link
+                        href={`/news/${article.slug}`}
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '1rem',
+                          color: 'var(--tnm-accent-gold, #fbc02d)',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          borderBottom: '1px solid transparent',
+                        }}
+                      >
+                        {t('readMore')} →
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              : HARDCODED_CARDS.map((card, index) => (
+                  <div
+                    key={card.key}
+                    className={`${styles.card} fade-in-up`}
+                    style={{ transitionDelay: `${index * 0.1 + 0.1}s` }}
+                  >
+                    <div className={styles.cardImg} style={{ backgroundImage: `url('${card.img}')` }} />
+                    <div className={styles.cardContent}>
+                      <h3 className={styles.cardTitle}>{t(card.titleKey)}</h3>
+                      <p className={styles.cardDesc}>{t(card.descKey)}</p>
+                    </div>
+                  </div>
+                ))}
           </div>
         </section>
 

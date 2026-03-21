@@ -38,7 +38,7 @@ export default async function TaiwanNightMarketPage({ params }: Props) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://momomusume.com';
 
   const supabase = getSupabaseAdmin();
-  const [{ data: momoNews }, { data: domesticNews }] = await Promise.all([
+  const [{ data: momoNews }, { data: domesticNews }, { data: taiwanArticles }] = await Promise.all([
     supabase
       .from('news')
       .select('*')
@@ -53,6 +53,12 @@ export default async function TaiwanNightMarketPage({ params }: Props) {
       .eq('category', '日本国内台湾夜市')
       .order('published_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('news')
+      .select('*')
+      .eq('is_published', true)
+      .eq('category', '本場台湾夜市')
+      .order('published_at', { ascending: false }),
   ]);
 
   const isJa = locale === 'ja';
@@ -126,7 +132,7 @@ export default async function TaiwanNightMarketPage({ params }: Props) {
       <JsonLd data={breadcrumbData} />
       <JsonLd data={articleData} />
       <JsonLd data={nightMarketListData} />
-      <TaiwanNightMarketClient momoNews={momoNews ?? []} domesticNews={domesticNews ?? []} />
+      <TaiwanNightMarketClient momoNews={momoNews ?? []} domesticNews={domesticNews ?? []} taiwanArticles={taiwanArticles ?? []} />
     </>
   );
 }
