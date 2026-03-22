@@ -26,20 +26,20 @@ export default function Footer() {
               <Box sx={{
                 mr: 1.5,
                 flexShrink: 0,
-                width: 56,
-                height: 56,
+                width: 72,
+                height: 72,
                 borderRadius: '50%',
-                backgroundColor: 'rgba(255, 182, 193, 0.35)',
+                backgroundColor: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
               }}>
                 <Image
-                  src="/images/momo-main-logo.png"
+                  src="/images/logo.svg"
                   alt="Sakura Sisters"
-                  width={56}
-                  height={56}
+                  width={72}
+                  height={72}
                 />
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>

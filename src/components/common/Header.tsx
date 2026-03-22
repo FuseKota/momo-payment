@@ -91,10 +91,10 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
 
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Image
-              src="/images/momo-main-logo.png"
+              src="/images/logo.svg"
               alt="Sakura Sisters"
-              width={isMobile ? 50 : 70}
-              height={isMobile ? 50 : 70}
+              width={68}
+              height={68}
             />
             <Typography
               variant="h5"
