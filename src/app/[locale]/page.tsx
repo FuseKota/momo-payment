@@ -3,6 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import HomeClient from './HomeClient';
 
+// ニュースセクションを60秒ごとに再生成（ISR）
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {
