@@ -95,10 +95,10 @@ export default function TaiwanNightMarketHeader() {
           {/* Logo */}
           <Link href="/taiwan-night-market" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Image
-              src="/images/logo.svg"
+              src="/images/sakura-sisters-logo.svg"
               alt="Sakura Sisters"
-              width={68}
-              height={68}
+              width={100}
+              height={100}
             />
             <Typography
               variant="h5"
@@ -182,10 +182,10 @@ export default function TaiwanNightMarketHeader() {
         <Box sx={{ pt: 2 }}>
           <Box sx={{ px: 2, pb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Image
-              src="/images/logo.svg"
+              src="/images/sakura-sisters-logo.svg"
               alt="Sakura Sisters"
-              width={80}
-              height={80}
+              width={120}
+              height={120}
             />
             <Typography
               variant="h6"
