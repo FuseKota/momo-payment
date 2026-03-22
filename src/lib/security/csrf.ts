@@ -60,12 +60,7 @@ export function validateOrigin(request: Request): {
       };
     }
 
-    // curl等のツールからのリクエストを拒否
-    // 開発環境では許可することも検討
-    if (process.env.NODE_ENV === 'development') {
-      return { valid: true, origin: null, reason: 'Development mode - no origin check' };
-    }
-
+    // Origin・Referer が両方ない場合は拒否（curl等のツールからの直接リクエストも含む）
     return {
       valid: false,
       origin: null,
