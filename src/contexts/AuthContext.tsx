@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import type { User, Session } from '@supabase/supabase-js';
 
 export interface SignUpAddress {
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const checkAdminStatus = async (userId: string): Promise<boolean> => {
     const { data } = await supabase
@@ -124,11 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!res.ok) {
           const body = await res.json().catch(() => null);
-          console.error('Failed to save profile/address via API:', res.status, body);
+          secureLog('error', 'Failed to save profile/address via API', { status: res.status, body });
           return { error: new Error('profile_save_failed') };
         }
       } catch (err) {
-        console.error('Signup API call failed:', err);
+        secureLog('error', 'Signup API call failed', safeErrorLog(err));
         return { error: new Error('profile_save_failed') };
       }
     }
