@@ -22,10 +22,10 @@ const PII_PATTERNS: PIIPattern[] = [
     pattern: /0[0-9\-]{9,13}/g,
     replacement: '[PHONE]',
   },
-  // 郵便番号
+  // 郵便番号（〒マークまたは"postal"/"zip"キー直後、または単独で境界がある場合）
   {
-    pattern: /\d{3}-?\d{4}/g,
-    replacement: '[POSTAL]',
+    pattern: /〒\d{3}-?\d{4}/g,
+    replacement: '〒[POSTAL]',
   },
   // クレジットカード番号（一部マスク）
   {
