@@ -7,8 +7,8 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      // カートのhydration patternで必要なため警告に緩める
-      "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "warn",
+      // ローカルストレージからのcart hydrationパターン（mount時1回のみ）は安全なため警告に緩める
+      "react-hooks/set-state-in-effect": "warn",
     },
   },
   // Override default ignores of eslint-config-next.
