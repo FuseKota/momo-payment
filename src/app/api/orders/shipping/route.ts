@@ -44,11 +44,11 @@ export async function POST(request: NextRequest) {
       .map((i) => i.variantId)
       .filter((id): id is string => !!id);
 
-    let variants: Array<{ id: string; product_id: string; size: string | null; price_yen: number | null }> = [];
+    let variants: Array<{ id: string; product_id: string; size: string | null; price_yen: number | null; stock_qty: number | null }> = [];
     if (variantIds.length > 0) {
       const { data: variantData, error: variantError } = await supabaseAdmin
         .from('product_variants')
-        .select('id, product_id, size, price_yen')
+        .select('id, product_id, size, price_yen, stock_qty')
         .in('id', variantIds);
 
       if (variantError) {
@@ -68,13 +68,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // バリアント-商品紐付け検証（価格操作攻撃の防止）
+      // バリアント-商品紐付け検証（価格操作攻撃の防止）+ 在庫チェック
       for (const item of body.items) {
         if (item.variantId) {
           const variant = variants.find((v) => v.id === item.variantId);
           if (variant && variant.product_id !== item.productId) {
             return NextResponse.json(
               { ok: false, error: 'variant_product_mismatch' },
+              { status: 400 }
+            );
+          }
+          // 在庫管理あり（stock_qtyが設定済み）の場合は在庫数を確認
+          if (variant && variant.stock_qty !== null && variant.stock_qty < item.qty) {
+            secureLog('warn', 'Variant out of stock', { variantId: item.variantId, stock: variant.stock_qty, requested: item.qty });
+            return NextResponse.json(
+              { ok: false, error: 'variant_out_of_stock' },
               { status: 400 }
             );
           }
