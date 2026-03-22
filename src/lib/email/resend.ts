@@ -48,6 +48,16 @@ export interface ShippingNotificationData {
 
 const FROM_EMAIL = env.EMAIL_FROM || 'noreply@momomusume.com';
 
+/** ユーザー入力値をHTMLテンプレートに挿入する前にエスケープ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
   const m = getMessages(data.locale || 'ja');
   const e = m.email;
@@ -57,7 +67,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
     .map(
       (item) => `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.name)}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.qty}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">¥${item.subtotal.toLocaleString()}</td>
       </tr>
@@ -69,9 +79,9 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
     ? `
       <h3 style="color: #FF6680; margin-top: 24px;">${e.shippingDestination}</h3>
       <p style="margin: 0;">
-        〒${data.shippingAddress.postalCode}<br>
-        ${data.shippingAddress.prefecture}${data.shippingAddress.city}${data.shippingAddress.address1}<br>
-        ${data.shippingAddress.address2 || ''}
+        〒${escapeHtml(data.shippingAddress.postalCode)}<br>
+        ${escapeHtml(data.shippingAddress.prefecture)}${escapeHtml(data.shippingAddress.city)}${escapeHtml(data.shippingAddress.address1)}<br>
+        ${data.shippingAddress.address2 ? escapeHtml(data.shippingAddress.address2) : ''}
       </p>
     `
     : '';
@@ -173,7 +183,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
 
     return { success: true, messageId: result?.id };
   } catch (error) {
-    console.error('Failed to send order confirmation email:', error);
+    secureLog('error', 'Failed to send order confirmation email', safeErrorLog(error));
     return { success: false, error };
   }
 }
@@ -250,7 +260,7 @@ export async function sendShippingNotificationEmail(data: ShippingNotificationDa
 
     return { success: true, messageId: result?.id };
   } catch (error) {
-    console.error('Failed to send shipping notification email:', error);
+    secureLog('error', 'Failed to send shipping notification email', safeErrorLog(error));
     return { success: false, error };
   }
 }
@@ -325,7 +335,7 @@ export async function sendPaymentConfirmationEmail(data: {
 
     return { success: true, messageId: result?.id };
   } catch (error) {
-    console.error('Failed to send payment confirmation email:', error);
+    secureLog('error', 'Failed to send payment confirmation email', safeErrorLog(error));
     return { success: false, error };
   }
 }
