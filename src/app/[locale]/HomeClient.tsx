@@ -121,7 +121,7 @@ export default function HomeClient({ news }: Props) {
           {t('orderMethods')}
         </Typography>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={4} justifyContent="center">
           {/* 配送注文 */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box

@@ -87,8 +87,8 @@ export default function CartPage() {
     <Layout cartItemCount={itemCount}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h3" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
+            <Typography variant="h3" sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: { xs: '1.75rem', md: '3rem' } }}>
               {t('title')}
             </Typography>
             {isPickupMode ? (
@@ -102,7 +102,7 @@ export default function CartPage() {
           </Button>
         </Box>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, md: 4 }}>
           {/* Cart Items */}
           <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 3 }}>
@@ -122,8 +122,8 @@ export default function CartPage() {
                           src={item.product.image_url}
                           alt={getLocalizedName(item.product, locale)}
                           sx={{
-                            width: 100,
-                            height: 100,
+                            width: { xs: 80, md: 100 },
+                            height: { xs: 80, md: 100 },
                             borderRadius: 2,
                             objectFit: 'cover',
                             flexShrink: 0,
@@ -132,8 +132,8 @@ export default function CartPage() {
                       ) : (
                         <Box
                           sx={{
-                            width: 100,
-                            height: 100,
+                            width: { xs: 80, md: 100 },
+                            height: { xs: 80, md: 100 },
                             backgroundColor: '#FFF0F3',
                             borderRadius: 2,
                             display: 'flex',

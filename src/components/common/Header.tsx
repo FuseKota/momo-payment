@@ -93,8 +93,8 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             <Image
               src="/images/momo-main-logo.png"
               alt="Sakura Sisters"
-              width={70}
-              height={70}
+              width={isMobile ? 50 : 70}
+              height={isMobile ? 50 : 70}
             />
             <Typography
               variant="h5"

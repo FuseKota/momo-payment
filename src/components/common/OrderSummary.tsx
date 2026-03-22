@@ -40,7 +40,7 @@ export default function OrderSummary({
   children,
 }: OrderSummaryProps) {
   return (
-    <Paper sx={{ p: 3, position: 'sticky', top: 100 }}>
+    <Paper sx={{ p: 3, position: 'sticky', top: { xs: 78, md: 88 } }}>
       <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
         {labels.title}
       </Typography>

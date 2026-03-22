@@ -142,7 +142,7 @@ export default function ProductDetailClient({ params }: Props) {
                 return (
                   <Paper
                     sx={{
-                      height: 400,
+                      height: { xs: 240, sm: 320, md: 400 },
                       backgroundColor: '#FFF0F3',
                       display: 'flex',
                       alignItems: 'center',
@@ -161,7 +161,7 @@ export default function ProductDetailClient({ params }: Props) {
                   {/* Main Image */}
                   <Paper
                     sx={{
-                      height: 400,
+                      height: { xs: 240, sm: 320, md: 400 },
                       borderRadius: 3,
                       overflow: 'hidden',
                       mb: 2,

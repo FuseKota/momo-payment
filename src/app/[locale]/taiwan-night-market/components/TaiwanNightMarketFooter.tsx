@@ -158,8 +158,8 @@ export default function TaiwanNightMarketFooter() {
           aria-label={t('footerBackToTop')}
           sx={{
             position: 'fixed',
-            bottom: 32,
-            right: 32,
+            bottom: { xs: 16, md: 32 },
+            right: { xs: 16, md: 32 },
             width: 48,
             height: 48,
             backgroundColor: 'rgba(251, 192, 45, 0.15)',

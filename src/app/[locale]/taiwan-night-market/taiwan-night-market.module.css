@@ -90,7 +90,7 @@
   animation-delay: 1.8s;
   animation-fill-mode: backwards;
   background: rgba(0,0,0,0.4);
-  padding: 100px 100px;
+  padding: clamp(24px, 6vw, 100px);
   border-radius: 10px;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255,50,50,0.2);
@@ -99,7 +99,7 @@
 
 .heroTitle {
   font-family: 'Noto Serif JP', serif;
-  font-size: 5.5rem;
+  font-size: clamp(2rem, 7vw, 5.5rem);
   font-weight: 900;
   color: var(--tnm-accent-gold);
   text-shadow: 0 0 30px rgba(251,192,45,0.6), 2px 2px 4px #000;
@@ -108,7 +108,7 @@
 }
 
 .heroSubtitle {
-  font-size: 1.6rem;
+  font-size: clamp(1rem, 2.5vw, 1.6rem);
   letter-spacing: 0.3em;
   text-shadow: 1px 1px 2px #000;
 }
@@ -120,7 +120,7 @@
 
 /* Sections */
 .section {
-  padding: 120px 10vw;
+  padding: clamp(60px, 8vw, 120px) 10vw;
   position: relative;
 }
 
@@ -130,9 +130,9 @@
 
 .sectionTitle {
   font-family: 'Noto Serif JP', serif;
-  font-size: 3rem;
+  font-size: clamp(1.8rem, 4vw, 3rem);
   text-align: center;
-  margin-bottom: 70px;
+  margin-bottom: clamp(30px, 5vw, 70px);
   color: #ffffff;
   position: relative;
   display: block;
@@ -154,8 +154,8 @@
 /* Grid */
 .gridContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 50px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: clamp(20px, 4vw, 50px);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -193,6 +193,18 @@
 
 .cardContent {
   padding: 30px;
+}
+
+@media (max-width: 600px) {
+  .cardImg {
+    height: 160px;
+  }
+  .cardContent {
+    padding: 16px;
+  }
+  .l7, .l8 {
+    display: none;
+  }
 }
 
 .cardTitle {
