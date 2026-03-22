@@ -83,13 +83,18 @@ export async function GET(
       );
     }
 
-    // 認証済みユーザーの場合: user_idが一致することを確認（他人の注文閲覧防止）
-    if (order.user_id && currentUserId && order.user_id !== currentUserId) {
-      secureLog('warn', 'Order access denied: user_id mismatch', { ip: clientIP });
-      return NextResponse.json(
-        { ok: false, error: 'order_not_found' },
-        { status: 404 }
-      );
+    // アクセス制御:
+    // - ユーザー紐付き注文: ログイン済みかつ本人のみ閲覧可
+    // - ゲスト注文 (user_id=null): 未ログインでも閲覧可
+    if (order.user_id !== null) {
+      // 認証済みユーザーの注文 → 本人のみ許可
+      if (!currentUserId || order.user_id !== currentUserId) {
+        secureLog('warn', 'Order access denied: user_id mismatch or unauthenticated', { ip: clientIP });
+        return NextResponse.json(
+          { ok: false, error: 'order_not_found' },
+          { status: 404 }
+        );
+      }
     }
 
     // レスポンスから内部フィールド(user_id)を除外
