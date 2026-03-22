@@ -7,6 +7,25 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
  * セキュリティヘッダー設定
  */
 const securityHeaders = [
+  // コンテンツセキュリティポリシー
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      // Next.js インラインスクリプト + Stripe
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+      // MUI インラインスタイル + Google Fonts
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      // Google Fonts フォントファイル
+      "font-src 'self' https://fonts.gstatic.com",
+      // 画像: 自サイト + Supabase Storage + data URI
+      "img-src 'self' data: blob: https://*.supabase.co",
+      // Stripe iframe
+      "frame-src https://js.stripe.com https://hooks.stripe.com",
+      // API接続先: 自サイト + Supabase + Stripe
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com",
+    ].join('; '),
+  },
   // クリックジャッキング防止
   {
     key: 'X-Frame-Options',
