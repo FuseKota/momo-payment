@@ -41,5 +41,11 @@ const mockNews: News[] = [
 ];
 
 export default function TaiwanNightMarketPreviewPage() {
-  return <TaiwanNightMarketClient news={mockNews} />;
+  return (
+    <TaiwanNightMarketClient
+      momoNews={mockNews}
+      domesticNews={mockNews}
+      taiwanArticles={mockNews}
+    />
+  );
 }
