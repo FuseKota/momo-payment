@@ -72,6 +72,7 @@ export default function AdminProductsPage() {
   const [formData, setFormData] = useState<ProductFormData>(defaultFormData);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
@@ -138,10 +139,7 @@ export default function AdminProductsPage() {
     setDialogOpen(true);
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const handleFile = async (file: File) => {
     if (!formData.slug) {
       setSnackbar({ open: true, message: 'スラッグを先に入力してください' });
       return;
@@ -169,7 +167,7 @@ export default function AdminProductsPage() {
         const error = await response.json();
         setSnackbar({ open: true, message: error.error || 'アップロードに失敗しました' });
       }
-    } catch (error) {
+    } catch {
       setSnackbar({ open: true, message: 'アップロードに失敗しました' });
     } finally {
       setIsUploading(false);
@@ -177,6 +175,29 @@ export default function AdminProductsPage() {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await handleFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
   };
 
   const handleRemoveImage = () => {
@@ -383,10 +404,19 @@ export default function AdminProductsPage() {
                 商品画像
               </Typography>
               <Box
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
+                  p: 1.5,
+                  borderRadius: 2,
+                  border: '2px dashed',
+                  borderColor: isDragging ? 'primary.main' : 'transparent',
+                  backgroundColor: isDragging ? '#FFF0F3' : 'transparent',
+                  transition: 'border-color 0.2s, background-color 0.2s',
                 }}
               >
                 {formData.image_url ? (
