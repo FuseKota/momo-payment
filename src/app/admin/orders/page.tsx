@@ -54,7 +54,7 @@ interface Order {
   shipments: Shipment[];
 }
 
-type TabValue = 'all' | 'shipping' | 'pickup';
+type TabValue = 'all' | 'shipping';
 
 export default function AdminOrdersPage() {
   const router = useRouter();
@@ -68,7 +68,7 @@ export default function AdminOrdersPage() {
     try {
       const params = new URLSearchParams();
       if (tab !== 'all') {
-        params.set('type', tab === 'shipping' ? 'SHIPPING' : 'PICKUP');
+        params.set('type', 'SHIPPING');
       }
       const response = await fetch(`/api/admin/orders?${params}`);
       if (response.ok) {
@@ -117,7 +117,6 @@ export default function AdminOrdersPage() {
           <Tabs value={tab} onChange={(_, value) => setTab(value)}>
             <Tab label="すべて" value="all" />
             <Tab label="配送" value="shipping" />
-            <Tab label="キッチンカー" value="pickup" />
           </Tabs>
         </Box>
 
