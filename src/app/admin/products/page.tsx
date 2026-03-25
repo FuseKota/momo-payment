@@ -27,8 +27,11 @@ import {
   Grid,
   CircularProgress,
   Snackbar,
+  Slider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import EditIcon from '@mui/icons-material/Edit';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -73,6 +76,11 @@ export default function AdminProductsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [pendingImageSrc, setPendingImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
@@ -177,10 +185,54 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const getCroppedImage = (imageSrc: string, pixelCrop: Area): Promise<File> => {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob!], 'cropped.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.9);
+      };
+      image.src = imageSrc;
+    });
+  };
+
+  const handleFileSelect = (file: File) => {
+    if (!formData.slug) {
+      setSnackbar({ open: true, message: 'スラッグを先に入力してください' });
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPendingImageSrc(objectUrl);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCropDialogOpen(true);
+  };
+
+  const handleCropConfirm = async () => {
+    if (!pendingImageSrc || !croppedAreaPixels) return;
+    const croppedFile = await getCroppedImage(pendingImageSrc, croppedAreaPixels);
+    URL.revokeObjectURL(pendingImageSrc);
+    setPendingImageSrc(null);
+    setCropDialogOpen(false);
+    await handleFile(croppedFile);
+  };
+
+  const handleCropCancel = () => {
+    if (pendingImageSrc) URL.revokeObjectURL(pendingImageSrc);
+    setPendingImageSrc(null);
+    setCropDialogOpen(false);
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    await handleFile(file);
+    handleFileSelect(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -197,7 +249,7 @@ export default function AdminProductsPage() {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
+    if (file) handleFileSelect(file);
   };
 
   const handleRemoveImage = () => {
@@ -392,6 +444,45 @@ export default function AdminProductsPage() {
       </TableContainer>
 
       {/* Edit/Add Dialog */}
+      <Dialog open={cropDialogOpen} onClose={handleCropCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>画像を調整</DialogTitle>
+        <DialogContent>
+          <Box sx={{ position: 'relative', height: 320, bgcolor: '#000', borderRadius: 1, mt: 1 }}>
+            {pendingImageSrc && (
+              <Cropper
+                image={pendingImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
+              />
+            )}
+          </Box>
+          <Box sx={{ px: 1, pt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              ズーム
+            </Typography>
+            <Slider
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              onChange={(_, v) => setZoom(v as number)}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCropCancel} disabled={isUploading}>
+            キャンセル
+          </Button>
+          <Button variant="contained" onClick={handleCropConfirm} disabled={isUploading}>
+            {isUploading ? <CircularProgress size={24} /> : '切り取る'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {editingProduct ? '商品を編集' : '商品を追加'}
