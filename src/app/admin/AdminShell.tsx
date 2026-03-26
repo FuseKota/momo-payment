@@ -102,8 +102,11 @@ export default function AdminShell({
               href={item.href}
               selected={pathname.startsWith(item.href)}
               sx={{
+                color: 'text.primary',
                 '&.Mui-selected': {
                   backgroundColor: 'primary.light',
+                  color: 'white',
+                  '& .MuiListItemIcon-root': { color: 'white' },
                   '&:hover': {
                     backgroundColor: 'primary.light',
                   },
@@ -112,9 +115,7 @@ export default function AdminShell({
             >
               <ListItemIcon
                 sx={{
-                  color: pathname.startsWith(item.href)
-                    ? 'primary.main'
-                    : 'inherit',
+                  color: pathname.startsWith(item.href) ? 'white' : 'text.primary',
                 }}
               >
                 {item.icon}
