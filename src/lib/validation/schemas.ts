@@ -175,5 +175,17 @@ export const adminProductCreateSchema = z.object({
  */
 export const adminProductUpdateSchema = adminProductCreateSchema.partial();
 
+/**
+ * 管理者：商品並び替えスキーマ
+ */
+export const adminProductReorderSchema = z.object({
+  items: z.array(
+    z.object({
+      id: uuidSchema,
+      sort_order: z.number().int().min(0).max(9999),
+    })
+  ).min(1).max(100),
+});
+
 export type PickupOrderInput = z.infer<typeof pickupOrderSchema>;
 export type ShippingOrderInput = z.infer<typeof shippingOrderSchema>;

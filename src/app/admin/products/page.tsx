@@ -36,6 +36,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SortIcon from '@mui/icons-material/Sort';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SaveIcon from '@mui/icons-material/Save';
+import Tooltip from '@mui/material/Tooltip';
 import { formatPrice } from '@/lib/utils/format';
 import type { Product } from '@/types/database';
 
@@ -46,7 +51,6 @@ interface ProductFormData {
   kind: 'FROZEN_FOOD' | 'GOODS';
   temp_zone: 'FROZEN' | 'AMBIENT';
   price_yen: number;
-  stock_qty: number;
   description: string;
   description_zh_tw: string;
   is_active: boolean;
@@ -60,7 +64,6 @@ const defaultFormData: ProductFormData = {
   kind: 'FROZEN_FOOD',
   temp_zone: 'FROZEN',
   price_yen: 0,
-  stock_qty: 0,
   description: '',
   description_zh_tw: '',
   is_active: true,
@@ -76,6 +79,7 @@ export default function AdminProductsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [pendingImageSrc, setPendingImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -85,6 +89,9 @@ export default function AdminProductsPage() {
     open: false,
     message: '',
   });
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [orderedProducts, setOrderedProducts] = useState<Product[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
@@ -134,7 +141,6 @@ export default function AdminProductsPage() {
         kind: product.kind,
         temp_zone: product.temp_zone,
         price_yen: product.price_yen,
-        stock_qty: product.stock_qty ?? 0,
         description: product.description || '',
         description_zh_tw: product.description_zh_tw || '',
         is_active: product.is_active,
@@ -252,6 +258,69 @@ export default function AdminProductsPage() {
     if (file) handleFileSelect(file);
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+        setSnackbar({ open: true, message: '商品を削除しました' });
+      } else {
+        setSnackbar({ open: true, message: '削除に失敗しました（注文履歴に含まれている商品は削除できません）' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: '削除に失敗しました' });
+    } finally {
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const handleStartReorder = () => {
+    setOrderedProducts([...products]);
+    setIsReorderMode(true);
+  };
+
+  const handleCancelReorder = () => {
+    setOrderedProducts([]);
+    setIsReorderMode(false);
+  };
+
+  const handleMoveProduct = (index: number, direction: 'up' | 'down') => {
+    const newList = [...orderedProducts];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newList.length) return;
+    [newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]];
+    setOrderedProducts(newList);
+  };
+
+  const handleSaveReorder = async () => {
+    setIsReordering(true);
+    try {
+      const payload = {
+        items: orderedProducts.map((p, index) => ({
+          id: p.id,
+          sort_order: index,
+        })),
+      };
+      const response = await fetch('/api/admin/products/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        setProducts(orderedProducts);
+        setOrderedProducts([]);
+        setIsReorderMode(false);
+        setSnackbar({ open: true, message: '並び順を保存しました' });
+      } else {
+        setSnackbar({ open: true, message: '保存に失敗しました' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: '保存に失敗しました' });
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
   const handleRemoveImage = () => {
     setFormData((prev) => ({ ...prev, image_url: null }));
   };
@@ -319,33 +388,94 @@ export default function AdminProductsPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          商品管理
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          商品を追加
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            商品管理
+          </Typography>
+          {isReorderMode && (
+            <Typography variant="body2" color="warning.main" sx={{ fontWeight: 600 }}>
+              並び替えモード
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {isReorderMode ? (
+            <>
+              <Button variant="outlined" onClick={handleCancelReorder} disabled={isReordering}>
+                キャンセル
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={isReordering ? <CircularProgress size={16} /> : <SaveIcon />}
+                onClick={handleSaveReorder}
+                disabled={isReordering}
+              >
+                並び順を保存
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outlined" startIcon={<SortIcon />} onClick={handleStartReorder}>
+                並び替え
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenDialog()}
+              >
+                商品を追加
+              </Button>
+            </>
+          )}
+        </Box>
       </Box>
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
+              {isReorderMode && <TableCell sx={{ width: 80 }}>順番</TableCell>}
               <TableCell>商品名</TableCell>
               <TableCell>種別</TableCell>
               <TableCell align="right">価格</TableCell>
-              <TableCell align="right">在庫</TableCell>
               <TableCell align="center">公開</TableCell>
-              <TableCell align="center">操作</TableCell>
+              {!isReorderMode && <TableCell align="center">操作</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
+            {(isReorderMode ? orderedProducts : products).map((product, index) => (
               <TableRow key={product.id} hover>
+                {isReorderMode && (
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Tooltip title="上へ">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleMoveProduct(index, 'up')}
+                            disabled={index === 0}
+                          >
+                            <ArrowUpwardIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                      <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                        {index + 1}
+                      </Typography>
+                      <Tooltip title="下へ">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleMoveProduct(index, 'down')}
+                            disabled={index === orderedProducts.length - 1}
+                          >
+                            <ArrowDownwardIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                )}
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     {product.image_url ? (
@@ -405,29 +535,32 @@ export default function AdminProductsPage() {
                     ¥{formatPrice(product.price_yen)}
                   </Typography>
                 </TableCell>
-                <TableCell align="right">
-                  <Chip
-                    label={product.stock_qty ?? 0}
-                    size="small"
-                    color={(product.stock_qty ?? 0) > 10 ? 'default' : 'warning'}
-                  />
-                </TableCell>
                 <TableCell align="center">
                   <Switch
                     checked={product.is_active}
                     onChange={() => handleToggleActive(product)}
                     color="primary"
+                    disabled={isReorderMode}
                   />
                 </TableCell>
-                <TableCell align="center">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleOpenDialog(product)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </TableCell>
+                {!isReorderMode && (
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => handleOpenDialog(product)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => setDeleteConfirmId(product.id)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {products.length === 0 && (
@@ -442,6 +575,24 @@ export default function AdminProductsPage() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Delete Confirm Dialog */}
+      <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)}>
+        <DialogTitle>商品を削除しますか？</DialogTitle>
+        <DialogContent>
+          <Typography>この操作は元に戻せません。</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmId(null)}>キャンセル</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+          >
+            削除
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Edit/Add Dialog */}
       <Dialog open={cropDialogOpen} onClose={handleCropCancel} maxWidth="sm" fullWidth>
@@ -636,16 +787,6 @@ export default function AdminProductsPage() {
                 value={formData.price_yen}
                 onChange={(e) => handleFormChange('price_yen', parseInt(e.target.value) || 0)}
                 InputProps={{ startAdornment: '¥' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="在庫数"
-                type="number"
-                fullWidth
-                required
-                value={formData.stock_qty}
-                onChange={(e) => handleFormChange('stock_qty', parseInt(e.target.value) || 0)}
               />
             </Grid>
             <Grid size={12}>
