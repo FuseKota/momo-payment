@@ -15,6 +15,7 @@ import {
   IconButton,
   Button,
   Switch,
+  FormControlLabel,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -54,6 +55,8 @@ interface ProductFormData {
   description: string;
   description_zh_tw: string;
   is_active: boolean;
+  can_pickup: boolean;
+  can_ship: boolean;
   image_url: string | null;
 }
 
@@ -67,6 +70,8 @@ const defaultFormData: ProductFormData = {
   description: '',
   description_zh_tw: '',
   is_active: true,
+  can_pickup: true,
+  can_ship: true,
   image_url: null,
 };
 
@@ -144,6 +149,8 @@ export default function AdminProductsPage() {
         description: product.description || '',
         description_zh_tw: product.description_zh_tw || '',
         is_active: product.is_active,
+        can_pickup: product.can_pickup,
+        can_ship: product.can_ship,
         image_url: product.image_url,
       });
     } else {
@@ -777,6 +784,33 @@ export default function AdminProductsPage() {
                   <MenuItem value="GOODS">グッズ</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid size={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                販売設定
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 3 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_pickup}
+                      onChange={(e) => handleFormChange('can_pickup', e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="店頭受け取り"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_ship}
+                      onChange={(e) => handleFormChange('can_ship', e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="配送EC（オンライン販売）"
+                />
+              </Box>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
