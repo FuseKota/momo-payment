@@ -90,13 +90,14 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
           )}
 
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Image
-              src="/images/logo.svg"
-              alt="Sakura Sisters"
-              width={68}
-              height={68}
-              style={{ width: 'auto', height: 'auto' }}
-            />
+            <Box sx={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
+              <Image
+                src="/images/logo.svg"
+                alt="Sakura Sisters"
+                fill
+                style={{ objectFit: 'contain' }}
+              />
+            </Box>
             <Typography
               variant="h5"
               component="span"
@@ -176,23 +177,12 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
               {user ? (
                 <>
-                  {isAdmin && (
-                    <Button
-                      component={NextLink}
-                      href="/admin/orders"
-                      size="small"
-                      startIcon={<AdminPanelSettingsIcon />}
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      {t('admin')}
-                    </Button>
-                  )}
                   <Button
                     component={Link}
                     href="/mypage"
                     size="small"
                     startIcon={<PersonIcon />}
-                    sx={{ color: 'text.secondary' }}
+                    sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
                   >
                     {t('mypage')}
                   </Button>
@@ -210,7 +200,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   href="/login"
                   size="small"
                   startIcon={<PersonIcon />}
-                  sx={{ color: 'text.secondary' }}
+                  sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
                 >
                   {t('login')}
                 </Button>
