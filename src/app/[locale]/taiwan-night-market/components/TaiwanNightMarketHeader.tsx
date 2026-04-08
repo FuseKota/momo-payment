@@ -64,7 +64,7 @@ export default function TaiwanNightMarketHeader() {
   return (
     <>
       <AppBar
-        position="sticky"
+        position="static"
         elevation={0}
         sx={{
           backgroundColor: darkBg,
@@ -99,6 +99,7 @@ export default function TaiwanNightMarketHeader() {
                 src="/images/sakura-sisters-logo.svg"
                 alt="Sakura Sisters"
                 fill
+                priority
                 style={{ objectFit: 'contain' }}
               />
             </Box>

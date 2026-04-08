@@ -66,7 +66,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
 
   return (
     <>
-      <AppBar position="sticky" color="inherit" elevation={0}>
+      <AppBar position="static" color="inherit" elevation={0}>
         <Toolbar
           sx={{
             maxWidth: 1200,
