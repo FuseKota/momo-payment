@@ -114,6 +114,33 @@
   margin: 0.4em 0;
 }
 
+.markdownContent img {
+  width: 100%;
+  max-height: 450px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 1.5em 0;
+}
+
+.markdownContent table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.markdownContent th,
+.markdownContent td {
+  padding: 0.6em 1em;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: left;
+}
+
+.markdownContent th {
+  background: rgba(251, 192, 45, 0.1);
+  color: #fbc02d;
+  font-weight: 700;
+}
+
 .markdownContent a {
   color: #fbc02d;
   text-decoration: underline;

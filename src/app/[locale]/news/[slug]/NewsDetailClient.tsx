@@ -5,6 +5,7 @@ import { Box, Container, Typography, Chip, Divider, Button } from '@mui/material
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTranslations } from 'next-intl';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import TaiwanNightMarketHeader from '../../taiwan-night-market/components/TaiwanNightMarketHeader';
 import TaiwanNightMarketFooter from '../../taiwan-night-market/components/TaiwanNightMarketFooter';
 import type { News } from '@/types/database';
@@ -71,7 +72,7 @@ export default function NewsDetailClient({ news }: Props) {
 
             {news.content ? (
               <div className={styles.markdownContent}>
-                <ReactMarkdown>{news.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{news.content}</ReactMarkdown>
               </div>
             ) : (
               <Typography sx={{ color: 'rgba(255,255,255,0.4)' }}>{t('noContent')}</Typography>
