@@ -164,8 +164,8 @@
 
 .card:hover {
   transform: translateY(-15px) scale(1.03);
-  box-shadow: 0 20px 40px rgba(211,47,47,0.4);
-  border-color: #ff5252;
+  box-shadow: 0 20px 40px rgba(255,255,255,0.4);
+  border-color: #ffffff;
 }
 
 .cardImg {
@@ -179,7 +179,13 @@
 }
 
 .card:hover .cardImg {
-  border-color: #ff5252;
+  border-color: #ffffff;
+}
+
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .cardContent {
@@ -202,13 +208,13 @@
   font-family: 'Noto Serif JP', serif;
   font-size: 1.6rem;
   margin-bottom: 15px;
-  color: var(--tnm-accent-gold);
+  color: #ffffff;
 }
 
 .cardDesc {
   font-size: 1.05rem;
   line-height: 1.7;
-  color: #ddd;
+  color: var(--tnm-accent-gold);
 }
 
 

@@ -11,14 +11,14 @@ import styles from './taiwan-night-market.module.css';
 import type { News } from '@/types/database';
 
 const NIGHT_MARKET_IMAGES: Record<string, string> = {
-  'shilin-night-market': 'https://images.unsplash.com/photo-1543088267-85b42d7b51b3?q=80&w=1000&auto=format&fit=crop',
-  'raohe-night-market': 'https://images.unsplash.com/photo-1577484462198-d19e917d0f95?q=80&w=1000&auto=format&fit=crop',
-  'ningxia-night-market': 'https://images.unsplash.com/photo-1506085183888-29be1900139e?q=80&w=1000&auto=format&fit=crop',
-  'fengjia-night-market': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop',
-  'liuhe-night-market': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1000&auto=format&fit=crop',
-  'ruifeng-night-market': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=1000&auto=format&fit=crop',
+  'shilin-night-market': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Shilin_night_market_alley_2.jpg/1200px-Shilin_night_market_alley_2.jpg',
+  'raohe-night-market': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/East_Entrance_of_Raohe_Street_Night_Market_20060118_night.jpg/1200px-East_Entrance_of_Raohe_Street_Night_Market_20060118_night.jpg',
+  'ningxia-night-market': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Ningxia_Night_Market_20250520.jpg/1200px-Ningxia_Night_Market_20250520.jpg',
+  'fengjia-night-market': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/1_fengjia_night_market_2019.jpg/1200px-1_fengjia_night_market_2019.jpg',
+  'liuhe-night-market': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Liouho-Night-Market-Kaohsiung.jpg/1200px-Liouho-Night-Market-Kaohsiung.jpg',
+  'ruifeng-night-market': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/%E9%AB%98%E9%9B%84%E5%B8%82%E7%91%9E%E8%B1%90%E5%A4%9C%E5%B8%82%E8%88%87%E8%A3%95%E8%AA%A0%E8%B7%AF.jpg/1200px-%E9%AB%98%E9%9B%84%E5%B8%82%E7%91%9E%E8%B1%90%E5%A4%9C%E5%B8%82%E8%88%87%E8%A3%95%E8%AA%A0%E8%B7%AF.jpg',
 };
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1543088267-85b42d7b51b3?q=80&w=1000&auto=format&fit=crop';
+const FALLBACK_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Shilin_night_market_alley_2.jpg/1200px-Shilin_night_market_alley_2.jpg';
 
 const HARDCODED_CARDS = [
   {
@@ -129,34 +129,25 @@ export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwan
           <div className={styles.gridContainer}>
             {taiwanArticles.length > 0
               ? taiwanArticles.map((article, index) => (
-                  <div
+                  <Link
                     key={article.id}
-                    className={`${styles.card} fade-in-up`}
-                    style={{ transitionDelay: `${(index % 3) * 0.1 + 0.1}s` }}
+                    href={`/news/${article.slug}`}
+                    className={styles.cardLink}
                   >
                     <div
-                      className={styles.cardImg}
-                      style={{ backgroundImage: `url('${NIGHT_MARKET_IMAGES[article.slug] ?? FALLBACK_IMAGE}')` }}
-                    />
-                    <div className={styles.cardContent}>
-                      <h3 className={styles.cardTitle}>{article.title}</h3>
-                      <p className={styles.cardDesc}>{article.excerpt}</p>
-                      <Link
-                        href={`/news/${article.slug}`}
-                        style={{
-                          display: 'inline-block',
-                          marginTop: '1rem',
-                          color: 'var(--tnm-accent-gold, #fbc02d)',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          textDecoration: 'none',
-                          borderBottom: '1px solid transparent',
-                        }}
-                      >
-                        {t('readMore')} →
-                      </Link>
+                      className={`${styles.card} fade-in-up`}
+                      style={{ transitionDelay: `${(index % 3) * 0.1 + 0.1}s` }}
+                    >
+                      <div
+                        className={styles.cardImg}
+                        style={{ backgroundImage: `url('${NIGHT_MARKET_IMAGES[article.slug] ?? FALLBACK_IMAGE}')` }}
+                      />
+                      <div className={styles.cardContent}>
+                        <h3 className={styles.cardTitle}>{article.title}</h3>
+                        <p className={styles.cardDesc}>{article.excerpt}</p>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))
               : HARDCODED_CARDS.map((card, index) => (
                   <div

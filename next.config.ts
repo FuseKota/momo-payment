@@ -18,8 +18,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       // Google Fonts フォントファイル
       "font-src 'self' https://fonts.gstatic.com",
-      // 画像: 自サイト + Supabase Storage + data URI
-      "img-src 'self' data: blob: https://*.supabase.co",
+      // 画像: 自サイト + Supabase Storage + data URI + Unsplash + Wikimedia
+      "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://upload.wikimedia.org",
       // Stripe iframe
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       // API接続先: 自サイト + Supabase + Stripe
