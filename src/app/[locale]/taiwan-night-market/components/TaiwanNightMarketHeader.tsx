@@ -99,6 +99,7 @@ export default function TaiwanNightMarketHeader() {
               alt="Sakura Sisters"
               width={100}
               height={100}
+              style={{ width: 'auto', height: 'auto' }}
             />
             <Typography
               variant="h5"
@@ -186,6 +187,7 @@ export default function TaiwanNightMarketHeader() {
               alt="Sakura Sisters"
               width={120}
               height={120}
+              style={{ width: 'auto', height: 'auto' }}
             />
             <Typography
               variant="h6"

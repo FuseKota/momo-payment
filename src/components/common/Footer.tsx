@@ -40,6 +40,7 @@ export default function Footer() {
                   alt="Sakura Sisters"
                   width={72}
                   height={72}
+                  style={{ width: 'auto', height: 'auto' }}
                 />
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>

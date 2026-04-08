@@ -65,7 +65,7 @@ export default function TaiwanNightMarketFooter() {
                     alt="Sakura Sisters"
                     width={200}
                     height={200}
-                    style={{ objectFit: 'cover' }}
+                    style={{ objectFit: 'cover', width: 'auto', height: 'auto' }}
                   />
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: gold }}>

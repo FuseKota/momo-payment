@@ -95,6 +95,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
               alt="Sakura Sisters"
               width={68}
               height={68}
+              style={{ width: 'auto', height: 'auto' }}
             />
             <Typography
               variant="h5"
