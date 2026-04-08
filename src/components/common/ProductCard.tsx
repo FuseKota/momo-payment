@@ -58,7 +58,7 @@ export default function ProductCard({
       component="img"
       image={product.image_url}
       alt={name}
-      sx={{ height: imageHeight, objectFit: 'cover' }}
+      sx={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover' }}
     />
   ) : (
     <CardMedia
