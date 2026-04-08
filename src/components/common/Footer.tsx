@@ -24,23 +24,20 @@ export default function Footer() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Box sx={{
+                position: 'relative',
                 mr: 1.5,
                 flexShrink: 0,
                 width: 72,
                 height: 72,
                 borderRadius: '50%',
                 backgroundColor: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 overflow: 'hidden',
               }}>
                 <Image
                   src="/images/logo.svg"
                   alt="Sakura Sisters"
-                  width={72}
-                  height={72}
-                  style={{ width: 'auto', height: 'auto' }}
+                  fill
+                  style={{ objectFit: 'contain' }}
                 />
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>

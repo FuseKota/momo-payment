@@ -94,13 +94,14 @@ export default function TaiwanNightMarketHeader() {
 
           {/* Logo */}
           <Link href="/taiwan-night-market" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Image
-              src="/images/sakura-sisters-logo.svg"
-              alt="Sakura Sisters"
-              width={100}
-              height={100}
-              style={{ width: 'auto', height: 'auto' }}
-            />
+            <Box sx={{ position: 'relative', width: 100, height: 100, flexShrink: 0 }}>
+              <Image
+                src="/images/sakura-sisters-logo.svg"
+                alt="Sakura Sisters"
+                fill
+                style={{ objectFit: 'contain' }}
+              />
+            </Box>
             <Typography
               variant="h5"
               component="span"
@@ -182,13 +183,14 @@ export default function TaiwanNightMarketHeader() {
       >
         <Box sx={{ pt: 2 }}>
           <Box sx={{ px: 2, pb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Image
-              src="/images/sakura-sisters-logo.svg"
-              alt="Sakura Sisters"
-              width={120}
-              height={120}
-              style={{ width: 'auto', height: 'auto' }}
-            />
+            <Box sx={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
+              <Image
+                src="/images/sakura-sisters-logo.svg"
+                alt="Sakura Sisters"
+                fill
+                style={{ objectFit: 'contain' }}
+              />
+            </Box>
             <Typography
               variant="h6"
               sx={{
