@@ -143,7 +143,7 @@ export default function TaiwanNightMarketFooter() {
               textAlign: 'center',
             }}
           >
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.3)' }}>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.3)' }} suppressHydrationWarning>
               © {new Date().getFullYear()} もも娘. All rights reserved.
             </Typography>
           </Box>

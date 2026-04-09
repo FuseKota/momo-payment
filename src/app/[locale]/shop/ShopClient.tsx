@@ -30,6 +30,7 @@ export default function ShopClient() {
   const [tab, setTab] = useState<TabValue>('all');
   const [products, setProducts] = useState<ProductWithVariants[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbar();
   const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode, items, updateQty } = useCart();
 
@@ -39,9 +40,10 @@ export default function ShopClient() {
         const response = await fetch('/api/products?mode=shipping');
         const data = await response.json();
         setProducts(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
+        setFetchError(false);
+      } catch {
         setProducts([]);
+        setFetchError(true);
       } finally {
         setIsLoading(false);
       }
@@ -167,7 +169,12 @@ export default function ShopClient() {
           </Grid>
         )}
 
-        {!isLoading && getDisplayProducts().length === 0 && (
+        {!isLoading && fetchError && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="error">{tc('unexpectedError')}</Typography>
+          </Box>
+        )}
+        {!isLoading && !fetchError && getDisplayProducts().length === 0 && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography color="text.secondary">{t('noProducts')}</Typography>
           </Box>

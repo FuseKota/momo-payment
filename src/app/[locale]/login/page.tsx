@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -26,6 +26,20 @@ import { Layout, PostalCodeField } from '@/components/common';
 import { PHONE_REGEX, validateAddressFields } from '@/lib/utils/form-validators';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </Layout>
+    }>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const t = useTranslations('login');
   const router = useRouter();
   const searchParams = useSearchParams();

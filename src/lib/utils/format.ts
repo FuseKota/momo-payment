@@ -36,8 +36,8 @@ export function formatDate(dateStr: string | null, locale: string = 'ja-JP'): st
 export function formatNewsDate(dateStr: string | null): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
   return `${y}.${m}.${day}`;
 }

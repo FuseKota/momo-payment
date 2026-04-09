@@ -182,8 +182,10 @@ export default function ShippingCheckoutPage() {
       }
 
       if (data.data?.checkoutUrl) {
+        // カートクリアはリダイレクト直前に行う（リダイレクト失敗時もStripe側で注文は作成済み）
         clearCart();
         window.location.href = data.data.checkoutUrl;
+        return; // リダイレクト後は何もしない
       } else {
         throw new Error(t('errors.checkoutUrlFailed'));
       }

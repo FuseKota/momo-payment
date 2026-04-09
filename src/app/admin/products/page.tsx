@@ -199,7 +199,7 @@ export default function AdminProductsPage() {
   };
 
   const getCroppedImage = (imageSrc: string, pixelCrop: Area): Promise<File> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const image = new Image();
       image.onload = () => {
         const canvas = document.createElement('canvas');
@@ -208,9 +208,11 @@ export default function AdminProductsPage() {
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
         canvas.toBlob((blob) => {
-          resolve(new File([blob!], 'cropped.jpg', { type: 'image/jpeg' }));
+          if (!blob) { reject(new Error('Failed to create blob')); return; }
+          resolve(new File([blob], 'cropped.jpg', { type: 'image/jpeg' }));
         }, 'image/jpeg', 0.9);
       };
+      image.onerror = () => reject(new Error('Failed to load image'));
       image.src = imageSrc;
     });
   };

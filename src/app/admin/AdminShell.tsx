@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -66,8 +66,13 @@ export default function AdminShell({
   }
 
   // Redirect to login if not admin
+  useEffect(() => {
+    if (!isLoading && !isAdmin) {
+      router.push('/admin/login');
+    }
+  }, [isLoading, isAdmin, router]);
+
   if (!isAdmin) {
-    router.push('/admin/login');
     return null;
   }
 

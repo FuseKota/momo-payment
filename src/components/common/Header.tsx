@@ -81,6 +81,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             <IconButton
               edge="start"
               color="primary"
+              aria-label="メニューを開く"
               onClick={() => setDrawerOpen(true)}
               sx={{ mr: 1 }}
               size="large"
@@ -189,6 +190,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   <IconButton
                     onClick={signOut}
                     size="small"
+                    aria-label="ログアウト"
                     sx={{ color: 'text.secondary' }}
                   >
                     <LogoutIcon />

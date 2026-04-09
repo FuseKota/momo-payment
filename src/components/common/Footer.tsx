@@ -172,7 +172,7 @@ export default function Footer() {
             textAlign: 'center',
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" suppressHydrationWarning>
             © {new Date().getFullYear()} もも娘. All rights reserved.
           </Typography>
         </Box>

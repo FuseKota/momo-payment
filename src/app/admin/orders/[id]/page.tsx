@@ -398,11 +398,11 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   完了にする
                 </Button>
               )}
-              {order.status !== 'CANCELLED' && order.status !== 'FULFILLED' && (
+              {order.status !== 'CANCELED' && order.status !== 'FULFILLED' && (
                 <Button
                   variant="outlined"
                   color="error"
-                  onClick={() => updateOrderStatus('CANCELLED')}
+                  onClick={() => updateOrderStatus('CANCELED')}
                   disabled={isUpdating}
                 >
                   キャンセル
