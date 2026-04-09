@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sendShippingNotificationEmail } from '@/lib/email/resend';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
-import { uuidSchema } from '@/lib/validation/schemas';
+import { uuidSchema, adminOrderUpdateSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -62,7 +62,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   const supabase = getSupabaseAdmin();
-  const body = await request.json();
+
+  let rawBody;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const parseResult = adminOrderUpdateSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'validation_error', details: formatValidationErrors(parseResult.error) },
+      { status: 400 }
+    );
+  }
+
+  const body = parseResult.data;
 
   try {
     // Get current order data for email notification
@@ -90,7 +106,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       updateData.fulfilled_at = new Date().toISOString();
     }
 
-    if (body.status === 'CANCELLED') {
+    if (body.status === 'CANCELED') {
       updateData.cancelled_at = new Date().toISOString();
     }
 

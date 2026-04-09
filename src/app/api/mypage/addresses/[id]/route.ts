@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireCustomer } from '@/lib/auth/require-customer';
+import { uuidSchema, savedAddressSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { validateOrigin } from '@/lib/security/csrf';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -10,7 +12,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const auth = await requireCustomer();
   if (!auth.authorized) return auth.response;
 
+  const originCheck = validateOrigin(request);
+  if (!originCheck.valid) {
+    return NextResponse.json({ error: 'invalid_origin' }, { status: 403 });
+  }
+
   const { id } = await params;
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid address ID' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {
@@ -26,7 +38,22 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Address not found' }, { status: 404 });
     }
 
-    const body = await request.json();
+    let rawBody;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const parseResult = savedAddressSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'validation_error', details: formatValidationErrors(parseResult.error) },
+        { status: 400 }
+      );
+    }
+
+    const body = parseResult.data;
 
     // isDefault が true なら、既存のデフォルトを解除
     if (body.isDefault) {
@@ -72,7 +99,17 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const auth = await requireCustomer();
   if (!auth.authorized) return auth.response;
 
+  const originCheck = validateOrigin(_request);
+  if (!originCheck.valid) {
+    return NextResponse.json({ error: 'invalid_origin' }, { status: 403 });
+  }
+
   const { id } = await params;
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid address ID' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {

@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
-
-interface ShipRequest {
-  carrier: string;
-  trackingNo: string;
-}
+import { uuidSchema, adminShipSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { sendShippingNotificationEmail } from '@/lib/email/resend';
 
 export async function POST(
   request: NextRequest,
@@ -17,14 +14,27 @@ export async function POST(
 
   try {
     const { id: orderId } = await params;
-    const body: ShipRequest = await request.json();
+    const idParse = uuidSchema.safeParse(orderId);
+    if (!idParse.success) {
+      return NextResponse.json({ ok: false, error: 'Invalid order ID' }, { status: 400 });
+    }
 
-    if (!body.carrier || !body.trackingNo) {
+    let rawBody;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const parseResult = adminShipSchema.safeParse(rawBody);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { ok: false, error: 'carrier_and_tracking_required' },
+        { ok: false, error: 'validation_error', details: formatValidationErrors(parseResult.error) },
         { status: 400 }
       );
     }
+
+    const body = parseResult.data;
 
     // 注文を取得
     const { data: order, error: orderError } = await supabaseAdmin
@@ -75,7 +85,7 @@ export async function POST(
     // 注文ステータスを更新
     const { error: updateError } = await supabaseAdmin
       .from('orders')
-      .update({ status: 'SHIPPED' })
+      .update({ status: 'SHIPPED', shipped_at: new Date().toISOString() })
       .eq('id', orderId);
 
     if (updateError) {
@@ -84,6 +94,26 @@ export async function POST(
         { ok: false, error: 'update_failed' },
         { status: 500 }
       );
+    }
+
+    // 発送通知メールを送信
+    const { data: orderForEmail } = await supabaseAdmin
+      .from('orders')
+      .select('order_no, customer_name, customer_email')
+      .eq('id', orderId)
+      .single();
+
+    if (orderForEmail?.customer_email) {
+      try {
+        await sendShippingNotificationEmail({
+          orderNo: orderForEmail.order_no,
+          customerName: orderForEmail.customer_name,
+          customerEmail: orderForEmail.customer_email,
+          trackingNumber: body.trackingNo,
+        });
+      } catch (emailError) {
+        secureLog('error', 'Failed to send shipping notification email', safeErrorLog(emailError));
+      }
     }
 
     return NextResponse.json({

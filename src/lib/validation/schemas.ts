@@ -187,5 +187,61 @@ export const adminProductReorderSchema = z.object({
   ).min(1).max(100),
 });
 
+/**
+ * 管理者：ニュース作成スキーマ
+ */
+export const adminNewsCreateSchema = z.object({
+  title: z.string().min(1, 'タイトルを入力してください').max(200),
+  slug: z.string().min(1, 'スラッグを入力してください').max(100).regex(/^[a-z0-9-]+$/, 'スラッグは小文字英数字とハイフンのみ使用できます'),
+  content: z.string().max(50000).nullable().optional(),
+  excerpt: z.string().max(500).nullable().optional(),
+  category: z.string().max(100).optional(),
+  is_published: z.boolean().optional(),
+  published_at: z.string().nullable().optional(),
+});
+
+/**
+ * 管理者：ニュース更新スキーマ（全フィールドオプション）
+ */
+export const adminNewsUpdateSchema = adminNewsCreateSchema.partial();
+
+/**
+ * 管理者：注文ステータス更新スキーマ
+ */
+export const adminOrderUpdateSchema = z.object({
+  status: z.enum(['PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED']).optional(),
+  tracking_number: z.string().max(100).nullable().optional(),
+});
+
+/**
+ * 管理者：発送登録スキーマ
+ */
+export const adminShipSchema = z.object({
+  carrier: z.string().min(1, '配送業者を入力してください').max(50),
+  trackingNo: z.string().min(1, '追跡番号を入力してください').max(100),
+});
+
+/**
+ * 管理者：入金確認スキーマ
+ */
+export const adminMarkPaidSchema = z.object({
+  note: z.string().max(500).optional(),
+});
+
+/**
+ * 住所保存スキーマ（mypage用）
+ */
+export const savedAddressSchema = z.object({
+  label: z.string().max(50).optional(),
+  recipientName: nameSchema,
+  recipientPhone: phoneSchema,
+  postalCode: postalCodeSchema,
+  pref: z.string().min(1).max(10),
+  city: z.string().min(1).max(50),
+  address1: z.string().min(1).max(200),
+  address2: z.string().max(200).optional(),
+  isDefault: z.boolean().optional(),
+});
+
 export type PickupOrderInput = z.infer<typeof pickupOrderSchema>;
 export type ShippingOrderInput = z.infer<typeof shippingOrderSchema>;

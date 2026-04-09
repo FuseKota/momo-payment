@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Database error', { status: 500 });
   }
 
-  // 4. checkout.session.expired: orderをCANCELLEDに更新
+  // 4. checkout.session.expired: orderをCANCELEDに更新
   if (isCheckoutSessionExpired(event)) {
     const sessionInfo = extractSessionInfo(event);
     if (sessionInfo) {
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       if (expiredPayment) {
         await supabaseAdmin
           .from('orders')
-          .update({ status: 'CANCELLED' })
+          .update({ status: 'CANCELED' })
           .eq('id', expiredPayment.order_id);
 
         secureLog('warn', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
   if (paymentError || !paymentRow) {
     secureLog('error', 'Stripe webhook: payment row not found', paymentError ? safeErrorLog(paymentError) : undefined);
-    return NextResponse.json({ ok: true, message: 'payment not found' });
+    return new NextResponse('Payment not found', { status: 500 });
   }
 
   // 8. paymentsを更新
@@ -125,11 +125,12 @@ export async function POST(request: NextRequest) {
     secureLog('error', 'Stripe webhook: failed to update payment', safeErrorLog(updatePaymentError));
   }
 
-  // 9. ordersを更新（PAID）
+  // 9. ordersを更新（PAID） — 楽観的ロック: PENDING_PAYMENTの注文のみ更新
   const { data: orderData, error: updateOrderError } = await supabaseAdmin
     .from('orders')
     .update({ status: 'PAID', paid_at: new Date().toISOString() })
     .eq('id', paymentRow.order_id)
+    .eq('status', 'PENDING_PAYMENT')
     .select('*, order_items(*)')
     .single();
 

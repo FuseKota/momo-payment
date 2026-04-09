@@ -396,7 +396,7 @@
     "PACKING": "梱包中",
     "SHIPPED": "発送済",
     "FULFILLED": "完了",
-    "CANCELLED": "キャンセル"
+    "CANCELED": "キャンセル"
   },
   "cartContext": {
     "pickupInCartWarning": "キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。",

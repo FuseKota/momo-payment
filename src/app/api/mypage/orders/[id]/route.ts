@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireCustomer } from '@/lib/auth/require-customer';
+import { uuidSchema } from '@/lib/validation/schemas';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -11,6 +12,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
   if (!auth.authorized) return auth.response;
 
   const { id } = await params;
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
+  }
   const supabase = getSupabaseAdmin();
 
   try {

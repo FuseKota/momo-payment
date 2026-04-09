@@ -67,7 +67,6 @@ export async function middleware(request: NextRequest) {
     // admin パスは Supabase セッションリフレッシュ
     if (pathname.startsWith('/admin')) {
       response = await refreshSupabaseSession(request, response);
-      applySecurityHeaders(response);
     }
 
     return response;
@@ -77,11 +76,10 @@ export async function middleware(request: NextRequest) {
   const response = intlMiddleware(request);
   applySecurityHeaders(response);
 
-  // /[locale]/mypage, /[locale]/login のセッションリフレッシュ
-  const localePattern = /^\/(ja|zh-tw)\/(mypage|login|checkout\/shipping)(\/|$)/;
+  // /[locale]/mypage, /[locale]/login, /[locale]/checkout のセッションリフレッシュ
+  const localePattern = /^\/(ja|zh-tw)\/(mypage|login|checkout\/shipping|checkout\/pickup)(\/|$)/;
   if (localePattern.test(pathname)) {
     await refreshSupabaseSession(request, response);
-    applySecurityHeaders(response);
   }
 
   return response;

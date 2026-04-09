@@ -48,7 +48,16 @@ export function validateOrigin(request: Request): {
   if (!origin) {
     // Refererヘッダーで代替チェック
     if (referer) {
-      const refererOrigin = new URL(referer).origin;
+      let refererOrigin: string;
+      try {
+        refererOrigin = new URL(referer).origin;
+      } catch {
+        return {
+          valid: false,
+          origin: null,
+          reason: 'Invalid referer URL format',
+        };
+      }
       const allowedOrigins = getAllowedOrigins();
       if (allowedOrigins.includes(refererOrigin)) {
         return { valid: true, origin: refererOrigin };

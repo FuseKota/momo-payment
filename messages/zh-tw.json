@@ -396,7 +396,7 @@
     "PACKING": "包裝中",
     "SHIPPED": "已出貨",
     "FULFILLED": "已完成",
-    "CANCELLED": "已取消"
+    "CANCELED": "已取消"
   },
   "cartContext": {
     "pickupInCartWarning": "購物車中有餐車取餐商品。如需加入宅配商品，請先清空購物車。",

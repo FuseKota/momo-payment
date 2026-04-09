@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireCustomer } from '@/lib/auth/require-customer';
+import { savedAddressSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { validateOrigin } from '@/lib/security/csrf';
 
 export async function GET() {
   const auth = await requireCustomer();
@@ -33,10 +35,30 @@ export async function POST(request: NextRequest) {
   const auth = await requireCustomer();
   if (!auth.authorized) return auth.response;
 
+  const originCheck = validateOrigin(request);
+  if (!originCheck.valid) {
+    return NextResponse.json({ error: 'invalid_origin' }, { status: 403 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {
-    const body = await request.json();
+    let rawBody;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const parseResult = savedAddressSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'validation_error', details: formatValidationErrors(parseResult.error) },
+        { status: 400 }
+      );
+    }
+
+    const body = parseResult.data;
 
     // isDefault が true なら、既存のデフォルトを解除
     if (body.isDefault) {

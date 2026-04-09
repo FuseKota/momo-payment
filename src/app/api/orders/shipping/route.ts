@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) {
       secureLog('error', 'Order items create error', safeErrorLog(itemsError));
-      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      await supabaseAdmin.from('orders').update({ status: 'CANCELED' }).eq('id', orderRow.id);
       return NextResponse.json(
         { ok: false, error: 'order_items_create_failed' },
         { status: 500 }
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     if (addressError) {
       secureLog('error', 'Address create error', safeErrorLog(addressError));
-      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      await supabaseAdmin.from('orders').update({ status: 'CANCELED' }).eq('id', orderRow.id);
       return NextResponse.json(
         { ok: false, error: 'address_create_failed' },
         { status: 500 }
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
 
     if (paymentError) {
       secureLog('error', 'Payment create error', safeErrorLog(paymentError));
-      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      await supabaseAdmin.from('orders').update({ status: 'CANCELED' }).eq('id', orderRow.id);
       return NextResponse.json(
         { ok: false, error: 'payment_create_failed' },
         { status: 500 }
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
       if (paymentRow) {
         await supabaseAdmin.from('payments').delete().eq('id', paymentRow.id);
       }
-      await supabaseAdmin.from('orders').update({ status: 'CANCELLED' }).eq('id', orderRow.id);
+      await supabaseAdmin.from('orders').update({ status: 'CANCELED' }).eq('id', orderRow.id);
       return NextResponse.json(
         { ok: false, error: 'payment_session_failed' },
         { status: 500 }

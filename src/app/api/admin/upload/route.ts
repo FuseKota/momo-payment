@@ -3,6 +3,7 @@ import { uploadProductImage, deleteProductImage } from '@/lib/storage/upload';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
+import { uuidSchema } from '@/lib/validation/schemas';
 
 export async function POST(request: NextRequest) {
   const guard = await adminWriteGuard(request);
@@ -46,6 +47,10 @@ export async function POST(request: NextRequest) {
 
     // Update product with image URL if productId is provided
     if (productId && result.url) {
+      const idParse = uuidSchema.safeParse(productId);
+      if (!idParse.success) {
+        return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 });
+      }
       const supabase = getSupabaseAdmin();
       await supabase
         .from('products')
@@ -78,6 +83,14 @@ export async function DELETE(request: NextRequest) {
     if (!path) {
       return NextResponse.json(
         { error: 'Path is required' },
+        { status: 400 }
+      );
+    }
+
+    // Path traversal防止
+    if (path.includes('..') || path.startsWith('/')) {
+      return NextResponse.json(
+        { error: 'Invalid path' },
         { status: 400 }
       );
     }

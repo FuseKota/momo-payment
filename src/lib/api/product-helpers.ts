@@ -52,7 +52,8 @@ export async function fetchAndValidateProducts(
     };
   }
 
-  if (!products || products.length !== productIds.length) {
+  const uniqueProductIds = [...new Set(productIds)];
+  if (!products || products.length !== uniqueProductIds.length) {
     return {
       ok: false,
       response: NextResponse.json(

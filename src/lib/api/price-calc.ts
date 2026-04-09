@@ -19,7 +19,8 @@ export function calculateOrderItems(
   variants?: Array<{ id: string; product_id: string; size: string | null; price_yen: number | null }>
 ): CalculatedItem[] {
   return orderItems.map((i) => {
-    const p = products.find((x) => x.id === i.productId)!;
+    const p = products.find((x) => x.id === i.productId);
+    if (!p) throw new Error(`Product not found: ${i.productId}`);
     const v = i.variantId ? variants?.find((x) => x.id === i.variantId) : undefined;
     const qty = toInt(i.qty);
     if (qty <= 0 || qty > 99) {

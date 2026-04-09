@@ -91,7 +91,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
       ? `
       <h3 style="color: #FF6680; margin-top: 24px;">${e.pickupSchedule}</h3>
       <p style="margin: 0;">
-        ${e.dateTime} ${data.pickupDate} ${data.pickupTime || ''}
+        ${e.dateTime} ${escapeHtml(data.pickupDate || '')} ${escapeHtml(data.pickupTime || '')}
       </p>
     `
       : '';
@@ -112,7 +112,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
       </div>
 
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', data.customerName)}</p>
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
           ${e.orderConfirmMessage.replace(/\n/g, '<br>')}
         </p>
@@ -215,7 +215,7 @@ export async function sendShippingNotificationEmail(data: ShippingNotificationDa
       </div>
 
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', data.customerName)}</p>
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
           ${e.shippingThankYou.replace(/\n/g, '<br>')}
         </p>
@@ -290,7 +290,7 @@ export async function sendPaymentConfirmationEmail(data: {
       </div>
 
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', data.customerName)}</p>
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
           ${e.paymentCompleteMessage}
         </p>

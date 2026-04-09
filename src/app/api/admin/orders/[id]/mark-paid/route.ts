@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
-
-interface MarkPaidRequest {
-  note?: string;
-}
+import { uuidSchema, adminMarkPaidSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 export async function POST(
   request: NextRequest,
@@ -16,7 +13,27 @@ export async function POST(
 
   try {
     const { id: orderId } = await params;
-    const body: MarkPaidRequest = await request.json();
+    const idParse = uuidSchema.safeParse(orderId);
+    if (!idParse.success) {
+      return NextResponse.json({ ok: false, error: 'Invalid order ID' }, { status: 400 });
+    }
+
+    let rawBody;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const parseResult = adminMarkPaidSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { ok: false, error: 'validation_error', details: formatValidationErrors(parseResult.error) },
+        { status: 400 }
+      );
+    }
+
+    const body = parseResult.data;
 
     // 注文を取得
     const { data: order, error: orderError } = await supabaseAdmin
@@ -52,6 +69,7 @@ export async function POST(
       .from('orders')
       .update({
         status: 'PAID',
+        paid_at: new Date().toISOString(),
         admin_note: body.note ?? null,
       })
       .eq('id', orderId);

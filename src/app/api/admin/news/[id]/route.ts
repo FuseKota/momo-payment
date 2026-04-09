@@ -1,15 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
+import { uuidSchema, adminNewsUpdateSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await adminWriteGuard(request);
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  const supabase = getSupabaseAdmin();
-  const body = await request.json();
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid news ID' }, { status: 400 });
+  }
 
+  const supabase = getSupabaseAdmin();
+
+  let rawBody;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const parseResult = adminNewsUpdateSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'validation_error', details: formatValidationErrors(parseResult.error) },
+      { status: 400 }
+    );
+  }
+
+  const body = parseResult.data;
   const updates: Record<string, unknown> = {};
   if (body.title !== undefined) updates.title = body.title;
   if (body.content !== undefined) updates.content = body.content;
@@ -48,6 +69,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
+  const idParse = uuidSchema.safeParse(id);
+  if (!idParse.success) {
+    return NextResponse.json({ error: 'Invalid news ID' }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   try {

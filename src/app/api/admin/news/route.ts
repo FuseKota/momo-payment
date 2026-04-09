@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
+import { adminNewsCreateSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -30,13 +31,23 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const supabase = getSupabaseAdmin();
-  const body = await request.json();
 
-  const { title, content, excerpt, category, slug, is_published, published_at } = body;
-
-  if (!title || !slug) {
-    return NextResponse.json({ error: 'title と slug は必須です' }, { status: 400 });
+  let rawBody;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+
+  const parseResult = adminNewsCreateSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'validation_error', details: formatValidationErrors(parseResult.error) },
+      { status: 400 }
+    );
+  }
+
+  const { title, content, excerpt, category, slug, is_published, published_at } = parseResult.data;
 
   try {
     const { data, error } = await supabase
