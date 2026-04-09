@@ -46,16 +46,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
 
-      if (session?.user) {
-        const admin = await checkAdminStatus(session.user.id);
-        setIsAdmin(admin);
+        if (session?.user) {
+          const admin = await checkAdminStatus(session.user.id);
+          setIsAdmin(admin);
+        }
+      } catch {
+        setSession(null);
+        setUser(null);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     getSession();

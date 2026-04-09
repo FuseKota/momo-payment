@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Link, useRouter } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import {
   Box,
   Container,
@@ -38,7 +38,6 @@ export default function ShippingCheckoutPage() {
   const t = useTranslations('checkoutShipping');
   const tc = useTranslations('common');
   const locale = useLocale();
-  const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
   const { user, isLoading: authLoading } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
@@ -63,9 +62,9 @@ export default function ShippingCheckoutPage() {
   // 認証ゲート: 未ログインならログインページへリダイレクト
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login?callbackUrl=/checkout/shipping' as '/login');
+      window.location.replace(`/${locale}/login?callbackUrl=/${locale}/checkout/shipping`);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, locale]);
 
   const applyAddress = useCallback((addr: CustomerAddress) => {
     setValues({
@@ -195,11 +194,25 @@ export default function ShippingCheckoutPage() {
   };
 
   // 認証チェック中はローディング表示
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <Layout>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
+        </Box>
+      </Layout>
+    );
+  }
+
+  // 未ログイン: useEffectでリダイレクト中
+  if (!user) {
+    return (
+      <Layout>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 2 }}>
+          <CircularProgress size={24} />
+          <Typography variant="body2" color="text.secondary">
+            {tc('loading')}
+          </Typography>
         </Box>
       </Layout>
     );
