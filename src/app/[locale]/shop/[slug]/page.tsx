@@ -41,11 +41,9 @@ export async function generateMetadata({
       locale === 'zh-tw'
         ? (product.description_zh_tw || product.description)
         : product.description;
-    const title = `${name} | もも娘`;
-
     return {
-      title,
-      description: description || `${name}の通販ページ。もも娘のオンラインショップ。`,
+      title: name,
+      description: description || name,
       alternates: {
         canonical: `${appUrl}/${locale}/shop/${slug}`,
         languages: {
@@ -55,7 +53,7 @@ export async function generateMetadata({
         },
       },
       openGraph: {
-        title,
+        title: name,
         description: description || '',
         url: `${appUrl}/${locale}/shop/${slug}`,
         images: product.image_url
@@ -65,7 +63,7 @@ export async function generateMetadata({
       },
       twitter: {
         card: 'summary_large_image',
-        title,
+        title: name,
         description: description || '',
       },
     };

@@ -24,8 +24,10 @@ const staticRoutes: Array<{
 }> = [
   { path: '', changeFrequency: 'weekly', priority: 1.0 },
   { path: '/shop', changeFrequency: 'daily', priority: 0.9 },
+  { path: '/news', changeFrequency: 'daily', priority: 0.7 },
   { path: '/taiwan-night-market', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/legal/tokushoho', changeFrequency: 'monthly', priority: 0.3 },
+  { path: '/legal/privacy', changeFrequency: 'monthly', priority: 0.3 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -64,6 +66,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             lastModified: product.updated_at ? new Date(product.updated_at) : now,
             changeFrequency: 'weekly',
             priority: 0.8,
+            alternates: buildAlternates(path, appUrl),
+          });
+        }
+      }
+    }
+  } catch {
+    // DB unavailable during build — skip dynamic routes
+  }
+
+  // Dynamic news routes
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: newsItems } = await supabase
+      .from('news')
+      .select('slug, published_at')
+      .eq('is_published', true);
+
+    if (newsItems) {
+      for (const item of newsItems) {
+        const path = `/news/${item.slug}`;
+        for (const locale of locales) {
+          entries.push({
+            url: `${appUrl}/${locale}${path}`,
+            lastModified: item.published_at ? new Date(item.published_at) : now,
+            changeFrequency: 'monthly',
+            priority: 0.6,
             alternates: buildAlternates(path, appUrl),
           });
         }

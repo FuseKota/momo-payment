@@ -37,13 +37,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const tc = await getTranslations({ locale, namespace: "common" });
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://momomusume.com";
+  const siteName = tc("siteName");
 
   return {
     metadataBase: new URL(appUrl),
     title: {
       default: t("title"),
-      template: "%s | もも娘",
+      template: `%s | ${siteName}`,
     },
     description: t("description"),
     alternates: {
@@ -55,7 +57,7 @@ export async function generateMetadata({
       },
     },
     openGraph: {
-      siteName: "もも娘",
+      siteName,
       locale: locale === "zh-tw" ? "zh_TW" : "ja_JP",
       type: "website",
     },

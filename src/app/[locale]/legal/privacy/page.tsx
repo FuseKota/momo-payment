@@ -1,5 +1,15 @@
 import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'legal' });
+  return {
+    title: t('privacyTitle'),
+    description: t('privacyTitle'),
+  };
+}
 
 export default function PrivacyPage() {
   const t = useTranslations('legal');
