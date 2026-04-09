@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import type { User, Session } from '@supabase/supabase-js';
@@ -86,15 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     return { error };
-  };
+  }, [supabase]);
 
-  const signUp = async (email: string, password: string, name: string, address?: SignUpAddress) => {
+  const signUp = useCallback(async (email: string, password: string, name: string, address?: SignUpAddress) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -141,30 +141,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return { error: null };
-  };
+  }, [supabase]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setIsAdmin(false);
-  };
+  }, [supabase]);
 
   const isCustomer = !!user && !isAdmin;
 
+  const value = useMemo(() => ({
+    user,
+    session,
+    isAdmin,
+    isCustomer,
+    isLoading,
+    signIn,
+    signUp,
+    signOut,
+  }), [user, session, isAdmin, isCustomer, isLoading, signIn, signUp, signOut]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        isAdmin,
-        isCustomer,
-        isLoading,
-        signIn,
-        signUp,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

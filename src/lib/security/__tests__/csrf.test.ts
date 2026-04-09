@@ -71,13 +71,14 @@ describe('csrf', () => {
       expect(result.reason).toBe('Missing origin header');
     });
 
-    it('開発環境でOriginなしは許可される', () => {
+    it('開発環境でもOriginなしは拒否される', () => {
       process.env.NODE_ENV = 'development';
 
       const request = new Request('http://localhost');
 
       const result = validateOrigin(request);
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('Missing origin header');
     });
 
     it('RefererヘッダーでOriginを代替チェックできる', () => {

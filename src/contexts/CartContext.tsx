@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import type { Product, ProductVariant, TempZone } from '@/types/database';
 
 export type CartMode = 'pickup' | 'shipping' | null;
@@ -207,31 +207,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return items.some((item) => item.product.temp_zone !== firstZone);
   };
 
-  const subtotal = items.reduce((sum, item) => {
+  const subtotal = useMemo(() => items.reduce((sum, item) => {
     const price = item.variant?.price_yen ?? item.product.price_yen;
     return sum + price * item.qty;
-  }, 0);
+  }, 0), [items]);
 
-  const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.qty, 0), [items]);
+
+  const value = useMemo(() => ({
+    items,
+    cartMode,
+    addItem,
+    removeItem,
+    updateQty,
+    clearCart,
+    switchMode,
+    canAddProduct,
+    getIncompatibleModeMessage,
+    getTempZone,
+    hasMixedTempZones,
+    subtotal,
+    itemCount,
+  }), [items, cartMode, addItem, removeItem, updateQty, clearCart, switchMode, canAddProduct, getIncompatibleModeMessage, getTempZone, hasMixedTempZones, subtotal, itemCount]);
 
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        cartMode,
-        addItem,
-        removeItem,
-        updateQty,
-        clearCart,
-        switchMode,
-        canAddProduct,
-        getIncompatibleModeMessage,
-        getTempZone,
-        hasMixedTempZones,
-        subtotal,
-        itemCount,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
