@@ -206,6 +206,34 @@ export const adminNewsCreateSchema = z.object({
 export const adminNewsUpdateSchema = adminNewsCreateSchema.partial();
 
 /**
+ * 飯舘村台湾夜市カレンダー：イベントタイプ
+ */
+export const iitateCalendarEventTypeSchema = z.enum(['day', 'night', 'closed', 'stage']);
+
+/**
+ * 管理者：飯舘村カレンダーイベント作成スキーマ
+ */
+export const adminIitateCalendarEventCreateSchema = z.object({
+  event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日付の形式が正しくありません (YYYY-MM-DD)'),
+  types: z.array(iitateCalendarEventTypeSchema).min(1, 'タイプを1つ以上選択してください').max(4),
+  time_range: z.string().max(100).nullable().optional(),
+  note: z.string().max(200).nullable().optional(),
+});
+
+/**
+ * 管理者：飯舘村カレンダーイベント更新スキーマ
+ */
+export const adminIitateCalendarEventUpdateSchema = adminIitateCalendarEventCreateSchema.partial();
+
+/**
+ * 管理者：飯舘村カレンダー月別ノート更新スキーマ（upsert）
+ */
+export const adminIitateCalendarMonthNoteSchema = z.object({
+  year_month: z.string().regex(/^\d{4}-\d{2}$/, '年月の形式が正しくありません (YYYY-MM)'),
+  notes: z.array(z.string().max(500)).max(10),
+});
+
+/**
  * 管理者：注文ステータス更新スキーマ
  */
 export const adminOrderUpdateSchema = z.object({

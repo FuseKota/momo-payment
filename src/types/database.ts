@@ -229,3 +229,23 @@ export interface News {
   created_at: string;
   updated_at: string;
 }
+
+export type IitateCalendarEventType = 'day' | 'night' | 'closed' | 'stage';
+
+export interface IitateCalendarEvent {
+  id: string;
+  event_date: string;
+  types: IitateCalendarEventType[];
+  time_range: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IitateCalendarMonthNote {
+  id: string;
+  year_month: string;
+  notes: string[];
+  created_at: string;
+  updated_at: string;
+}
