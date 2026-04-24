@@ -98,6 +98,7 @@ export interface Order {
   user_id: string | null;
   locale: string;
   paid_at: string | null;
+  lookup_token: string | null;
   created_at: string;
   updated_at: string;
 }
