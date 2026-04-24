@@ -30,10 +30,36 @@ const envSchema = z.object({
   }),
   SHIPPING_FEE_YEN: z.coerce.number().int().positive().default(1200),
 
-  // Email (optional)
+  // Email (本番では必須、開発/テストでは optional)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().email().optional().or(z.literal('')),
   ADMIN_EMAIL: z.string().email().optional().or(z.literal('')),
+
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === 'production') {
+    if (!data.RESEND_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RESEND_API_KEY'],
+        message: 'RESEND_API_KEY is required in production',
+      });
+    }
+    if (!data.EMAIL_FROM) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['EMAIL_FROM'],
+        message: 'EMAIL_FROM is required in production',
+      });
+    }
+    if (!data.ADMIN_EMAIL) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ADMIN_EMAIL'],
+        message: 'ADMIN_EMAIL is required in production',
+      });
+    }
+  }
 });
 
 /**

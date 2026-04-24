@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminProductCreateSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -17,11 +18,13 @@ export async function GET() {
       .order('sort_order');
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      secureLog('error', 'Admin products list error', safeErrorLog(error));
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
+    secureLog('error', 'Admin products list exception', safeErrorLog(error));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -52,11 +55,16 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'このスラッグはすでに使われています' }, { status: 409 });
+      }
+      secureLog('error', 'Admin product create error', safeErrorLog(error));
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
+    secureLog('error', 'Admin product create exception', safeErrorLog(error));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

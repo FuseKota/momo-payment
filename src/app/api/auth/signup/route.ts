@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { nameSchema, phoneSchema, addressSchema } from '@/lib/validation/schemas';
+import { validateOrigin } from '@/lib/security/csrf';
+import { checkAuthRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 /**
  * POST /api/auth/signup
@@ -13,6 +15,22 @@ import { nameSchema, phoneSchema, addressSchema } from '@/lib/validation/schemas
  */
 export async function POST(request: Request) {
   try {
+    // CSRF: Origin 検証
+    const originCheck = validateOrigin(request);
+    if (!originCheck.valid) {
+      return NextResponse.json({ error: 'invalid_origin' }, { status: 403 });
+    }
+
+    // レート制限（認証系は厳しめ: 5 req/min/IP）
+    const ip = getClientIP(request);
+    const rateLimit = await checkAuthRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'rate_limit_exceeded', retryAfter: rateLimit.resetIn },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.resetIn) } }
+      );
+    }
+
     // セッションから userId を取得（ボディの userId は信頼しない）
     const supabaseClient = await createClient();
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();

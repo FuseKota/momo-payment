@@ -46,13 +46,25 @@ export const postalCodeSchema = z
   .regex(/^\d{3}-?\d{4}$/, '郵便番号の形式が正しくありません');
 
 /**
+ * 制御文字・ゼロ幅文字を除去するヘルパー
+ */
+function stripControlChars(val: string): string {
+  // ASCII control, Zero-width joiner/non-joiner, BOM, LRM/RLM, ゼロ幅スペース類を除去
+  return val
+    .replace(/[\x00-\x08\x0B-\x1F\x7F]/g, '')
+    .replace(/[​-‏﻿‪-‮⁦-⁩]/g, '')
+    .trim();
+}
+
+/**
  * 名前バリデーション
  */
 export const nameSchema = z
   .string()
   .min(1, 'お名前を入力してください')
   .max(100, 'お名前は100文字以内で入力してください')
-  .transform((val) => val.trim());
+  .transform(stripControlChars)
+  .refine((v) => v.length > 0, { message: 'お名前を入力してください' });
 
 /**
  * 商品数量バリデーション
@@ -91,10 +103,10 @@ export const customerSchema = z.object({
  */
 export const addressSchema = z.object({
   postalCode: postalCodeSchema,
-  pref: z.string().min(1, '都道府県を入力してください').max(10),
-  city: z.string().min(1, '市区町村を入力してください').max(50),
-  address1: z.string().min(1, '番地を入力してください').max(200),
-  address2: z.string().max(200).optional(),
+  pref: z.string().min(1, '都道府県を入力してください').max(10).transform(stripControlChars),
+  city: z.string().min(1, '市区町村を入力してください').max(50).transform(stripControlChars),
+  address1: z.string().min(1, '番地を入力してください').max(200).transform(stripControlChars),
+  address2: z.string().max(200).optional().transform((v) => (v ? stripControlChars(v) : v)),
 });
 
 /**

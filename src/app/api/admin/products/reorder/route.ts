@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { adminProductReorderSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 export async function PATCH(request: NextRequest) {
   const guard = await adminWriteGuard(request);
@@ -27,14 +28,17 @@ export async function PATCH(request: NextRequest) {
   const { items } = parseResult.data;
 
   try {
-    await Promise.all(
-      items.map(({ id, sort_order }) =>
-        supabase.from('products').update({ sort_order }).eq('id', id)
-      )
-    );
+    // 原子的に複数行を更新（PostgreSQL RPC 経由でトランザクション保証）
+    const { data, error } = await supabase.rpc('reorder_products', { p_items: items });
 
-    return NextResponse.json({ updated: items.length });
-  } catch {
+    if (error) {
+      secureLog('error', 'Product reorder error', safeErrorLog(error));
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+
+    return NextResponse.json({ updated: data ?? items.length });
+  } catch (err) {
+    secureLog('error', 'Product reorder exception', safeErrorLog(err));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
