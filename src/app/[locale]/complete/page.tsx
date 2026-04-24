@@ -62,6 +62,7 @@ function CompleteContent() {
   const tc = useTranslations('common');
   const searchParams = useSearchParams();
   const orderNo = searchParams.get('orderNo');
+  const token = searchParams.get('token');
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +76,10 @@ function CompleteContent() {
 
     const fetchOrder = async () => {
       try {
-        const response = await fetch(`/api/orders/by-no/${orderNo}`);
+        const url = token
+          ? `/api/orders/by-no/${orderNo}?token=${encodeURIComponent(token)}`
+          : `/api/orders/by-no/${orderNo}`;
+        const response = await fetch(url);
         const data = await response.json();
 
         if (!response.ok || !data.ok) {
@@ -92,7 +96,7 @@ function CompleteContent() {
     };
 
     fetchOrder();
-  }, [orderNo, t]);
+  }, [orderNo, token, t]);
 
   if (loading) {
     return (

@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         user_id: guard.userId,
         locale,
       })
-      .select('id, order_no')
+      .select('id, order_no, lookup_token')
       .single();
 
     if (orderError || !orderRow) {
@@ -140,6 +140,7 @@ export async function POST(request: NextRequest) {
         data: {
           orderId: orderRow.id,
           orderNo: orderRow.order_no,
+          lookupToken: orderRow.lookup_token,
           orderType: 'PICKUP',
           status: 'RESERVED',
           paymentMethod: 'PAY_AT_PICKUP',
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
       quantity: x.qty,
     }));
 
-    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/complete?orderNo=${orderRow.order_no}`;
+    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/complete?orderNo=${orderRow.order_no}&token=${orderRow.lookup_token ?? ''}`;
     const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/checkout/pickup?canceled=true`;
 
     let session;
@@ -228,6 +229,7 @@ export async function POST(request: NextRequest) {
       data: {
         orderId: orderRow.id,
         orderNo: orderRow.order_no,
+        lookupToken: orderRow.lookup_token,
         orderType: 'PICKUP',
         status: 'PENDING_PAYMENT',
         paymentMethod: 'STRIPE',
