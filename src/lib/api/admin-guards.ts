@@ -37,7 +37,7 @@ export async function adminWriteGuard(request: NextRequest): Promise<AdminGuardR
     return { ok: false, response: auth.response };
   }
 
-  const rateLimit = checkAdminRateLimit(getClientIP(request));
+  const rateLimit = await checkAdminRateLimit(getClientIP(request));
   if (!rateLimit.allowed) {
     return {
       ok: false,

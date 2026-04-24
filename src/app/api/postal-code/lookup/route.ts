@@ -16,7 +16,7 @@ interface AddressResult {
 
 export async function GET(request: NextRequest) {
   const ip = getClientIP(request);
-  const rateLimit = checkRateLimit(`postal:${ip}`, 30, 60000);
+  const rateLimit = await checkRateLimit(`postal:${ip}`, 30, 60000);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'RATE_LIMITED' },

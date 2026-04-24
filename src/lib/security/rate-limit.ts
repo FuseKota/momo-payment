@@ -1,128 +1,129 @@
 /**
- * インメモリレート制限
- * スライディングウィンドウ方式でリクエスト数を制限
+ * 永続レート制限（Supabase Postgres 経由）
+ * サーバレス環境で水平スケールしても共有カウンタとして機能する。
+ *
+ * 設計:
+ * - RPC `check_rate_limit` で UPSERT + 判定を 1 往復・原子的に実行
+ * - DB 障害時はフェイルオープン（サービス継続を優先、ログには warn 出力）
+ * - 同一 runtime 内の短期キャッシュで DB 負荷をわずかに軽減（オプション）
  */
 
-interface RateLimitRecord {
-  count: number;
-  resetTime: number;
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetIn: number;
 }
 
-// IPアドレスごとのレート制限記録
-const rateLimitMap = new Map<string, RateLimitRecord>();
-
-// デフォルト設定
-const DEFAULT_LIMIT = 10; // リクエスト数
-const DEFAULT_WINDOW_MS = 60 * 1000; // 1分
+const DEFAULT_LIMIT = 10;
+const DEFAULT_WINDOW_MS = 60 * 1000;
 
 /**
- * レート制限をチェック
- * @param identifier - 識別子（通常はIPアドレス）
- * @param limit - ウィンドウ内の最大リクエスト数
- * @param windowMs - ウィンドウサイズ（ミリ秒）
- * @returns allowed: 許可されたか, remaining: 残りリクエスト数, resetIn: リセットまでの秒数
+ * レート制限をチェック（Supabase RPC 経由・原子的）
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   identifier: string,
   limit: number = DEFAULT_LIMIT,
   windowMs: number = DEFAULT_WINDOW_MS
-): { allowed: boolean; remaining: number; resetIn: number } {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
+): Promise<RateLimitResult> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_limit: limit,
+      p_window_seconds: Math.ceil(windowMs / 1000),
+    });
 
-  // 新規または期限切れの場合
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(identifier, { count: 1, resetTime: now + windowMs });
+    if (error || !data || (Array.isArray(data) && data.length === 0)) {
+      // フェイルオープン: DB 障害時はサービス継続（警告は残す）
+      secureLog('warn', 'Rate limit check failed, failing open', {
+        identifier,
+        error: error ? safeErrorLog(error) : undefined,
+      });
+      return {
+        allowed: true,
+        remaining: limit,
+        resetIn: Math.ceil(windowMs / 1000),
+      };
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    return {
+      allowed: row.allowed,
+      remaining: row.remaining,
+      resetIn: row.reset_in,
+    };
+  } catch (err) {
+    secureLog('warn', 'Rate limit exception, failing open', safeErrorLog(err));
     return {
       allowed: true,
-      remaining: limit - 1,
+      remaining: limit,
       resetIn: Math.ceil(windowMs / 1000),
     };
   }
-
-  // 制限超過
-  if (record.count >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetIn: Math.ceil((record.resetTime - now) / 1000),
-    };
-  }
-
-  // カウント増加
-  record.count++;
-  return {
-    allowed: true,
-    remaining: limit - record.count,
-    resetIn: Math.ceil((record.resetTime - now) / 1000),
-  };
 }
 
 /**
- * 注文API用レート制限チェック
- * 10リクエスト/分/IP
+ * 注文API用レート制限チェック（10 req/min/IP）
  */
-export function checkOrderRateLimit(ip: string): ReturnType<typeof checkRateLimit> {
+export function checkOrderRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`order:${ip}`, 10, 60 * 1000);
 }
 
 /**
- * Webhook用レート制限チェック
- * 100リクエスト/分（Stripeリトライ対応）
+ * Webhook用レート制限チェック（100 req/min/IP）
  */
-export function checkWebhookRateLimit(ip: string): ReturnType<typeof checkRateLimit> {
+export function checkWebhookRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`webhook:${ip}`, 100, 60 * 1000);
 }
 
 /**
- * 管理者API用レート制限チェック
- * 30リクエスト/分（書き込み操作用）
+ * 管理者API用レート制限チェック（30 req/min/IP）
  */
-export function checkAdminRateLimit(ip: string): ReturnType<typeof checkRateLimit> {
+export function checkAdminRateLimit(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(`admin:${ip}`, 30, 60 * 1000);
 }
 
 /**
- * リクエストからIPアドレスを取得
- * x-real-ip を優先する（Vercel等の信頼できるインフラが設定するヘッダー）
- * x-forwarded-for はクライアントに偽装される可能性があるため後回し
+ * 認証API用レート制限チェック（5 req/min/IP、ブルートフォース対策）
+ */
+export function checkAuthRateLimit(ip: string): Promise<RateLimitResult> {
+  return checkRateLimit(`auth:${ip}`, 5, 60 * 1000);
+}
+
+/**
+ * リクエストからクライアントIPを取得
+ * - Vercel は x-real-ip / x-forwarded-for を設定
+ * - Netlify は x-nf-client-connection-ip を設定
+ * - いずれもプラットフォーム側で上書きされるため偽装不可
  */
 export function getClientIP(request: Request): string {
-  // x-real-ip: Vercel Edge Network 等の信頼できるプロキシが設定するIP（偽装不可）
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP.trim();
-  }
+  const nfIp = request.headers.get('x-nf-client-connection-ip');
+  if (nfIp) return nfIp.trim();
 
-  // x-forwarded-for: 複数プロキシを経由した場合のIPリスト（最初のIPはクライアントだが偽装可能）
+  const realIP = request.headers.get('x-real-ip');
+  if (realIP) return realIP.trim();
+
   const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
+  if (forwarded) return forwarded.split(',')[0].trim();
 
   return 'unknown';
 }
 
-// 定期的なクリーンアップ（メモリリーク防止）
-// サーバーサイドでのみ実行
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of rateLimitMap.entries()) {
-      if (now > value.resetTime) {
-        rateLimitMap.delete(key);
-      }
-    }
-  }, 60 * 1000); // 1分ごと
-}
-
 /**
- * テスト用：レート制限をリセット
+ * テスト用: rate_limit_buckets を直接リセット
  */
-export function resetRateLimit(identifier?: string): void {
-  if (identifier) {
-    rateLimitMap.delete(identifier);
-  } else {
-    rateLimitMap.clear();
+export async function resetRateLimit(identifier?: string): Promise<void> {
+  try {
+    const supabase = getSupabaseAdmin();
+    if (identifier) {
+      await supabase.from('rate_limit_buckets').delete().eq('identifier', identifier);
+    } else {
+      await supabase.from('rate_limit_buckets').delete().neq('identifier', '');
+    }
+  } catch {
+    // ignore in tests
   }
 }

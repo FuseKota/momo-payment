@@ -12,10 +12,22 @@ import {
   sendOrderConfirmationEmail,
 } from '@/lib/email/resend';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { checkWebhookRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+  // 0. IP レート制限（署名検証より前に不正リクエストを安価に弾く）
+  const ip = getClientIP(request);
+  const rateLimit = await checkWebhookRateLimit(ip);
+  if (!rateLimit.allowed) {
+    secureLog('warn', 'Webhook rate limit exceeded', { ip });
+    return new NextResponse('Too Many Requests', {
+      status: 429,
+      headers: { 'Retry-After': String(rateLimit.resetIn) },
+    });
+  }
+
   // 1. Raw bodyを取得（署名検証に必要）
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature');

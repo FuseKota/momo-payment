@@ -36,7 +36,7 @@ describe('orderGuard', () => {
   });
 
   it('レート制限超過で429を返す', async () => {
-    vi.mocked(checkOrderRateLimit).mockReturnValue({
+    vi.mocked(checkOrderRateLimit).mockResolvedValue({
       allowed: false,
       remaining: 0,
       resetIn: 30,
@@ -50,7 +50,7 @@ describe('orderGuard', () => {
   });
 
   it('CSRF検証失敗で403を返す', async () => {
-    vi.mocked(checkOrderRateLimit).mockReturnValue({
+    vi.mocked(checkOrderRateLimit).mockResolvedValue({
       allowed: true,
       remaining: 9,
       resetIn: 60,
@@ -69,7 +69,7 @@ describe('orderGuard', () => {
   });
 
   it('全チェック通過で成功を返す（ゲストユーザー）', async () => {
-    vi.mocked(checkOrderRateLimit).mockReturnValue({
+    vi.mocked(checkOrderRateLimit).mockResolvedValue({
       allowed: true,
       remaining: 9,
       resetIn: 60,
@@ -93,7 +93,7 @@ describe('orderGuard', () => {
   });
 
   it('ログインユーザーのuser_idを取得する', async () => {
-    vi.mocked(checkOrderRateLimit).mockReturnValue({
+    vi.mocked(checkOrderRateLimit).mockResolvedValue({
       allowed: true,
       remaining: 9,
       resetIn: 60,
@@ -119,7 +119,7 @@ describe('orderGuard', () => {
   });
 
   it('認証エラーでもユーザーIDはnullで成功する', async () => {
-    vi.mocked(checkOrderRateLimit).mockReturnValue({
+    vi.mocked(checkOrderRateLimit).mockResolvedValue({
       allowed: true,
       remaining: 9,
       resetIn: 60,

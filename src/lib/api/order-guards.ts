@@ -25,7 +25,7 @@ export async function orderGuard(request: NextRequest): Promise<OrderGuardResult
   const clientIP = getClientIP(request);
 
   // 1. レート制限チェック
-  const rateLimit = checkOrderRateLimit(clientIP);
+  const rateLimit = await checkOrderRateLimit(clientIP);
   if (!rateLimit.allowed) {
     secureLog('warn', 'Rate limit exceeded', { ip: clientIP });
     return {

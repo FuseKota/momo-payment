@@ -6,14 +6,25 @@ import { checkRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 
+/**
+ * タイミング攻撃耐性のある文字列比較
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ orderNo: string }> }
 ) {
   try {
-    // レート制限チェック
     const clientIP = getClientIP(request);
-    const rateLimit = checkRateLimit(`order-lookup:${clientIP}`, 10, 60000);
+    const rateLimit = await checkRateLimit(`order-lookup:${clientIP}`, 10, 60000);
     if (!rateLimit.allowed) {
       secureLog('warn', 'Order lookup rate limit exceeded', { ip: clientIP });
       return NextResponse.json(
@@ -37,17 +48,19 @@ export async function GET(
       );
     }
 
-    // 認証済みユーザーのIDを取得（省略可 - ゲスト注文に対応するため）
+    // クエリ文字列から lookup_token を取得（ゲスト注文の閲覧認可用）
+    const { searchParams } = new URL(request.url);
+    const providedToken = searchParams.get('token');
+
     let currentUserId: string | null = null;
     try {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
       currentUserId = user?.id ?? null;
     } catch {
-      // 認証エラーは無視（ゲスト注文に対応するため）
+      // ゲストアクセスは許容
     }
 
-    // 注文を取得
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .select(`
@@ -65,6 +78,7 @@ export async function GET(
         pickup_time,
         created_at,
         user_id,
+        lookup_token,
         order_items (
           id,
           product_name,
@@ -84,12 +98,27 @@ export async function GET(
     }
 
     // アクセス制御:
-    // - ユーザー紐付き注文: ログイン済みかつ本人のみ閲覧可
-    // - ゲスト注文 (user_id=null): 未ログインでも閲覧可
+    // - ユーザー紐付き注文: ログイン済み本人のみ、または有効な lookup_token を提示
+    // - ゲスト注文 (user_id=null): 有効な lookup_token が必須
+    const tokenValid = !!(
+      providedToken &&
+      order.lookup_token &&
+      timingSafeEqual(providedToken, order.lookup_token)
+    );
+
     if (order.user_id !== null) {
-      // 認証済みユーザーの注文 → 本人のみ許可
-      if (!currentUserId || order.user_id !== currentUserId) {
-        secureLog('warn', 'Order access denied: user_id mismatch or unauthenticated', { ip: clientIP });
+      const isOwner = currentUserId && order.user_id === currentUserId;
+      if (!isOwner && !tokenValid) {
+        secureLog('warn', 'Order access denied: user mismatch and invalid token', { ip: clientIP });
+        return NextResponse.json(
+          { ok: false, error: 'order_not_found' },
+          { status: 404 }
+        );
+      }
+    } else {
+      // ゲスト注文
+      if (!tokenValid) {
+        secureLog('warn', 'Guest order access denied: invalid token', { ip: clientIP });
         return NextResponse.json(
           { ok: false, error: 'order_not_found' },
           { status: 404 }
@@ -97,8 +126,8 @@ export async function GET(
       }
     }
 
-    // レスポンスから内部フィールド(user_id)を除外
-    const { user_id: _uid, ...orderData } = order;
+    // 内部フィールドを除去してレスポンス
+    const { user_id: _uid, lookup_token: _tok, ...orderData } = order;
 
     return NextResponse.json({
       ok: true,
