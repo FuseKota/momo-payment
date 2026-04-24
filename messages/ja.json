@@ -480,6 +480,27 @@
     "footerOrder": "ご注文",
     "footerSupport": "サポート",
     "footerLegal": "特定商取引法に基づく表記",
-    "footerBackToTop": "ページトップへ戻る"
+    "footerBackToTop": "ページトップへ戻る",
+    "calendar": {
+      "sun": "日",
+      "mon": "月",
+      "tue": "火",
+      "wed": "水",
+      "thu": "木",
+      "fri": "金",
+      "sat": "土"
+    },
+    "iitateCalendar": {
+      "title": "飯舘村台湾夜市カレンダー",
+      "headerTitle": "台湾夜市カレンダー",
+      "prev": "前の月",
+      "next": "次の月",
+      "legendClosed": "休園日",
+      "legendDay": "昼の部",
+      "legendNight": "夜の部",
+      "legendStage": "福島もも娘🍑ステージ",
+      "disclaimer": "※臨時休園日になる事もございますm(_ _)m",
+      "noEvents": "この月の開催情報はまだ公開されていません"
+    }
   }
 }

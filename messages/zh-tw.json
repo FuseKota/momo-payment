@@ -480,6 +480,27 @@
     "footerOrder": "訂購",
     "footerSupport": "支援",
     "footerLegal": "根據特定商交易法的標示",
-    "footerBackToTop": "回到頁面頂端"
+    "footerBackToTop": "回到頁面頂端",
+    "calendar": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
+    "iitateCalendar": {
+      "title": "飯舘村台灣夜市行事曆",
+      "headerTitle": "台灣夜市行事曆",
+      "prev": "上個月",
+      "next": "下個月",
+      "legendClosed": "休園日",
+      "legendDay": "午間場",
+      "legendNight": "夜間場",
+      "legendStage": "福島桃娘🍑舞台",
+      "disclaimer": "※也可能有臨時休園日，敬請見諒 m(_ _)m",
+      "noEvents": "此月份的活動資訊尚未公開"
+    }
   }
 }

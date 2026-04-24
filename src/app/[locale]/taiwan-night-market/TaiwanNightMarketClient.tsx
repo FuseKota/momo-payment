@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import Lantern from './components/Lantern';
 import TaiwanNightMarketHeader from './components/TaiwanNightMarketHeader';
 import TaiwanNightMarketFooter from './components/TaiwanNightMarketFooter';
+import IitateCalendar from './components/IitateCalendar';
 import { NewsSection } from '@/components/common';
 import styles from './taiwan-night-market.module.css';
 import type { News } from '@/types/database';
@@ -115,7 +116,10 @@ export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwan
           showViewAll={false}
         />
 
-        {/* ② 日本国内 台湾夜市情報 */}
+        {/* ② 飯舘村台湾夜市カレンダー */}
+        <IitateCalendar />
+
+        {/* ③ 日本国内 台湾夜市情報 */}
         <NewsSection
           items={domesticNews}
           variant="dark"

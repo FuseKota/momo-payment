@@ -1,0 +1,279 @@
+.section {
+  padding: clamp(40px, 6vw, 80px) 4vw;
+  background-color: #242424;
+}
+
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: clamp(1.6rem, 3.6vw, 2.6rem);
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: clamp(24px, 4vw, 48px);
+  position: relative;
+}
+
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  max-width: 320px;
+  height: 3px;
+  background: var(--tnm-accent-gold);
+  box-shadow: 0 0 10px var(--tnm-accent-gold);
+}
+
+.card {
+  background: #e8491b;
+  border-radius: 6px;
+  padding: clamp(16px, 3vw, 28px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+
+.monthBlock {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #ffffff;
+}
+
+.monthNumber {
+  font-family: 'Noto Serif JP', serif;
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.year {
+  font-size: clamp(0.75rem, 1.6vw, 0.95rem);
+  letter-spacing: 0.08em;
+  opacity: 0.95;
+}
+
+.calendarTitle {
+  font-size: clamp(1rem, 2.4vw, 1.4rem);
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.navButton {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-size: 1rem;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  font-family: inherit;
+}
+
+.navButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navLabel {
+  color: #ffffff;
+  font-size: 0.95rem;
+  min-width: 120px;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.grid {
+  background: #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-left: 1px solid #fbd4c4;
+  border-top: 1px solid #fbd4c4;
+}
+
+.weekdayCell {
+  background: #ffffff;
+  padding: 6px 2px;
+  text-align: center;
+  font-size: clamp(0.75rem, 1.6vw, 0.9rem);
+  color: #a63108;
+  border-right: 1px solid #fbd4c4;
+  border-bottom: 1px solid #fbd4c4;
+  font-weight: 500;
+}
+
+.weekdaySat {
+  color: #4a7abf;
+}
+
+.dayCell {
+  background: #ffffff;
+  min-height: clamp(64px, 11vw, 92px);
+  padding: 4px 3px;
+  border-right: 1px solid #fbd4c4;
+  border-bottom: 1px solid #fbd4c4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+}
+
+.dayEmpty {
+  background: #ffffff;
+}
+
+.dayNumber {
+  font-size: clamp(0.8rem, 1.7vw, 1rem);
+  color: #a63108;
+  font-weight: 500;
+  align-self: flex-start;
+  padding-left: 2px;
+  line-height: 1;
+}
+
+.dayNumberSat {
+  color: #4a7abf;
+}
+
+.icons {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+  min-height: clamp(22px, 4vw, 30px);
+  line-height: 1;
+}
+
+.icon {
+  font-size: clamp(0.95rem, 2.6vw, 1.4rem);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconSun {
+  color: #a63108;
+}
+
+.iconMoon {
+  color: #a63108;
+}
+
+.iconClose {
+  color: #a63108;
+  font-weight: 300;
+}
+
+.iconStage {
+  color: #a63108;
+}
+
+.time {
+  font-size: clamp(0.55rem, 1.2vw, 0.7rem);
+  color: #a63108;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.note {
+  font-size: clamp(0.55rem, 1.2vw, 0.7rem);
+  color: #a63108;
+  text-align: center;
+  line-height: 1.2;
+  padding: 0 1px;
+}
+
+.legend {
+  margin-top: 14px;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: clamp(12px, 2.5vw, 18px);
+  color: #333;
+  font-size: clamp(0.78rem, 1.7vw, 0.92rem);
+  line-height: 1.7;
+}
+
+.legendRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  margin-bottom: 6px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #333;
+}
+
+.legendIcon {
+  font-size: 1.1em;
+  color: #a63108;
+  display: inline-flex;
+  align-items: center;
+}
+
+.legendNote {
+  margin-top: 8px;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.legendExtra {
+  margin-top: 10px;
+  font-size: 0.95em;
+  color: #333;
+  white-space: pre-line;
+}
+
+.emptyMessage {
+  text-align: center;
+  padding: 24px 12px;
+  color: #a63108;
+  font-size: clamp(0.8rem, 1.8vw, 1rem);
+  grid-column: 1 / -1;
+  background: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .dayCell {
+    padding: 2px 1px;
+  }
+  .time,
+  .note {
+    font-size: 0.52rem;
+  }
+}
