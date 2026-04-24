@@ -45,12 +45,17 @@ export default function AdminShell({
   const router = useRouter();
   const { isAdmin, isLoading, signOut, user } = useAuth();
 
-  // Skip layout for login page
+  useEffect(() => {
+    if (pathname === '/admin/login') return;
+    if (!isLoading && !isAdmin) {
+      router.push('/admin/login');
+    }
+  }, [pathname, isLoading, isAdmin, router]);
+
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
 
-  // Show loading while checking auth
   if (isLoading) {
     return (
       <Box
@@ -66,13 +71,6 @@ export default function AdminShell({
       </Box>
     );
   }
-
-  // Redirect to login if not admin
-  useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      router.push('/admin/login');
-    }
-  }, [isLoading, isAdmin, router]);
 
   if (!isAdmin) {
     return null;
