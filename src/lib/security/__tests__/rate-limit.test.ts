@@ -1,106 +1,106 @@
-/**
- * レート制限のユニットテスト
- */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { checkRateLimit, checkOrderRateLimit, resetRateLimit, getClientIP } from '../rate-limit';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+const mockRpc = vi.fn();
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => ({ rpc: mockRpc }),
+}));
+
+import { checkRateLimit, getClientIP } from '../rate-limit';
 
 describe('rate-limit', () => {
   beforeEach(() => {
-    // 各テスト前にレート制限をリセット
-    resetRateLimit();
+    mockRpc.mockReset();
   });
 
-  describe('checkRateLimit', () => {
-    it('最初のリクエストは許可される', () => {
-      const result = checkRateLimit('test-ip', 10, 60000);
+  describe('checkRateLimit (Supabase RPC)', () => {
+    it('許可レスポンスを正しく返す', async () => {
+      mockRpc.mockResolvedValue({
+        data: [{ allowed: true, remaining: 9, reset_in: 60 }],
+        error: null,
+      });
+
+      const result = await checkRateLimit('test-ip', 10, 60000);
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(9);
+      expect(result.resetIn).toBe(60);
     });
 
-    it('制限内のリクエストは許可される', () => {
-      for (let i = 0; i < 10; i++) {
-        const result = checkRateLimit('test-ip', 10, 60000);
-        expect(result.allowed).toBe(true);
-        expect(result.remaining).toBe(9 - i);
-      }
-    });
+    it('拒否レスポンスを正しく返す', async () => {
+      mockRpc.mockResolvedValue({
+        data: [{ allowed: false, remaining: 0, reset_in: 30 }],
+        error: null,
+      });
 
-    it('制限を超えたリクエストは拒否される', () => {
-      // 10回のリクエスト
-      for (let i = 0; i < 10; i++) {
-        checkRateLimit('test-ip', 10, 60000);
-      }
-
-      // 11回目は拒否
-      const result = checkRateLimit('test-ip', 10, 60000);
+      const result = await checkRateLimit('test-ip', 10, 60000);
       expect(result.allowed).toBe(false);
       expect(result.remaining).toBe(0);
+      expect(result.resetIn).toBe(30);
     });
 
-    it('異なるIPは独立してカウントされる', () => {
-      // IP1で10回
-      for (let i = 0; i < 10; i++) {
-        checkRateLimit('ip-1', 10, 60000);
-      }
+    it('DB エラー時はフェイルオープンで許可する', async () => {
+      mockRpc.mockResolvedValue({
+        data: null,
+        error: { message: 'connection refused' },
+      });
 
-      // IP2は制限されていない
-      const result = checkRateLimit('ip-2', 10, 60000);
+      const result = await checkRateLimit('test-ip', 10, 60000);
       expect(result.allowed).toBe(true);
     });
 
-    it('リセット後は再び許可される', () => {
-      for (let i = 0; i < 10; i++) {
-        checkRateLimit('test-ip', 10, 60000);
-      }
+    it('例外時もフェイルオープンで許可する', async () => {
+      mockRpc.mockRejectedValue(new Error('network error'));
 
-      // 制限超過
-      expect(checkRateLimit('test-ip', 10, 60000).allowed).toBe(false);
-
-      // リセット
-      resetRateLimit('order:test-ip');
-      resetRateLimit('test-ip');
-
-      // 再び許可
-      expect(checkRateLimit('test-ip', 10, 60000).allowed).toBe(true);
+      const result = await checkRateLimit('test-ip', 10, 60000);
+      expect(result.allowed).toBe(true);
     });
-  });
 
-  describe('checkOrderRateLimit', () => {
-    it('注文APIのレート制限（10req/min）が適用される', () => {
-      // 10回は許可
-      for (let i = 0; i < 10; i++) {
-        const result = checkOrderRateLimit('192.168.1.1');
-        expect(result.allowed).toBe(true);
-      }
+    it('RPC に識別子・limit・window を渡す', async () => {
+      mockRpc.mockResolvedValue({
+        data: [{ allowed: true, remaining: 5, reset_in: 60 }],
+        error: null,
+      });
 
-      // 11回目は拒否
-      const result = checkOrderRateLimit('192.168.1.1');
-      expect(result.allowed).toBe(false);
+      await checkRateLimit('custom-id', 10, 60000);
+      expect(mockRpc).toHaveBeenCalledWith('check_rate_limit', {
+        p_identifier: 'custom-id',
+        p_limit: 10,
+        p_window_seconds: 60,
+      });
     });
   });
 
   describe('getClientIP', () => {
-    it('x-forwarded-forヘッダーからIPを取得', () => {
-      const request = new Request('http://localhost', {
-        headers: {
-          'x-forwarded-for': '192.168.1.1, 10.0.0.1',
-        },
+    function createRequest(headers: Record<string, string>): Request {
+      return new Request('http://localhost', { headers });
+    }
+
+    it('x-nf-client-connection-ip を最優先する (Netlify)', () => {
+      const req = createRequest({
+        'x-nf-client-connection-ip': '10.0.0.1',
+        'x-real-ip': '10.0.0.2',
+        'x-forwarded-for': '10.0.0.3',
       });
-      expect(getClientIP(request)).toBe('192.168.1.1');
+      expect(getClientIP(req)).toBe('10.0.0.1');
     });
 
-    it('x-real-ipヘッダーからIPを取得', () => {
-      const request = new Request('http://localhost', {
-        headers: {
-          'x-real-ip': '192.168.1.2',
-        },
+    it('x-real-ip を使う (Vercel)', () => {
+      const req = createRequest({
+        'x-real-ip': '192.168.1.1',
+        'x-forwarded-for': '10.0.0.3',
       });
-      expect(getClientIP(request)).toBe('192.168.1.2');
+      expect(getClientIP(req)).toBe('192.168.1.1');
     });
 
-    it('ヘッダーがない場合はunknownを返す', () => {
-      const request = new Request('http://localhost');
-      expect(getClientIP(request)).toBe('unknown');
+    it('x-forwarded-for の最初の IP を使う', () => {
+      const req = createRequest({
+        'x-forwarded-for': '203.0.113.1, 10.0.0.1',
+      });
+      expect(getClientIP(req)).toBe('203.0.113.1');
+    });
+
+    it('ヘッダーがない場合は "unknown" を返す', () => {
+      const req = createRequest({});
+      expect(getClientIP(req)).toBe('unknown');
     });
   });
 });
