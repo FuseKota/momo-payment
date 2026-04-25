@@ -92,3 +92,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ci-dummy-service-key
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           SHIPPING_FEE_YEN: '1200'
+          # 本番必須化された Email 系（ビルド検証用ダミー）
+          RESEND_API_KEY: re_ci_dummy
+          EMAIL_FROM: noreply@example.com
+          ADMIN_EMAIL: admin@example.com
