@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { setRequestLocale } from 'next-intl/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import ProductDetailClient from './ProductDetailClient';
 
@@ -72,10 +73,12 @@ export async function generateMetadata({
   }
 }
 
-export default function ProductDetailPage({
+export default async function ProductDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return <ProductDetailClient params={params} />;
 }
