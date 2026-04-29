@@ -6,22 +6,14 @@ import { routing } from '@/i18n/routing';
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-/**
- * CSP を per-request nonce 付きで生成
- * - script-src: 'strict-dynamic' + nonce で XSS 緩和を有効化
- * - style-src: MUI/emotion の CSSinJS が動的 <style> を挿入するため 'unsafe-inline' 継続
- */
-function buildCsp(nonce: string): string {
+// next-intl middleware と Next.js の自動 nonce 付与が両立できず、'strict-dynamic'
+// 下では _next/static の <script> が全て CSP で弾かれていたため host-based に戻した。
+function buildCsp(): string {
   const isProd = process.env.NODE_ENV === 'production';
   const scriptSrc = [
     "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    'https://js.stripe.com',
-    // 古いブラウザ向けフォールバック（strict-dynamic があれば無視される）
     "'unsafe-inline'",
-    'https:',
-    // 開発時のみ HMR eval を許容
+    'https://js.stripe.com',
     ...(isProd ? [] : ["'unsafe-eval'"]),
   ].join(' ');
 
@@ -69,13 +61,7 @@ async function refreshSupabaseSession(request: NextRequest, response: NextRespon
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // per-request nonce（CSP 用）を生成
-  const nonce = Buffer.from(crypto.randomUUID().replace(/-/g, '')).toString('base64');
-  const csp = buildCsp(nonce);
-
-  // request 側にも nonce を伝播（Server Components で headers() から読める）
-  request.headers.set('x-nonce', nonce);
+  const csp = buildCsp();
 
   if (pathname.startsWith('/admin') || pathname.startsWith('/api')) {
     let response = NextResponse.next({
