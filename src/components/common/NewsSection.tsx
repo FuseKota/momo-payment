@@ -11,13 +11,20 @@ interface NewsSectionProps {
   showViewAll?: boolean;
 }
 
+// SSR (UTC) と CSR (Asia/Tokyo 等) で日付がずれて hydration mismatch を
+// 起こすため、表示は Asia/Tokyo 固定で生成する。
+const dateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Tokyo',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}.${m}.${day}`;
+  if (Number.isNaN(d.getTime())) return '';
+  return dateFormatter.format(d).replace(/-/g, '.');
 }
 
 function truncate(text: string | null, max = 60): string {
