@@ -20,8 +20,9 @@ function buildCsp(): string {
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    // フォントは next/font で同一オリジン配信のため Google Fonts の外部許可は不要
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://upload.wikimedia.org",
     "frame-src https://js.stripe.com https://hooks.stripe.com",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com",
