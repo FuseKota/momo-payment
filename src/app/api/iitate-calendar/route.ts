@@ -1,5 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { listCalendarEvents } from '@/lib/google/calendar';
+import {
+  mapGoogleEventsToMonth,
+  type MappedCalendarEvent,
+} from '@/lib/google/iitate-calendar-mapper';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { env } from '@/lib/env';
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+/** 対象月の Asia/Tokyo 境界（DST 無しのため固定 +09:00）を RFC3339 で返す */
+function monthBounds(month: string): { timeMin: string; timeMax: string } {
+  const [year, monthNum] = month.split('-').map(Number);
+  const nextYear = monthNum === 12 ? year + 1 : year;
+  const nextMonth = monthNum === 12 ? 1 : monthNum + 1;
+  return {
+    timeMin: `${month}-01T00:00:00+09:00`,
+    timeMax: `${nextYear}-${pad2(nextMonth)}-01T00:00:00+09:00`,
+  };
+}
+
+/**
+ * Google カレンダーから当月イベントを取得しマッピングする。
+ * 月単位でキャッシュ（1 時間鮮度）し、Google API クォータを保護する。
+ * month は引数として渡すことで unstable_cache のキーに含める。
+ */
+const fetchEventsCached = unstable_cache(
+  async (month: string): Promise<MappedCalendarEvent[]> => {
+    const { timeMin, timeMax } = monthBounds(month);
+    const events = await listCalendarEvents(timeMin, timeMax);
+    return mapGoogleEventsToMonth(events, month, env.GOOGLE_CALENDAR_TIMEZONE);
+  },
+  ['iitate-calendar-events'],
+  { tags: ['iitate-calendar'], revalidate: 3600 }
+);
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -9,40 +47,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'month パラメータが必要です (YYYY-MM)' }, { status: 400 });
   }
 
-  const [yearStr, monthStr] = month.split('-');
-  const year = Number(yearStr);
-  const monthNum = Number(monthStr);
-  const startDate = `${month}-01`;
-  const lastDay = new Date(year, monthNum, 0).getDate();
-  const endDate = `${month}-${String(lastDay).padStart(2, '0')}`;
-
   const supabase = getSupabaseAdmin();
 
-  try {
-    const [{ data: events, error: eventsError }, { data: monthNote, error: noteError }] = await Promise.all([
-      supabase
-        .from('iitate_calendar_events')
-        .select('event_date, types, time_range, note')
-        .gte('event_date', startDate)
-        .lte('event_date', endDate)
-        .order('event_date', { ascending: true }),
-      supabase
-        .from('iitate_calendar_month_notes')
-        .select('notes')
-        .eq('year_month', month)
-        .maybeSingle(),
-    ]);
+  // events は Google（正）、notes は Supabase（継続）。互いに独立して取得し、
+  // 片方が失敗してももう片方は返せるようにする。
+  const [events, notes] = await Promise.all([
+    fetchEventsCached(month).catch((error) => {
+      secureLog('error', 'Failed to fetch Google Calendar events', safeErrorLog(error));
+      return [] as MappedCalendarEvent[];
+    }),
+    supabase
+      .from('iitate_calendar_month_notes')
+      .select('notes')
+      .eq('year_month', month)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          secureLog('error', 'Failed to fetch month notes', safeErrorLog(error));
+          return [] as string[];
+        }
+        return (data?.notes as string[] | undefined) ?? [];
+      }),
+  ]);
 
-    if (eventsError || noteError) {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      month,
-      events: events ?? [],
-      notes: monthNote?.notes ?? [],
-    });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  return NextResponse.json({ month, events, notes });
 }
