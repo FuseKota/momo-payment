@@ -10,11 +10,15 @@ export function generateStaticParams() {
 }
 import ThemeRegistry from "@/lib/mui/ThemeRegistry";
 
+// CJK フォントはサブセット先読みが効かず大量の woff2 を eager に読み込むため
+// preload を無効化する（display: swap でフォールバック表示されるため FOIT なし）。
+// 参考: https://nextjs.org/docs/app/api-reference/components/font#preload
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   display: "swap",
+  preload: false,
 });
 
 const notoSansTC = Noto_Sans_TC({
@@ -22,6 +26,7 @@ const notoSansTC = Noto_Sans_TC({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   display: "swap",
+  preload: false,
 });
 
 const htmlLangMap: Record<Locale, string> = {

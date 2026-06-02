@@ -2,11 +2,13 @@ import { Noto_Sans_JP } from "next/font/google";
 import ThemeRegistry from "@/lib/mui/ThemeRegistry";
 import AdminShell from "./AdminShell";
 
+// CJK フォントは preload が効かないため無効化（display: swap でフォールバック表示）
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
+  preload: false,
 });
 
 export const metadata = {
