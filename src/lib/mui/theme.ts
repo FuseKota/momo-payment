@@ -60,7 +60,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: [
-      '"Noto Sans JP"',
+      'var(--app-font-sans)',
       '"Hiragino Kaku Gothic ProN"',
       '"Hiragino Sans"',
       'Meiryo',

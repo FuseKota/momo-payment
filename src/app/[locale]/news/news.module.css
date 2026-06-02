@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap');
+/* フォントは next/font 自己ホスト（--app-font-serif）を使用。外部 @import は廃止。 */
 
 /* =====================
    ニュースページ — 台湾夜市デザイン
@@ -17,7 +17,7 @@
 }
 
 .heroTitle {
-  font-family: 'Noto Serif JP', serif;
+  font-family: var(--app-font-serif), serif;
   font-size: clamp(3rem, 8vw, 5rem);
   font-weight: 900;
   color: #fbc02d;
@@ -46,7 +46,7 @@
 }
 
 .detailTitle {
-  font-family: 'Noto Serif JP', serif;
+  font-family: var(--app-font-serif), serif;
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   font-weight: 700;
   color: #fbc02d;
@@ -68,7 +68,7 @@
 }
 
 .markdownContent h1 {
-  font-family: 'Noto Serif JP', serif;
+  font-family: var(--app-font-serif), serif;
   font-size: clamp(1.6rem, 4vw, 2.2rem);
   font-weight: 700;
   color: #fbc02d;
@@ -79,7 +79,7 @@
 }
 
 .markdownContent h2 {
-  font-family: 'Noto Serif JP', serif;
+  font-family: var(--app-font-serif), serif;
   font-size: clamp(1.25rem, 3vw, 1.6rem);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.95);
