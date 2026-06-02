@@ -35,6 +35,18 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().email().optional().or(z.literal('')),
   ADMIN_EMAIL: z.string().email().optional().or(z.literal('')),
 
+  // Google Calendar（飯舘村台湾夜市カレンダーの読み取り元）
+  // 本番では必須、開発/テストでは optional（未設定時は API が空イベントで応答）
+  GOOGLE_CALENDAR_CLIENT_EMAIL: z.string().email().optional().or(z.literal('')),
+  // サービスアカウントの秘密鍵（PEM）。.env では改行を \n エスケープで記述するため、
+  // ここで実際の改行へ復元してから JWT クライアントに渡す
+  GOOGLE_CALENDAR_PRIVATE_KEY: z
+    .string()
+    .optional()
+    .transform((s) => (s ? s.replace(/\\n/g, '\n') : s)),
+  GOOGLE_CALENDAR_ID: z.string().optional(),
+  GOOGLE_CALENDAR_TIMEZONE: z.string().default('Asia/Tokyo'),
+
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === 'production') {
@@ -57,6 +69,27 @@ const envSchema = z.object({
         code: 'custom',
         path: ['ADMIN_EMAIL'],
         message: 'ADMIN_EMAIL is required in production',
+      });
+    }
+    if (!data.GOOGLE_CALENDAR_CLIENT_EMAIL) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['GOOGLE_CALENDAR_CLIENT_EMAIL'],
+        message: 'GOOGLE_CALENDAR_CLIENT_EMAIL is required in production',
+      });
+    }
+    if (!data.GOOGLE_CALENDAR_PRIVATE_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['GOOGLE_CALENDAR_PRIVATE_KEY'],
+        message: 'GOOGLE_CALENDAR_PRIVATE_KEY is required in production',
+      });
+    }
+    if (!data.GOOGLE_CALENDAR_ID) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['GOOGLE_CALENDAR_ID'],
+        message: 'GOOGLE_CALENDAR_ID is required in production',
       });
     }
   }
