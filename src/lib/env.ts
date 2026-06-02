@@ -28,7 +28,6 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url({
     message: 'NEXT_PUBLIC_APP_URL must be a valid URL',
   }),
-  SHIPPING_FEE_YEN: z.coerce.number().int().positive().default(1200),
 
   // Email (本番では必須、開発/テストでは optional)
   RESEND_API_KEY: z.string().optional(),

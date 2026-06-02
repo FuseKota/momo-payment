@@ -93,6 +93,8 @@ export interface Order {
   customer_email: string | null;
   pickup_date: string | null;
   pickup_time: string | null;
+  delivery_date: string | null;
+  delivery_time_slot: string | null;
   agreement_accepted: boolean;
   admin_note: string | null;
   user_id: string | null;

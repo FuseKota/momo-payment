@@ -156,6 +156,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   </Typography>
                 </Box>
               )}
+
+              {(order.delivery_date ||
+                (order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED')) && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary">{t('deliveryDate')}</Typography>
+                  <Typography>
+                    {order.delivery_date || t('deliveryDateUnspecified')}
+                    {order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED' &&
+                      ` / ${tc(`timeSlots.${order.delivery_time_slot}`)}`}
+                  </Typography>
+                </Box>
+              )}
             </Paper>
 
             {/* 商品一覧 */}

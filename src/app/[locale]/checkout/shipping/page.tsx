@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
@@ -24,6 +24,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
+import EventIcon from '@mui/icons-material/Event';
 import { Layout, PostalCodeField, OrderSummary } from '@/components/common';
 import type { OrderSummaryItem } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
@@ -31,7 +32,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFormField } from '@/hooks/useFormField';
 import { validateCustomerFields, validateAddressFields } from '@/lib/utils/form-validators';
 import { getLocalizedName } from '@/lib/utils/localize-product';
-import { SHIPPING_FEE_YEN } from '@/lib/utils/constants';
+import {
+  calcShippingFee,
+  calcMinDeliveryYmd,
+  calcMaxDeliveryYmd,
+  addDaysYmd,
+  jstTodayYmd,
+  MAX_LEAD_TIME_DAYS,
+  DELIVERY_TIME_SLOTS,
+} from '@/lib/shipping';
 import type { CustomerAddress } from '@/types/database';
 
 export default function ShippingCheckoutPage() {
@@ -54,10 +63,30 @@ export default function ShippingCheckoutPage() {
     city: '',
     address1: '',
     address2: '',
+    deliveryDate: '',
+    deliveryTimeSlot: 'UNSPECIFIED',
   });
 
   const steps = [t('stepAddress'), t('stepPayment')];
-  const total = subtotal + SHIPPING_FEE_YEN;
+
+  // 送料は配送先（都道府県）から算出。未確定（未対応・未入力）は null
+  const shippingFee = useMemo(() => calcShippingFee(form.prefecture), [form.prefecture]);
+  const total = subtotal + (shippingFee ?? 0);
+
+  // お届け希望日の選択可能範囲（JST基準）。pref 未確定時は最遠リードタイムを暫定 min とする
+  const todayYmd = useMemo(() => jstTodayYmd(), []);
+  const minDeliveryYmd = useMemo(
+    () => calcMinDeliveryYmd(form.prefecture, todayYmd) ?? addDaysYmd(todayYmd, MAX_LEAD_TIME_DAYS),
+    [form.prefecture, todayYmd]
+  );
+  const maxDeliveryYmd = useMemo(() => calcMaxDeliveryYmd(todayYmd), [todayYmd]);
+
+  // 都道府県変更で既選択のお届け日が範囲外になったらクリア
+  useEffect(() => {
+    if (form.deliveryDate && (form.deliveryDate < minDeliveryYmd || form.deliveryDate > maxDeliveryYmd)) {
+      setValues({ deliveryDate: '' });
+    }
+  }, [minDeliveryYmd, maxDeliveryYmd, form.deliveryDate, setValues]);
 
   // 認証ゲート: 未ログインならログインページへリダイレクト
   useEffect(() => {
@@ -160,6 +189,8 @@ export default function ShippingCheckoutPage() {
             variantId: item.variant?.id,
             qty: item.qty,
           })),
+          deliveryDate: form.deliveryDate || undefined,
+          deliveryTimeSlot: form.deliveryTimeSlot,
           agreementAccepted: true,
           locale,
         }),
@@ -176,8 +207,10 @@ export default function ShippingCheckoutPage() {
           customer_info_required: t('errors.customerInfoRequired'),
           items_required: t('errors.itemsRequired'),
           agreement_required: t('errors.agreementRequired'),
+          unsupported_region: t('errors.unsupportedRegion'),
+          invalid_delivery_date: t('errors.invalidDeliveryDate'),
         };
-        const message = errorMessages[data.error] || data.error || t('errors.orderCreateFailed');
+        const message = errorMessages[data.error] || data.error || t('errors.orderFailed');
         throw new Error(message);
       }
 
@@ -335,6 +368,44 @@ export default function ShippingCheckoutPage() {
                     </Grid>
                   </Grid>
 
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 4, mb: 3 }}>
+                    <EventIcon sx={{ color: 'primary.main' }} />
+                    <Typography variant="h6">{t('deliveryScheduleTitle')}</Typography>
+                  </Box>
+                  <Grid container spacing={3}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label={t('deliveryDate')}
+                        type="date"
+                        fullWidth
+                        value={form.deliveryDate}
+                        onChange={handleChange('deliveryDate')}
+                        slotProps={{
+                          inputLabel: { shrink: true },
+                          htmlInput: { min: minDeliveryYmd, max: maxDeliveryYmd },
+                        }}
+                        helperText={t('deliveryDateHint')}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <FormControl fullWidth>
+                        <InputLabel id="delivery-time-slot-label">{t('deliveryTimeSlot')}</InputLabel>
+                        <Select
+                          labelId="delivery-time-slot-label"
+                          value={form.deliveryTimeSlot}
+                          label={t('deliveryTimeSlot')}
+                          onChange={handleChange('deliveryTimeSlot')}
+                        >
+                          {DELIVERY_TIME_SLOTS.map((slot) => (
+                            <MenuItem key={slot} value={slot}>
+                              {tc(`timeSlots.${slot}`)}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+
                   <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
                     <Button variant="contained" size="large" onClick={handleNext}>
                       {t('proceedToPayment')}
@@ -365,6 +436,20 @@ export default function ShippingCheckoutPage() {
                     </Paper>
                   </Box>
 
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                      {t('deliveryScheduleTitle')}
+                    </Typography>
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('deliveryDate')}: {form.deliveryDate || t('deliveryDateUnspecified')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('deliveryTimeSlot')}: {tc(`timeSlots.${form.deliveryTimeSlot}`)}
+                      </Typography>
+                    </Paper>
+                  </Box>
+
                   <Alert severity="info" sx={{ mb: 3 }}>{t('paymentNotice')}</Alert>
 
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
@@ -388,12 +473,14 @@ export default function ShippingCheckoutPage() {
             <OrderSummary
               items={summaryItems}
               subtotal={subtotal}
-              shippingFee={SHIPPING_FEE_YEN}
+              shippingFee={shippingFee ?? undefined}
+              shippingFeePending={shippingFee == null}
               total={total}
               labels={{
                 title: t('orderSummary'),
                 subtotal: tc('subtotal'),
                 shippingFee: tc('shippingFee'),
+                shippingFeePending: tc('shippingFeePending'),
                 total: tc('total'),
                 quantity: tc('quantity'),
               }}

@@ -24,7 +24,7 @@ import type { OrderSummaryItem } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
 import { getLocalizedName } from '@/lib/utils/localize-product';
-import { SHIPPING_FEE_YEN, MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
+import { MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
 
 export default function CartPage() {
   const t = useTranslations('cart');
@@ -34,8 +34,9 @@ export default function CartPage() {
   const { items, updateQty, removeItem, clearCart, subtotal, itemCount, cartMode } = useCart();
 
   const isPickupMode = cartMode === 'pickup';
-  const shippingFee = isPickupMode ? undefined : (items.length > 0 ? SHIPPING_FEE_YEN : 0);
-  const total = isPickupMode ? subtotal : subtotal + (items.length > 0 ? SHIPPING_FEE_YEN : 0);
+  // 配送料はお届け先（都道府県）で変動するため、カート段階では確定しない
+  const shippingPending = !isPickupMode && items.length > 0;
+  const total = subtotal;
 
   if (items.length === 0) {
     return (
@@ -209,12 +210,13 @@ export default function CartPage() {
             <OrderSummary
               items={summaryItems}
               subtotal={subtotal}
-              shippingFee={shippingFee}
+              shippingFeePending={shippingPending}
               total={total}
               labels={{
                 title: t('orderSummary'),
                 subtotal: tc('subtotal'),
                 shippingFee: !isPickupMode ? tc('shippingFee') : undefined,
+                shippingFeePending: t('shippingFeeVaries'),
                 total: tc('total'),
                 quantity: tc('quantity'),
               }}

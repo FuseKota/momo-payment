@@ -202,6 +202,8 @@ export async function POST(request: NextRequest) {
               address1: addressData.address1,
               address2: addressData.address2,
             },
+            deliveryDate: orderData.delivery_date ?? undefined,
+            deliveryTimeSlot: orderData.delivery_time_slot ?? undefined,
             locale: orderLocale,
           });
         }

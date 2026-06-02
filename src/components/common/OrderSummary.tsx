@@ -16,6 +16,8 @@ interface OrderSummaryLabels {
   title: string;
   subtotal: string;
   shippingFee?: string;
+  /** 送料が未確定（配送先未入力等）のときに表示する説明（例: お届け先により変動） */
+  shippingFeePending?: string;
   total: string;
   quantity: string;
 }
@@ -24,6 +26,8 @@ interface OrderSummaryProps {
   items: OrderSummaryItem[];
   subtotal: number;
   shippingFee?: number;
+  /** true のとき送料行を「未確定」表示にする（shippingFee より優先） */
+  shippingFeePending?: boolean;
   total: number;
   labels: OrderSummaryLabels;
   showItemDetails?: boolean;
@@ -34,6 +38,7 @@ export default function OrderSummary({
   items,
   subtotal,
   shippingFee,
+  shippingFeePending = false,
   total,
   labels,
   showItemDetails = true,
@@ -73,11 +78,21 @@ export default function OrderSummary({
         <Typography>¥{formatPrice(subtotal)}</Typography>
       </Box>
 
-      {shippingFee != null && labels.shippingFee && (
+      {shippingFeePending && labels.shippingFee ? (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography color="text.secondary">{labels.shippingFee}</Typography>
-          <Typography>¥{formatPrice(shippingFee)}</Typography>
+          <Typography color="text.secondary" variant="body2">
+            {labels.shippingFeePending ?? '—'}
+          </Typography>
         </Box>
+      ) : (
+        shippingFee != null &&
+        labels.shippingFee && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Typography color="text.secondary">{labels.shippingFee}</Typography>
+            <Typography>¥{formatPrice(shippingFee)}</Typography>
+          </Box>
+        )
       )}
 
       <Divider sx={{ my: 2 }} />

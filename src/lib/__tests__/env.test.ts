@@ -36,7 +36,6 @@ describe('env validation', () => {
     NEXT_PUBLIC_APP_URL: z.string().url({
       message: 'NEXT_PUBLIC_APP_URL must be a valid URL',
     }),
-    SHIPPING_FEE_YEN: z.coerce.number().int().positive().default(1200),
   });
 
   describe('STRIPE_SECRET_KEY', () => {
@@ -76,35 +75,6 @@ describe('env validation', () => {
 
     it('無効なURLを拒否する', () => {
       const result = z.string().url().safeParse('not-a-url');
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe('SHIPPING_FEE_YEN', () => {
-    it('正の整数を受け入れる', () => {
-      const result = z.coerce.number().int().positive().safeParse('1200');
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toBe(1200);
-      }
-    });
-
-    it('デフォルト値が1200', () => {
-      const schema = z.coerce.number().int().positive().default(1200);
-      const result = schema.safeParse(undefined);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toBe(1200);
-      }
-    });
-
-    it('負の数を拒否する', () => {
-      const result = z.coerce.number().int().positive().safeParse('-100');
-      expect(result.success).toBe(false);
-    });
-
-    it('小数を拒否する', () => {
-      const result = z.coerce.number().int().positive().safeParse('1200.5');
       expect(result.success).toBe(false);
     });
   });

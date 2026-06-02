@@ -35,6 +35,8 @@ export interface OrderConfirmationData {
   };
   pickupDate?: string;
   pickupTime?: string;
+  deliveryDate?: string;
+  deliveryTimeSlot?: string;
   locale?: string;
 }
 
@@ -96,6 +98,20 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
     `
       : '';
 
+  const deliverySlotLabel =
+    data.deliveryTimeSlot && data.deliveryTimeSlot !== 'UNSPECIFIED'
+      ? (m.common.timeSlots as Record<string, string>)[data.deliveryTimeSlot] ?? ''
+      : '';
+  const deliveryScheduleHtml =
+    data.orderType === 'SHIPPING' && (data.deliveryDate || deliverySlotLabel)
+      ? `
+      <h3 style="color: #FF6680; margin-top: 24px;">${e.deliverySchedule}</h3>
+      <p style="margin: 0;">
+        ${escapeHtml(data.deliveryDate || '')} ${escapeHtml(deliverySlotLabel)}
+      </p>
+    `
+      : '';
+
   const orderTypeLabel = data.orderType === 'SHIPPING' ? e.orderTypeShipping : e.orderTypePickup;
 
   const html = `
@@ -148,6 +164,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
         </div>
 
         ${shippingAddressHtml}
+        ${deliveryScheduleHtml}
         ${pickupInfoHtml}
       </div>
 

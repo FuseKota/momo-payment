@@ -40,6 +40,15 @@
     "processing": "處理中...",
     "subtotal": "小計",
     "shippingFee": "運費",
+    "shippingFeePending": "依配送地區而定",
+    "timeSlots": {
+      "UNSPECIFIED": "不指定",
+      "AM": "上午（8:00-12:00）",
+      "T12_14": "12:00-14:00",
+      "T14_16": "14:00-16:00",
+      "T16_18": "16:00-18:00",
+      "T18_21": "18:00-21:00"
+    },
     "total": "合計",
     "quantity": "數量",
     "taxIncluded": "(含稅)",
@@ -127,7 +136,8 @@
     "orderSummary": "訂單摘要",
     "proceedToOrder": "前往訂購",
     "proceedToCheckout": "前往結帳",
-    "pickupNote": "請至餐車領取"
+    "pickupNote": "請至餐車領取",
+    "shippingFeeVaries": "依配送地區而定"
   },
   "checkoutPickup": {
     "backToMenu": "返回餐車菜單",
@@ -186,6 +196,11 @@
     "city": "市區町村",
     "address1": "地址",
     "address2": "其他（選填）",
+    "deliveryScheduleTitle": "希望配送日期與時段",
+    "deliveryDate": "希望配送日期",
+    "deliveryDateHint": "可指定依訂單與地區計算的最快配達日之後，至兩週內的日期（選填）",
+    "deliveryDateUnspecified": "不指定",
+    "deliveryTimeSlot": "希望配送時段",
     "proceedToPayment": "前往付款",
     "payment": "付款",
     "shippingDestination": "配送地址",
@@ -204,7 +219,9 @@
       "itemsRequired": "購物車是空的。",
       "agreementRequired": "需要同意使用條款。",
       "orderFailed": "訂單建立失敗",
-      "checkoutUrlFailed": "無法取得付款連結"
+      "checkoutUrlFailed": "無法取得付款連結",
+      "unsupportedRegion": "很抱歉，此地區目前無法配送。",
+      "invalidDeliveryDate": "希望配送日期超出可選範圍。"
     },
     "validation": {
       "nameRequired": "請輸入姓名",
@@ -237,6 +254,9 @@
     "pickupInfoTitle": "關於餐車領取",
     "payAtPickupNotice": "請在現場付款。",
     "shippingInfoTitle": "關於配送",
+    "deliveryScheduleTitle": "希望配送日期與時段",
+    "deliveryDate": "希望配送日期",
+    "deliveryTimeSlot": "希望配送時段",
     "shippingWithinDays": "商品將於3個工作日內出貨。",
     "trackingNotice": "出貨後，我們將以電子郵件通知追蹤編號。",
     "contactNotice": "如有任何疑問，歡迎隨時聯繫我們。",
@@ -298,6 +318,8 @@
     "paymentMethod": "付款方式",
     "payAtPickup": "現場付款",
     "creditCard": "信用卡",
+    "deliveryDate": "希望配送日期與時段",
+    "deliveryDateUnspecified": "不指定",
     "pickupDate": "領取日期",
     "products": "商品",
     "productName": "商品名稱",
@@ -422,6 +444,7 @@
     "total": "合計：",
     "shippingDestination": "配送地址",
     "pickupSchedule": "領取時間",
+    "deliverySchedule": "希望配送日期與時段",
     "dateTime": "日期時間：",
     "contactNotice": "如有任何疑問，歡迎隨時聯繫我們。",
     "autoSendNotice": "此郵件為系統自動發送，無法回覆，敬請見諒。",

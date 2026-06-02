@@ -40,6 +40,15 @@
     "processing": "処理中...",
     "subtotal": "小計",
     "shippingFee": "送料",
+    "shippingFeePending": "お届け先により変動",
+    "timeSlots": {
+      "UNSPECIFIED": "指定なし",
+      "AM": "午前中（8:00-12:00）",
+      "T12_14": "12:00-14:00",
+      "T14_16": "14:00-16:00",
+      "T16_18": "16:00-18:00",
+      "T18_21": "18:00-21:00"
+    },
     "total": "合計",
     "quantity": "数量",
     "taxIncluded": "(税込)",
@@ -127,7 +136,8 @@
     "orderSummary": "注文内容",
     "proceedToOrder": "注文に進む",
     "proceedToCheckout": "レジに進む",
-    "pickupNote": "キッチンカーでお受け取りください"
+    "pickupNote": "キッチンカーでお受け取りください",
+    "shippingFeeVaries": "お届け先により変動します"
   },
   "checkoutPickup": {
     "backToMenu": "キッチンカーメニューに戻る",
@@ -186,6 +196,11 @@
     "city": "市区町村",
     "address1": "番地・建物名",
     "address2": "その他（任意）",
+    "deliveryScheduleTitle": "お届け希望日時",
+    "deliveryDate": "お届け希望日",
+    "deliveryDateHint": "ご注文・地域に応じた最短日以降、2週間先までご指定いただけます（任意）",
+    "deliveryDateUnspecified": "指定なし",
+    "deliveryTimeSlot": "お届け希望時間帯",
     "proceedToPayment": "お支払いへ進む",
     "payment": "お支払い",
     "shippingDestination": "配送先",
@@ -204,7 +219,9 @@
       "itemsRequired": "カートが空です。",
       "agreementRequired": "利用規約への同意が必要です。",
       "orderFailed": "注文の作成に失敗しました",
-      "checkoutUrlFailed": "決済URLの取得に失敗しました"
+      "checkoutUrlFailed": "決済URLの取得に失敗しました",
+      "unsupportedRegion": "申し訳ございません。この地域へのお届けには対応していません。",
+      "invalidDeliveryDate": "お届け希望日が選択可能な範囲外です。"
     },
     "validation": {
       "nameRequired": "お名前を入力してください",
@@ -237,6 +254,9 @@
     "pickupInfoTitle": "キッチンカー受取について",
     "payAtPickupNotice": "お支払いは現地にてお願いいたします。",
     "shippingInfoTitle": "配送について",
+    "deliveryScheduleTitle": "お届け希望日時",
+    "deliveryDate": "お届け希望日",
+    "deliveryTimeSlot": "お届け希望時間帯",
     "shippingWithinDays": "商品は3営業日以内に発送いたします。",
     "trackingNotice": "発送完了後、追跡番号をメールでお知らせいたします。",
     "contactNotice": "ご不明な点がございましたら、お気軽にお問い合わせください。",
@@ -298,6 +318,8 @@
     "paymentMethod": "支払方法",
     "payAtPickup": "店頭払い",
     "creditCard": "クレジットカード",
+    "deliveryDate": "お届け希望日時",
+    "deliveryDateUnspecified": "指定なし",
     "pickupDate": "受取日時",
     "products": "商品",
     "productName": "商品名",
@@ -422,6 +444,7 @@
     "total": "合計:",
     "shippingDestination": "配送先",
     "pickupSchedule": "受取予定",
+    "deliverySchedule": "お届け希望日時",
     "dateTime": "日時:",
     "contactNotice": "ご不明な点がございましたら、お気軽にお問い合わせください。",
     "autoSendNotice": "このメールは自動送信されています。返信はお受けできませんのでご了承ください。",

@@ -9,6 +9,11 @@ import { orderGuard } from '@/lib/api/order-guards';
 import { fetchAndValidateProducts } from '@/lib/api/product-helpers';
 import { calculateOrderItems, calculateSubtotal } from '@/lib/api/price-calc';
 import { localizedProductName } from '@/lib/api/localize';
+import {
+  calcShippingFee,
+  isDeliveryDateInRange,
+  jstTodayYmd,
+} from '@/lib/shipping';
 
 export const runtime = 'nodejs';
 
@@ -31,7 +36,28 @@ export async function POST(request: NextRequest) {
 
     const body = parseResult.data;
     const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : 'ja') as string;
-    const shippingFeeYen = env.SHIPPING_FEE_YEN;
+
+    // 送料を配送先（都道府県）から算出（運賃表60サイズ + 箱代）
+    const shippingFeeYen = calcShippingFee(body.address.pref);
+    if (shippingFeeYen === null) {
+      return NextResponse.json(
+        { ok: false, error: 'unsupported_region' },
+        { status: 400 }
+      );
+    }
+
+    // お届け希望日の検証（暦日の実在性 + 最短お届け日 〜 注文日+14日。JST基準）
+    // isDeliveryDateInRange は内部で isValidYmd を実行するため、2026-02-30 等の
+    // 形式は正しいが実在しない日付（date 列 INSERT で 500 になる）も 400 で弾ける
+    if (body.deliveryDate) {
+      const todayYmd = jstTodayYmd();
+      if (!isDeliveryDateInRange(body.address.pref, body.deliveryDate, todayYmd)) {
+        return NextResponse.json(
+          { ok: false, error: 'invalid_delivery_date' },
+          { status: 400 }
+        );
+      }
+    }
 
     // 3. 商品取得 + 検証
     const productIds = body.items.map((i) => i.productId);
@@ -118,6 +144,8 @@ export async function POST(request: NextRequest) {
         customer_name: body.customer.name,
         customer_phone: body.customer.phone,
         customer_email: body.customer.email ?? null,
+        delivery_date: body.deliveryDate ?? null,
+        delivery_time_slot: body.deliveryTimeSlot ?? null,
         agreement_accepted: true,
         user_id: guard.userId,
         locale,

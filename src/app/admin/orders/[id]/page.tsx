@@ -60,12 +60,24 @@ interface Order {
   shipping_fee_yen: number;
   total_yen: number;
   tracking_number: string | null;
+  delivery_date: string | null;
+  delivery_time_slot: string | null;
   created_at: string;
   paid_at: string | null;
   shipped_at: string | null;
   fulfilled_at: string | null;
   order_items: OrderItem[];
 }
+
+/** 佐川急便の時間帯コード → 日本語ラベル（管理画面表示用） */
+const TIME_SLOT_LABELS: Record<string, string> = {
+  UNSPECIFIED: '指定なし',
+  AM: '午前中（8:00-12:00）',
+  T12_14: '12:00-14:00',
+  T14_16: '14:00-16:00',
+  T16_18: '16:00-18:00',
+  T18_21: '18:00-21:00',
+};
 
 export default function AdminOrderDetailPage({ params }: Props) {
   const { id } = use(params);
@@ -211,6 +223,21 @@ export default function AdminOrderDetailPage({ params }: Props) {
                   {order.payment_method === 'PAY_AT_PICKUP' ? '現地払い' : 'オンライン決済'}
                 </Typography>
               </Grid>
+              {order.order_type === 'SHIPPING' &&
+                (order.delivery_date ||
+                  (order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED')) && (
+                  <Grid size={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      お届け希望日時
+                    </Typography>
+                    <Typography>
+                      {order.delivery_date || '指定なし'}
+                      {order.delivery_time_slot &&
+                        order.delivery_time_slot !== 'UNSPECIFIED' &&
+                        ` / ${TIME_SLOT_LABELS[order.delivery_time_slot] ?? order.delivery_time_slot}`}
+                    </Typography>
+                  </Grid>
+                )}
             </Grid>
           </Paper>
 

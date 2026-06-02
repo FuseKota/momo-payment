@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { DELIVERY_TIME_SLOTS } from '@/lib/shipping/time-slots';
+import { resolveZone } from '@/lib/shipping/calc';
 
 /**
  * 食品表示ラベルスキーマ（FoodLabel インターフェースに対応）
@@ -130,19 +132,44 @@ export const pickupOrderSchema = z.object({
 });
 
 /**
- * 配送（SHIPPING）注文スキーマ
+ * お届け時間帯スキーマ（佐川急便の指定枠）
  */
-export const shippingOrderSchema = z.object({
-  customer: customerSchema,
-  address: addressSchema,
-  items: z
-    .array(cartItemSchema)
-    .min(1, 'カートに商品がありません')
-    .max(50, '一度に注文できる商品は50種類までです'),
-  agreementAccepted: z.literal(true, {
-    message: '利用規約に同意してください',
-  }),
-});
+export const deliveryTimeSlotSchema = z.enum(DELIVERY_TIME_SLOTS);
+
+/**
+ * 配送（SHIPPING）注文スキーマ
+ *
+ * deliveryDate の「最短日〜+14日」範囲チェックは注文日(now)に依存するため
+ * route 側で行う（now を単一ソース化しテストを安定させるため）。
+ * ここでは pref が配送対応地域かどうかのみ superRefine で検証する。
+ */
+export const shippingOrderSchema = z
+  .object({
+    customer: customerSchema,
+    address: addressSchema,
+    items: z
+      .array(cartItemSchema)
+      .min(1, 'カートに商品がありません')
+      .max(50, '一度に注文できる商品は50種類までです'),
+    deliveryDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'お届け希望日の形式が正しくありません')
+      .optional(),
+    deliveryTimeSlot: deliveryTimeSlotSchema.optional(),
+    agreementAccepted: z.literal(true, {
+      message: '利用規約に同意してください',
+    }),
+  })
+  .superRefine((data, ctx) => {
+    // address 自体の欠落は object スキーマ側で検出済みのため、ここでは pref がある場合のみ判定
+    if (data.address && resolveZone(data.address.pref) === null) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['address', 'pref'],
+        message: 'お届けに対応していない地域です',
+      });
+    }
+  });
 
 /**
  * バリデーションエラーをユーザーフレンドリーな形式に変換

@@ -210,5 +210,38 @@ describe('validation schemas', () => {
       };
       expect(shippingOrderSchema.safeParse(order).success).toBe(true);
     });
+
+    it('配送に対応していない都道府県を拒否する', () => {
+      const order = {
+        ...validShippingOrder,
+        address: { ...validShippingOrder.address, pref: '海外' },
+      };
+      expect(shippingOrderSchema.safeParse(order).success).toBe(false);
+    });
+
+    it('お届け希望日・時間帯を受け入れる', () => {
+      const order = {
+        ...validShippingOrder,
+        deliveryDate: '2026-06-10',
+        deliveryTimeSlot: 'AM' as const,
+      };
+      expect(shippingOrderSchema.safeParse(order).success).toBe(true);
+    });
+
+    it('不正な時間帯を拒否する', () => {
+      const order = {
+        ...validShippingOrder,
+        deliveryTimeSlot: 'EVENING',
+      };
+      expect(shippingOrderSchema.safeParse(order).success).toBe(false);
+    });
+
+    it('不正な日付形式を拒否する', () => {
+      const order = {
+        ...validShippingOrder,
+        deliveryDate: '2026/06/10',
+      };
+      expect(shippingOrderSchema.safeParse(order).success).toBe(false);
+    });
   });
 });

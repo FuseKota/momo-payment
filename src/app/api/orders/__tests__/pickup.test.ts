@@ -36,7 +36,6 @@ vi.mock('@/lib/stripe/client', () => ({
 vi.mock('@/lib/env', () => ({
   env: {
     NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
-    SHIPPING_FEE_YEN: 1200,
   },
 }));
 

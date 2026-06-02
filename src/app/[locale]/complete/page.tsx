@@ -51,6 +51,8 @@ interface OrderData {
   customer_name: string;
   pickup_date?: string;
   pickup_time?: string;
+  delivery_date?: string;
+  delivery_time_slot?: string;
   created_at: string;
   paid_at?: string;
   order_items: OrderItem[];
@@ -307,6 +309,24 @@ function CompleteContent() {
                     {order.shippingAddress.address2 &&
                       ` ${order.shippingAddress.address2}`}
                   </Typography>
+                </Paper>
+              )}
+              {(order.delivery_date ||
+                (order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED')) && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
+                    {t('deliveryScheduleTitle')}
+                  </Typography>
+                  {order.delivery_date && (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('deliveryDate')}: {order.delivery_date}
+                    </Typography>
+                  )}
+                  {order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED' && (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('deliveryTimeSlot')}: {tc(`timeSlots.${order.delivery_time_slot}`)}
+                    </Typography>
+                  )}
                 </Paper>
               )}
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>

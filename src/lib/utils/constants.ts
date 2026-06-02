@@ -1,9 +1,3 @@
-/**
- * 送料（円）- フロントエンド表示用デフォルト値
- * API側の正式な送料は env.SHIPPING_FEE_YEN を使用する
- */
-export const SHIPPING_FEE_YEN = 1200;
-
 /** カート内の1商品あたりの最大数量 */
 export const MAX_ITEM_QUANTITY = 10;
 

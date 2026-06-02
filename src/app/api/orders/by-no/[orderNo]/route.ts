@@ -76,6 +76,8 @@ export async function GET(
         customer_name,
         pickup_date,
         pickup_time,
+        delivery_date,
+        delivery_time_slot,
         created_at,
         user_id,
         lookup_token,
