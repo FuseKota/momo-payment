@@ -3,8 +3,9 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getShippingProducts } from '@/lib/api/product-queries';
 import ShopClient from './ShopClient';
 
-// ISR: 商品一覧をサーバー側でプリレンダリングし、画像を初期 HTML に含める
-export const revalidate = 60;
+// ISR: 商品一覧をサーバー側でプリレンダリングし、画像を初期 HTML に含める。
+// 商品カタログは更新頻度が低いため 300 秒でエッジキャッシュを長めに保ち TTFB を安定させる
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
