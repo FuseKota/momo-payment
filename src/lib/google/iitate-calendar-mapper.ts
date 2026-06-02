@@ -83,6 +83,39 @@ function minutesToHm(min: number): string {
 }
 
 /**
+ * 時刻レンジ（例: 13:00〜16:00 / 13:00-16:00）を捉える正規表現。
+ * 区切りは全角チルダ・各種ダッシュに加え、日本語入力で頻出する長音符類
+ * （ー U+30FC / ― U+2015 / ｰ U+FF70 / − U+2212）にも対応する。
+ */
+const TIME_RANGE_RE = /(\d{1,2}):(\d{2})\s*[~～〜ー―ｰ\-–—−]\s*(\d{1,2}):(\d{2})/;
+/** 単一時刻（例: 18:00）を捉える正規表現 */
+const SINGLE_TIME_RE = /(\d{1,2}):(\d{2})/;
+
+/** 時(0-23)・分(0-59)として妥当かを判定（価格・番号の "99:99" 等を時刻と誤認しないため） */
+function isValidHm(h: string, m: string): boolean {
+  return Number(h) <= 23 && Number(m) <= 59;
+}
+
+/**
+ * 終日予定のタイトル等に文字で書かれた時刻（「13:00〜16:00」など）を分単位へ変換する。
+ * 時刻付き(dateTime)イベントには使わず、終日イベントのフォールバックとして用いる。
+ */
+export function parseTimeFromText(text: string): { startMin: number; endMin: number | null } | null {
+  const range = text.match(TIME_RANGE_RE);
+  if (range && isValidHm(range[1], range[2]) && isValidHm(range[3], range[4])) {
+    return {
+      startMin: Number(range[1]) * 60 + Number(range[2]),
+      endMin: Number(range[3]) * 60 + Number(range[4]),
+    };
+  }
+  const single = text.match(SINGLE_TIME_RE);
+  if (single && isValidHm(single[1], single[2])) {
+    return { startMin: Number(single[1]) * 60 + Number(single[2]), endMin: null };
+  }
+  return null;
+}
+
+/**
  * テキスト（タイトル＋説明）からタイプを判定する。
  * 明示タグ `[day]` 等とキーワードの両方を拾い、union（重複排除）する。
  */
@@ -119,13 +152,18 @@ export function deriveNote(summary: string, description: string): string | null 
     .find((l) => l.length > 0);
   if (descLine) return descLine.slice(0, 200);
 
-  // タイトルからタグとキーワード（長い順）を除去
+  // タイトルからタグ・キーワード（長い順）・時刻表記を除去し、括弧や区切り記号を整理
   let rest = summary.replace(/\[[^\]]*\]/g, ' ');
   const phrases = ALL_TYPES.flatMap((t) => TYPE_KEYWORDS[t]).sort((a, b) => b.length - a.length);
   for (const phrase of phrases) {
     rest = rest.split(phrase).join(' ');
   }
-  rest = rest.replace(/[\s　,、・/／\-–—|｜]+/g, ' ').trim();
+  // 時刻表記は time_range 側で扱うため note からは除去する。
+  // 「レンジ（区切り文字ごと）→ 単一時刻」の順に消すことで、区切りに使われた長音符類が
+  // note に残らないようにしつつ、語中の長音符（例: セレモニー）は保持する。
+  rest = rest.replace(new RegExp(TIME_RANGE_RE.source, 'g'), ' ');
+  rest = rest.replace(/\d{1,2}:\d{2}/g, ' ');
+  rest = rest.replace(/[\s　,、。・/／\-–—~～〜|｜「」『』（）()【】［］]+/g, ' ').trim();
   return rest.length > 0 ? rest.slice(0, 200) : null;
 }
 
@@ -156,6 +194,8 @@ function expandEvent(event: GoogleCalendarEvent, timeZone: string): DayContribut
 
   // 終日イベント（end.date は排他的）
   if (event.start?.date) {
+    // 終日予定でもタイトル/説明に時刻が書かれていれば time_range として拾う
+    const textTime = parseTimeFromText(`${summary} ${description}`);
     const startMs = dateStrToUtcMs(event.start.date);
     const endMs = event.end?.date
       ? dateStrToUtcMs(event.end.date)
@@ -165,8 +205,8 @@ function expandEvent(event: GoogleCalendarEvent, timeZone: string): DayContribut
       contributions.push({
         event_date: utcMsToDateStr(ms),
         types,
-        startMin: null,
-        endMin: null,
+        startMin: textTime?.startMin ?? null,
+        endMin: textTime?.endMin ?? null,
         note,
       });
     }

@@ -3,6 +3,7 @@ import {
   mapGoogleEventsToMonth,
   detectTypes,
   deriveNote,
+  parseTimeFromText,
 } from '../iitate-calendar-mapper';
 import type { GoogleCalendarEvent } from '../types';
 
@@ -151,6 +152,38 @@ describe('mapGoogleEventsToMonth', () => {
     expect(mapGoogleEventsToMonth([ev], MONTH)).toEqual([]);
   });
 
+  it('終日予定のタイトルに書かれた時刻を time_range として拾い、note からは除去する', () => {
+    // 店舗スタッフが終日予定のタイトルに「「昼の部」13:00〜16:00」と入力したケース
+    const result = mapGoogleEventsToMonth([allDay('2026-06-02', '2026-06-03', '「昼の部」13:00〜16:00')], MONTH);
+    expect(result[0]).toMatchObject({
+      event_date: '2026-06-02',
+      types: ['day'],
+      time_range: '13:00~16:00',
+      note: null,
+    });
+  });
+
+  it('終日予定のタイトルに時刻＋メモがあれば time_range とメモを分離する', () => {
+    const result = mapGoogleEventsToMonth([allDay('2026-06-04', '2026-06-05', '夜の部 17:00-21:00 OPENセレモニー')], MONTH);
+    expect(result[0]).toMatchObject({
+      event_date: '2026-06-04',
+      types: ['night'],
+      time_range: '17:00~21:00',
+      note: 'OPENセレモニー',
+    });
+  });
+
+  it('長音符ダッシュ「ー」で時刻が区切られても time_range を拾い、note には残さない', () => {
+    // スタッフが「13:00ー16:00」と長音符（U+30FC）で区切って入力したケース
+    const result = mapGoogleEventsToMonth([allDay('2026-06-06', '2026-06-07', '「昼の部」13:00ー16:00')], MONTH);
+    expect(result[0]).toMatchObject({
+      event_date: '2026-06-06',
+      types: ['day'],
+      time_range: '13:00~16:00',
+      note: null,
+    });
+  });
+
   it('キーワード未マッチでも時刻・メモを持つ汎用イベントとして残す', () => {
     const result = mapGoogleEventsToMonth(
       [timed('2026-06-10', '10:00', '12:00', '特別イベント', '詳細あり')],
@@ -162,5 +195,27 @@ describe('mapGoogleEventsToMonth', () => {
       time_range: '10:00~12:00',
       note: '詳細あり',
     });
+  });
+});
+
+describe('parseTimeFromText', () => {
+  it('全角チルダ・各種ダッシュ・長音符類のいずれの区切りでも時刻レンジを拾う', () => {
+    for (const dash of ['~', '～', '〜', '-', '–', '—', 'ー', '―', 'ｰ', '−']) {
+      expect(parseTimeFromText(`13:00${dash}16:00`)).toEqual({ startMin: 780, endMin: 960 });
+    }
+  });
+
+  it('単一時刻は endMin=null で返す', () => {
+    expect(parseTimeFromText('18:00 開始')).toEqual({ startMin: 1080, endMin: null });
+  });
+
+  it('時(0-23)・分(0-59)の範囲外（99:99 / 25:00 等）は時刻として採用しない', () => {
+    expect(parseTimeFromText('抽選番号 99:99 当選')).toBeNull();
+    expect(parseTimeFromText('25:00')).toBeNull();
+    expect(parseTimeFromText('12:60')).toBeNull();
+  });
+
+  it('時刻が無ければ null', () => {
+    expect(parseTimeFromText('お知らせ 詳細は後日')).toBeNull();
   });
 });
