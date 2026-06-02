@@ -168,6 +168,9 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
           <Typography variant="body2" color="text.secondary">
             {t('shippingFeeInfo')}
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {t('shippingDeliveryInfo')}
+          </Typography>
         </Box>
       </Container>
 

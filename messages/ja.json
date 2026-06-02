@@ -97,7 +97,8 @@
     "noProducts": "商品がありません",
     "selectSize": "サイズを選択",
     "aboutShipping": "配送について",
-    "shippingFeeInfo": "• 送料: ¥1,200（全国一律）",
+    "shippingFeeInfo": "• 送料: 840円〜880円（お届け地域により異なります・税込）",
+    "shippingDeliveryInfo": "• お届け日数: ご注文から最短3〜5日（地域により異なります）。お届け希望日・時間帯のご指定も可能です。",
     "addedToCart": "{name}をカートに追加しました"
   },
   "productDetail": {
@@ -380,7 +381,7 @@
     "price": "販売価格",
     "priceValue": "各商品ページに記載（税込）",
     "shippingFeeLabel": "送料",
-    "shippingFeeValue": "1,200円（全国一律・税込）",
+    "shippingFeeValue": "お届け地域により異なります（840円〜880円・税込）。金額はご注文手続き時に表示します。",
     "payment": "支払方法",
     "paymentValue": "クレジットカード（Visa・Mastercard・American Express・JCB）",
     "paymentTiming": "支払時期",

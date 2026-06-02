@@ -97,7 +97,8 @@
     "noProducts": "沒有商品",
     "selectSize": "選擇尺寸",
     "aboutShipping": "關於配送",
-    "shippingFeeInfo": "• 運費：¥1,200（全國統一）",
+    "shippingFeeInfo": "• 運費：840日圓〜880日圓（依配送地區而異・含稅）",
+    "shippingDeliveryInfo": "• 配送天數：自下單起最快3〜5天（依地區而異）。可指定希望配送日期與時段。",
     "addedToCart": "已將{name}加入購物車"
   },
   "productDetail": {
@@ -380,7 +381,7 @@
     "price": "販售價格",
     "priceValue": "依各商品頁面所示（含稅）",
     "shippingFeeLabel": "運費",
-    "shippingFeeValue": "1,200日圓（全國統一・含稅）",
+    "shippingFeeValue": "依配送地區而異（840日圓〜880日圓・含稅）。金額將於結帳時顯示。",
     "payment": "付款方式",
     "paymentValue": "信用卡（Visa・Mastercard・American Express・JCB）",
     "paymentTiming": "付款時間",
