@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { getProductBySlug } from '@/lib/api/product-queries';
 import ProductDetailClient from './ProductDetailClient';
+
+// ISR: 商品詳細をサーバー側でプリレンダリングし、LCP 画像を初期 HTML に含める
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   try {
@@ -78,7 +82,9 @@ export default async function ProductDetailPage({
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }) {
-  const { locale } = await params;
+  const { slug, locale } = await params;
   setRequestLocale(locale);
-  return <ProductDetailClient params={params} />;
+
+  const product = await getProductBySlug(slug);
+  return <ProductDetailClient product={product} />;
 }

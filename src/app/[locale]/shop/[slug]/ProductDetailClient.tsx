@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState } from 'react';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import {
@@ -13,7 +14,6 @@ import {
   Divider,
   Breadcrumbs,
   Grid,
-  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -26,20 +26,30 @@ import { MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
 import type { Product, ProductVariant, ProductWithVariants } from '@/types/database';
 
 interface Props {
-  params: Promise<{ slug: string }>;
+  /** サーバー側で取得済みの商品（存在しなければ null） */
+  product: ProductWithVariants | null;
 }
 
-export default function ProductDetailClient({ params }: Props) {
-  const { slug } = use(params);
+export default function ProductDetailClient({ product }: Props) {
   const t = useTranslations('productDetail');
   const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
-  const [product, setProduct] = useState<ProductWithVariants | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    () => {
+      // バリアントを持つ商品は、最初の購入可能な variant を初期選択する
+      if (product?.has_variants && product.variants?.length > 0) {
+        return (
+          product.variants.find(
+            (v) => v.is_active && (v.stock_qty === null || v.stock_qty > 0)
+          ) || null
+        );
+      }
+      return null;
+    }
+  );
   const { addItem, itemCount } = useCart();
 
   // Combine image_url and images array into a single array
@@ -51,41 +61,6 @@ export default function ProductDetailClient({ params }: Props) {
     }
     return imgs;
   };
-
-  useEffect(() => {
-    async function fetchProduct() {
-      try {
-        const response = await fetch(`/api/products?slug=${slug}`);
-        if (response.ok) {
-          const data: ProductWithVariants = await response.json();
-          setProduct(data);
-
-          // Auto-select first available variant if product has variants
-          if (data.has_variants && data.variants?.length > 0) {
-            const firstAvailable = data.variants.find(
-              (v) => v.is_active && (v.stock_qty === null || v.stock_qty > 0)
-            );
-            setSelectedVariant(firstAvailable || null);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch product:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchProduct();
-  }, [slug]);
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
-          <CircularProgress />
-        </Container>
-      </Layout>
-    );
-  }
 
   if (!product) {
     return (
@@ -161,21 +136,20 @@ export default function ProductDetailClient({ params }: Props) {
                   {/* Main Image */}
                   <Paper
                     sx={{
+                      position: 'relative',
                       height: { xs: 240, sm: 320, md: 400 },
                       borderRadius: 3,
                       overflow: 'hidden',
                       mb: 2,
                     }}
                   >
-                    <Box
-                      component="img"
+                    <Image
                       src={allImages[selectedImageIndex]}
                       alt={`${getLocalizedName(product, locale)}の商品画像`}
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
+                      fill
+                      sizes="(max-width: 900px) 100vw, 50vw"
+                      style={{ objectFit: 'cover' }}
+                      priority
                     />
                   </Paper>
                   {/* Thumbnails */}
@@ -186,6 +160,7 @@ export default function ProductDetailClient({ params }: Props) {
                           key={index}
                           onClick={() => setSelectedImageIndex(index)}
                           sx={{
+                            position: 'relative',
                             width: 80,
                             height: 80,
                             borderRadius: 2,
@@ -200,15 +175,12 @@ export default function ProductDetailClient({ params }: Props) {
                             },
                           }}
                         >
-                          <Box
-                            component="img"
+                          <Image
                             src={img}
                             alt={`${getLocalizedName(product, locale)} - サムネイル${index + 1}`}
-                            sx={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                            }}
+                            fill
+                            sizes="80px"
+                            style={{ objectFit: 'cover' }}
                           />
                         </Box>
                       ))}

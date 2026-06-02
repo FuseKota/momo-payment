@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   Box,
@@ -10,48 +10,33 @@ import {
   Tabs,
   Tab,
   Alert,
-  CircularProgress,
   Snackbar,
 } from '@mui/material';
 import { Layout, ProductCard } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { getLocalizedName } from '@/lib/utils/localize-product';
-import type { ProductWithVariants } from '@/types/database';
+import type { Product } from '@/types/database';
 
 type TabValue = 'all' | 'frozen' | 'goods';
 
-export default function ShopClient() {
+interface ShopClientProps {
+  /** サーバー側でプリフェッチした配送対象商品一覧 */
+  initialProducts: Product[];
+}
+
+export default function ShopClient({ initialProducts }: ShopClientProps) {
   const t = useTranslations('shop');
   const tc = useTranslations('common');
   const tRoot = useTranslations();
   const locale = useLocale();
 
   const [tab, setTab] = useState<TabValue>('all');
-  const [products, setProducts] = useState<ProductWithVariants[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
+  const products = initialProducts;
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbar();
   const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode, items, updateQty } = useCart();
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch('/api/products?mode=shipping');
-        const data = await response.json();
-        setProducts(Array.isArray(data) ? data : []);
-        setFetchError(false);
-      } catch {
-        setProducts([]);
-        setFetchError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchProducts();
-  }, []);
-
-  const getDisplayProducts = (): ProductWithVariants[] => {
+  const getDisplayProducts = (): Product[] => {
     switch (tab) {
       case 'frozen':
         return products.filter((p) => p.kind === 'FROZEN_FOOD');
@@ -62,7 +47,7 @@ export default function ShopClient() {
     }
   };
 
-  const handleAddToCart = (product: ProductWithVariants) => {
+  const handleAddToCart = (product: Product) => {
     if (product.has_variants) return;
     const messageKey = getIncompatibleModeMessage(product);
     if (messageKey) {
@@ -141,40 +126,28 @@ export default function ShopClient() {
           </Tabs>
         </Box>
 
-        {isLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
-        )}
+        <Grid container spacing={3}>
+          {getDisplayProducts().map((product, index) => (
+            <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <ProductCard
+                product={product}
+                locale={locale}
+                cartQty={getCartQty(product.id)}
+                onAdd={() => handleAddToCart(product)}
+                onUpdateQty={(delta) => handleUpdateQty(product.id, delta)}
+                disabled={!canAddProduct(product)}
+                variantLink={product.has_variants ? `/shop/${product.slug}` : undefined}
+                variantLinkLabel={product.has_variants ? t('selectSize') : undefined}
+                addLabel={tc('add')}
+                detailLink={`/shop/${product.slug}`}
+                imageHeight={200}
+                priority={index < 3}
+              />
+            </Grid>
+          ))}
+        </Grid>
 
-        {!isLoading && (
-          <Grid container spacing={3}>
-            {getDisplayProducts().map((product) => (
-              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                <ProductCard
-                  product={product}
-                  locale={locale}
-                  cartQty={getCartQty(product.id)}
-                  onAdd={() => handleAddToCart(product)}
-                  onUpdateQty={(delta) => handleUpdateQty(product.id, delta)}
-                  disabled={!canAddProduct(product)}
-                  variantLink={product.has_variants ? `/shop/${product.slug}` : undefined}
-                  variantLinkLabel={product.has_variants ? t('selectSize') : undefined}
-                  addLabel={tc('add')}
-                  detailLink={`/shop/${product.slug}`}
-                  imageHeight={200}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-
-        {!isLoading && fetchError && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography color="error">{tc('unexpectedError')}</Typography>
-          </Box>
-        )}
-        {!isLoading && !fetchError && getDisplayProducts().length === 0 && (
+        {getDisplayProducts().length === 0 && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography color="text.secondary">{t('noProducts')}</Typography>
           </Box>

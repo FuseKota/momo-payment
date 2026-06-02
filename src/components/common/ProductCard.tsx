@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import {
   Box,
   Card,
@@ -32,6 +33,8 @@ interface ProductCardProps {
   /** 商品詳細リンク（shop は有り、pickup は無し） */
   detailLink?: string;
   imageHeight?: number;
+  /** above-the-fold の LCP 画像に優先読み込みを付与する */
+  priority?: boolean;
 }
 
 export default function ProductCard({
@@ -48,18 +51,23 @@ export default function ProductCard({
   outOfStockLabel,
   detailLink,
   imageHeight = 180,
+  priority = false,
 }: ProductCardProps) {
   const name = getLocalizedName(product, locale);
   const description = getLocalizedDescription(product, locale);
   const emoji = product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁';
 
   const imageContent = product.image_url ? (
-    <CardMedia
-      component="img"
-      image={product.image_url}
-      alt={name}
-      sx={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover' }}
-    />
+    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1 / 1' }}>
+      <Image
+        src={product.image_url}
+        alt={name}
+        fill
+        sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
+        style={{ objectFit: 'cover' }}
+        priority={priority}
+      />
+    </Box>
   ) : (
     <CardMedia
       sx={{
