@@ -73,6 +73,16 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Database error', { status: 500 });
   }
 
+  // 冪等レコードは「受信時」に挿入しているため、後続処理がリトライ可能な失敗をした場合は
+  // この行を取り消す。そうしないと Stripe が再送しても重複チェックに弾かれ、
+  // 「決済成立済みなのに注文が PENDING_PAYMENT のまま詰まる」状態が回復できなくなる。
+  const releaseEventForRetry = async () => {
+    await supabaseAdmin
+      .from('stripe_webhook_events')
+      .delete()
+      .eq('event_id', event.id);
+  };
+
   // 4. checkout.session.expired: orderをCANCELEDに更新
   if (isCheckoutSessionExpired(event)) {
     const sessionInfo = extractSessionInfo(event);
@@ -84,10 +94,14 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (expiredPayment) {
+        // 楽観的ロック: PENDING_PAYMENT の注文のみキャンセル。
+        // 到着順序の乱れた expired イベントが PAID/FULFILLED の注文を
+        // 誤って CANCELED に上書きするのを防ぐ。
         await supabaseAdmin
           .from('orders')
           .update({ status: 'CANCELED' })
-          .eq('id', expiredPayment.order_id);
+          .eq('id', expiredPayment.order_id)
+          .eq('status', 'PENDING_PAYMENT');
 
         secureLog('warn', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
       }
@@ -119,6 +133,8 @@ export async function POST(request: NextRequest) {
 
   if (paymentError || !paymentRow) {
     secureLog('error', 'Stripe webhook: payment row not found', paymentError ? safeErrorLog(paymentError) : undefined);
+    // 注文作成直後の競合等で payment 行がまだ無い可能性 → Stripe の再送で回復させる
+    await releaseEventForRetry();
     return new NextResponse('Payment not found', { status: 500 });
   }
 
@@ -134,7 +150,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: 'payment not completed' });
   }
 
-  const currencyValid = currency === null || currency.toLowerCase() === 'jpy';
+  const currencyValid = currency?.toLowerCase() === 'jpy';
   if (amountTotal === null || amountTotal !== paymentRow.amount_yen || !currencyValid) {
     secureLog('error', 'Stripe webhook: amount/currency mismatch — manual review required', {
       orderId: paymentRow.order_id,
@@ -158,7 +174,10 @@ export async function POST(request: NextRequest) {
     .eq('id', paymentRow.id);
 
   if (updatePaymentError) {
+    // 一時的なDBエラーの可能性 → 冪等レコードを取り消して Stripe に再送させる
     secureLog('error', 'Stripe webhook: failed to update payment', safeErrorLog(updatePaymentError));
+    await releaseEventForRetry();
+    return new NextResponse('Database error', { status: 500 });
   }
 
   // 9. ordersを更新（PAID） — 楽観的ロック: PENDING_PAYMENTの注文のみ更新
@@ -171,10 +190,37 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (updateOrderError) {
+    // PGRST116 = 対象行なし。既に PAID 等へ遷移済み（並行処理 or 再送）→ 正常終了
+    if (updateOrderError.code === 'PGRST116') {
+      secureLog('warn', 'Stripe webhook: order not in PENDING_PAYMENT, already processed', {
+        orderId: paymentRow.order_id,
+      });
+      return NextResponse.json({ ok: true, message: 'order already processed' });
+    }
+    // それ以外は一時的なDBエラーの可能性 → 冪等レコードを取り消して再送させる
     secureLog('error', 'Stripe webhook: failed to update order', safeErrorLog(updateOrderError));
+    await releaseEventForRetry();
+    return new NextResponse('Database error', { status: 500 });
   }
 
   secureLog('info', `Stripe webhook: order ${paymentRow.order_id} marked as PAID`);
+
+  // 9.5 在庫減算 — PENDING_PAYMENT→PAID に実際に遷移したこの1回だけ実行されるため冪等。
+  //   variant_id を持つ（在庫管理対象の）明細のみ対象。失敗しても決済は成立済みなので
+  //   ログのみで継続し、200を返す（在庫整合は管理者の手動確認に委ねる）。
+  if (orderData?.order_items) {
+    for (const item of orderData.order_items as Array<{ variant_id: string | null; qty: number }>) {
+      if (item.variant_id) {
+        const { error: stockError } = await supabaseAdmin.rpc('decrement_variant_stock', {
+          p_variant_id: item.variant_id,
+          p_qty: item.qty,
+        });
+        if (stockError) {
+          secureLog('error', 'Stripe webhook: failed to decrement stock', safeErrorLog(stockError));
+        }
+      }
+    }
+  }
 
   // 10. メール通知を送信
   if (orderData && orderData.customer_email) {

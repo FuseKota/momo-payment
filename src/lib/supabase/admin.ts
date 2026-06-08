@@ -28,6 +28,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 // For backward compatibility
 export const supabaseAdmin = {
   from: (...args: Parameters<SupabaseClient['from']>) => getSupabaseAdmin().from(...args),
+  rpc: (...args: Parameters<SupabaseClient['rpc']>) => getSupabaseAdmin().rpc(...args),
 };
 
 export default supabaseAdmin;
