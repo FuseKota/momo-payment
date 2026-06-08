@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     // Stripe決済の場合
     const idempotencyKey = crypto.randomUUID();
-    const { data: paymentRow } = await supabaseAdmin
+    const { data: paymentRow, error: paymentError } = await supabaseAdmin
       .from('payments')
       .insert({
         order_id: orderRow.id,
@@ -162,6 +162,16 @@ export async function POST(request: NextRequest) {
       })
       .select('id')
       .single();
+
+    if (paymentError || !paymentRow) {
+      // payment 行が無いと Webhook が注文を特定できず詰まるため、ここで中断・ロールバック
+      secureLog('error', 'Payment create error', safeErrorLog(paymentError));
+      await supabaseAdmin.from('orders').update({ status: 'CANCELED' }).eq('id', orderRow.id);
+      return NextResponse.json(
+        { ok: false, error: 'payment_create_failed' },
+        { status: 500 }
+      );
+    }
 
     const lineItems = items.map((x) => ({
       price_data: {
