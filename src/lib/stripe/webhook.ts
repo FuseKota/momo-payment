@@ -48,6 +48,11 @@ export function isCheckoutSessionExpired(event: Stripe.Event): boolean {
 export function extractSessionInfo(event: Stripe.Event): {
   sessionId: string;
   paymentIntentId: string | null;
+  // 実際にStripeで決済された金額。JPYはzero-decimal通貨のため円単位そのまま
+  amountTotal: number | null;
+  // 'paid' | 'unpaid' | 'no_payment_required'
+  paymentStatus: string | null;
+  currency: string | null;
   metadata: Record<string, string>;
 } | null {
   if (
@@ -64,6 +69,9 @@ export function extractSessionInfo(event: Stripe.Event): {
       typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id ?? null,
+    amountTotal: session.amount_total ?? null,
+    paymentStatus: session.payment_status ?? null,
+    currency: session.currency ?? null,
     metadata: (session.metadata as Record<string, string>) ?? {},
   };
 }

@@ -108,18 +108,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: 'no session info' });
   }
 
-  const { sessionId, paymentIntentId } = sessionInfo;
+  const { sessionId, paymentIntentId, amountTotal, paymentStatus, currency } = sessionInfo;
 
   // 7. paymentsテーブルからinternal orderを特定
   const { data: paymentRow, error: paymentError } = await supabaseAdmin
     .from('payments')
-    .select('id, order_id')
+    .select('id, order_id, amount_yen')
     .eq('stripe_session_id', sessionId)
     .maybeSingle();
 
   if (paymentError || !paymentRow) {
     secureLog('error', 'Stripe webhook: payment row not found', paymentError ? safeErrorLog(paymentError) : undefined);
     return new NextResponse('Payment not found', { status: 500 });
+  }
+
+  // 7.5 金額・支払いステータス検証（多層防御の最後の砦）
+  //   - Stripeが報告した実支払額(amount_total)とDBの請求額(amount_yen)を突合し、
+  //     改ざん・部分支払い・通貨不一致でPAIDに遷移しないようにする。
+  //   - JPYはzero-decimal通貨のためamount_totalは円単位そのまま。
+  if (paymentStatus !== 'paid') {
+    secureLog('warn', 'Stripe webhook: payment_status is not paid, skipping PAID transition', {
+      orderId: paymentRow.order_id,
+      paymentStatus: paymentStatus ?? 'null',
+    });
+    return NextResponse.json({ ok: true, message: 'payment not completed' });
+  }
+
+  const currencyValid = currency === null || currency.toLowerCase() === 'jpy';
+  if (amountTotal === null || amountTotal !== paymentRow.amount_yen || !currencyValid) {
+    secureLog('error', 'Stripe webhook: amount/currency mismatch — manual review required', {
+      orderId: paymentRow.order_id,
+      expectedYen: paymentRow.amount_yen,
+      actualAmount: amountTotal ?? 'null',
+      currency: currency ?? 'null',
+    });
+    // 注文はPENDING_PAYMENTのまま残し、管理者の手動確認に委ねる（自動でPAIDにしない）
+    return NextResponse.json({ ok: true, message: 'amount mismatch, manual review required' });
   }
 
   // 8. paymentsを更新
