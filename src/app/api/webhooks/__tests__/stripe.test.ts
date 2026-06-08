@@ -8,9 +8,12 @@ const mockSelect = vi.fn();
 const mockEq = vi.fn();
 const mockMaybeSingle = vi.fn();
 const mockSingle = vi.fn();
+const mockDelete = vi.fn();
+const mockRpc = vi.fn().mockResolvedValue({ data: null, error: null });
 
 vi.mock('@/lib/supabase/admin', () => ({
   supabaseAdmin: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
     from: (...args: unknown[]) => {
       mockFrom(...args);
       return {
@@ -33,6 +36,16 @@ vi.mock('@/lib/supabase/admin', () => ({
             error: null,
           };
           return eqChain;
+        },
+        delete: () => {
+          mockDelete();
+          // releaseEventForRetry: .delete().eq('event_id', ...) を await する
+          return {
+            eq: (...eArgs: unknown[]) => {
+              mockEq(...eArgs);
+              return Promise.resolve({ data: null, error: null });
+            },
+          };
         },
         select: (...sArgs: unknown[]) => {
           mockSelect(...sArgs);
@@ -312,5 +325,164 @@ describe('POST /api/webhooks/stripe', () => {
     expect(data.message).toBe('payment not completed');
     expect(mockUpdate).not.toHaveBeenCalled();
     expect(sendPaymentConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it('payment行が見つからないとき500を返し冪等レコードを取り消す', async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: 'evt_no_payment',
+      type: 'checkout.session.completed',
+    } as any);
+
+    mockInsert.mockImplementation(() => ({ data: null, error: null }));
+    vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
+    vi.mocked(extractSessionInfo).mockReturnValue({
+      sessionId: 'cs_test_missing',
+      paymentIntentId: 'pi_x',
+      amountTotal: 1000,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
+    });
+
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null }) // 重複チェック
+      .mockResolvedValueOnce({ data: null, error: null }); // payment 見つからず
+
+    const res = await POST(makeRequest());
+
+    // Stripe に再送させるため 500、かつ冪等レコードを取り消す
+    expect(res.status).toBe(500);
+    expect(mockDelete).toHaveBeenCalled();
+  });
+
+  it('orders更新がDBエラーのとき500を返し冪等レコードを取り消す', async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: 'evt_order_db_error',
+      type: 'checkout.session.completed',
+    } as any);
+
+    mockInsert.mockImplementation(() => ({ data: null, error: null }));
+    vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
+    vi.mocked(extractSessionInfo).mockReturnValue({
+      sessionId: 'cs_test_dberr',
+      paymentIntentId: 'pi_y',
+      amountTotal: 1000,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
+    });
+
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-db', order_id: 'order-db', amount_yen: 1000 },
+        error: null,
+      });
+
+    // orders 更新が一時的なDBエラー
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { code: '08006', message: 'connection failure' },
+    });
+
+    const res = await POST(makeRequest());
+
+    expect(res.status).toBe(500);
+    expect(mockDelete).toHaveBeenCalled();
+    expect(sendPaymentConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it('注文が既にPAID（対象行なし）のとき200で正常終了し冪等レコードは残す', async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: 'evt_already_paid',
+      type: 'checkout.session.completed',
+    } as any);
+
+    mockInsert.mockImplementation(() => ({ data: null, error: null }));
+    vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
+    vi.mocked(extractSessionInfo).mockReturnValue({
+      sessionId: 'cs_test_paid',
+      paymentIntentId: 'pi_z',
+      amountTotal: 1000,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
+    });
+
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-paid', order_id: 'order-paid', amount_yen: 1000 },
+        error: null,
+      });
+
+    // 楽観ロックで対象行なし（既に PAID）→ PGRST116
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { code: 'PGRST116', message: 'no rows returned' },
+    });
+
+    const res = await POST(makeRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.message).toBe('order already processed');
+    // 再処理ではないので冪等レコードは取り消さない・メールも送らない
+    expect(mockDelete).not.toHaveBeenCalled();
+    expect(sendPaymentConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it('variant_idを持つ明細は決済成功時に在庫が減算される', async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: 'evt_stock',
+      type: 'checkout.session.completed',
+    } as any);
+
+    mockInsert.mockImplementation(() => ({ data: null, error: null }));
+    vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
+    vi.mocked(extractSessionInfo).mockReturnValue({
+      sessionId: 'cs_test_stock',
+      paymentIntentId: 'pi_stock',
+      amountTotal: 3000,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
+    });
+
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-stock', order_id: 'order-stock', amount_yen: 3000 },
+        error: null,
+      });
+
+    mockSingle.mockResolvedValue({
+      data: {
+        id: 'order-stock',
+        order_no: 'ORD-STOCK',
+        customer_name: 'テスト',
+        customer_email: null,
+        order_type: 'SHIPPING',
+        subtotal_yen: 1800,
+        shipping_fee_yen: 1200,
+        total_yen: 3000,
+        locale: 'ja',
+        order_items: [
+          { variant_id: 'var-1', qty: 2 },
+          { variant_id: null, qty: 5 }, // 在庫管理対象外 → 減算しない
+        ],
+      },
+      error: null,
+    });
+
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(200);
+
+    // variant_id を持つ明細のみ RPC 呼び出し（1回）
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(mockRpc).toHaveBeenCalledWith('decrement_variant_stock', {
+      p_variant_id: 'var-1',
+      p_qty: 2,
+    });
   });
 });
