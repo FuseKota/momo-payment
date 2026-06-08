@@ -69,6 +69,18 @@ function CompleteContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // lookup_token がブラウザ履歴・アクセスログ・Refererに残らないよう、URLから除去する。
+  // token変数はクロージャに保持済みのため、除去後もデータ取得には影響しない。
+  useEffect(() => {
+    if (token && typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('token')) {
+        url.searchParams.delete('token');
+        window.history.replaceState(window.history.state, '', url.toString());
+      }
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!orderNo) {
       setError(t('orderNoNotFound'));
