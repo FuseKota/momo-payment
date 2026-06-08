@@ -71,7 +71,10 @@ function LoginPageContent() {
   useEffect(() => {
     if (!authLoading && user) {
       if (isAdmin) {
-        router.push('/admin/orders');
+        // 管理画面はロケールプレフィックス外（src/app/admin/*）にあるため、
+        // next-intl の router を使うと /ja が付与され 404 になる。
+        // locale を付けないハード遷移で /admin/orders に移動する。
+        window.location.href = '/admin/orders';
       } else {
         router.push(safeCallbackUrl as '/mypage');
       }
