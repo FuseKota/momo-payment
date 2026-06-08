@@ -19,19 +19,20 @@ vi.mock('@/lib/supabase/admin', () => ({
         },
         update: (...uArgs: unknown[]) => {
           mockUpdate(...uArgs);
-          return {
+          // .eq() を連鎖可能にする（orders更新は .eq('id').eq('status') の2連）
+          const eqChain = {
             eq: (...eArgs: unknown[]) => {
               mockEq(...eArgs);
-              return {
-                select: (...sArgs: unknown[]) => {
-                  mockSelect(...sArgs);
-                  return { single: mockSingle };
-                },
-                data: null,
-                error: null,
-              };
+              return eqChain;
             },
+            select: (...sArgs: unknown[]) => {
+              mockSelect(...sArgs);
+              return { single: mockSingle };
+            },
+            data: null,
+            error: null,
           };
+          return eqChain;
         },
         select: (...sArgs: unknown[]) => {
           mockSelect(...sArgs);
@@ -157,12 +158,19 @@ describe('POST /api/webhooks/stripe', () => {
     vi.mocked(extractSessionInfo).mockReturnValue({
       sessionId: 'cs_test_123',
       paymentIntentId: 'pi_test_456',
+      amountTotal: 1000,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
     });
 
-    mockMaybeSingle.mockResolvedValue({
-      data: { id: 'pay-1', order_id: 'order-1' },
-      error: null,
-    });
+    // 1回目: webhook_events 重複チェック（未登録）、2回目: payments 検索（請求額1000）
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-1', order_id: 'order-1', amount_yen: 1000 },
+        error: null,
+      });
 
     mockSingle.mockResolvedValue({
       data: {
@@ -187,6 +195,8 @@ describe('POST /api/webhooks/stripe', () => {
 
     const data = await res.json();
     expect(data.ok).toBe(true);
+    // 金額一致・支払い完了 → PAID遷移とメール送信が行われる
+    expect(sendPaymentConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
   it('returns 200 even when email sending fails', async () => {
@@ -200,12 +210,18 @@ describe('POST /api/webhooks/stripe', () => {
     vi.mocked(extractSessionInfo).mockReturnValue({
       sessionId: 'cs_test_789',
       paymentIntentId: 'pi_test_012',
+      amountTotal: 500,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
     });
 
-    mockMaybeSingle.mockResolvedValue({
-      data: { id: 'pay-2', order_id: 'order-2' },
-      error: null,
-    });
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-2', order_id: 'order-2', amount_yen: 500 },
+        error: null,
+      });
 
     mockSingle.mockResolvedValue({
       data: {
@@ -228,5 +244,73 @@ describe('POST /api/webhooks/stripe', () => {
     const res = await POST(makeRequest());
     // Should still return 200 even if email fails
     expect(res.status).toBe(200);
+  });
+
+  it('金額不一致のときPAIDに遷移させずメールも送らない', async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: 'evt_amount_mismatch',
+      type: 'checkout.session.completed',
+    } as any);
+
+    mockInsert.mockImplementation(() => ({ data: null, error: null }));
+    vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
+    // 攻撃シナリオ: 実支払額(1)がDB請求額(1000)と一致しない
+    vi.mocked(extractSessionInfo).mockReturnValue({
+      sessionId: 'cs_test_attack',
+      paymentIntentId: 'pi_test_attack',
+      amountTotal: 1,
+      paymentStatus: 'paid',
+      currency: 'jpy',
+      metadata: {},
+    });
+
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-3', order_id: 'order-3', amount_yen: 1000 },
+        error: null,
+      });
+
+    const res = await POST(makeRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(200); // Stripeの再送を防ぐため200
+    expect(data.message).toBe('amount mismatch, manual review required');
+    // PAIDへのorders更新もメール送信も行われない
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(sendPaymentConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it('payment_statusがpaidでないときPAIDに遷移させない', async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: 'evt_unpaid',
+      type: 'checkout.session.completed',
+    } as any);
+
+    mockInsert.mockImplementation(() => ({ data: null, error: null }));
+    vi.mocked(isCheckoutSessionCompleted).mockReturnValue(true);
+    vi.mocked(extractSessionInfo).mockReturnValue({
+      sessionId: 'cs_test_unpaid',
+      paymentIntentId: null,
+      amountTotal: 1000,
+      paymentStatus: 'unpaid',
+      currency: 'jpy',
+      metadata: {},
+    });
+
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { id: 'pay-4', order_id: 'order-4', amount_yen: 1000 },
+        error: null,
+      });
+
+    const res = await POST(makeRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.message).toBe('payment not completed');
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(sendPaymentConfirmationEmail).not.toHaveBeenCalled();
   });
 });
