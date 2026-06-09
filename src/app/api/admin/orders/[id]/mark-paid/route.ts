@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { uuidSchema, adminMarkPaidSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { sendPickupPaymentReceivedEmail } from '@/lib/email/resend';
 
 export async function POST(
   request: NextRequest,
@@ -38,7 +39,7 @@ export async function POST(
     // 注文を取得
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select('id, status, payment_method')
+      .select('id, status, payment_method, order_no, customer_name, customer_email, total_yen, locale')
       .eq('id', orderId)
       .single();
 
@@ -87,6 +88,21 @@ export async function POST(
       .from('payments')
       .update({ status: 'SUCCEEDED' })
       .eq('order_id', orderId);
+
+    // 入金確認メール（店頭払い）— 失敗してもステータス更新は確定済みなのでログのみ
+    if (order.customer_email) {
+      try {
+        await sendPickupPaymentReceivedEmail({
+          orderNo: order.order_no,
+          customerName: order.customer_name,
+          customerEmail: order.customer_email,
+          total: order.total_yen,
+          locale: order.locale || 'ja',
+        });
+      } catch (emailError) {
+        secureLog('error', 'Failed to send pickup payment received email', safeErrorLog(emailError));
+      }
+    }
 
     return NextResponse.json({
       ok: true,

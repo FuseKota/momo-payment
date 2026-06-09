@@ -10,6 +10,8 @@ import { getStripeEnvironmentName } from '@/lib/stripe/client';
 import {
   sendPaymentConfirmationEmail,
   sendOrderConfirmationEmail,
+  sendAdminNewOrderEmail,
+  sendOrderCancellationEmail,
 } from '@/lib/email/resend';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { checkWebhookRateLimit, getClientIP } from '@/lib/security/rate-limit';
@@ -97,13 +99,32 @@ export async function POST(request: NextRequest) {
         // 楽観的ロック: PENDING_PAYMENT の注文のみキャンセル。
         // 到着順序の乱れた expired イベントが PAID/FULFILLED の注文を
         // 誤って CANCELED に上書きするのを防ぐ。
-        await supabaseAdmin
+        // .select() の結果が空＝既に PAID 等へ遷移済みなので、その場合は通知も送らない。
+        const { data: canceledOrder } = await supabaseAdmin
           .from('orders')
           .update({ status: 'CANCELED' })
           .eq('id', expiredPayment.order_id)
-          .eq('status', 'PENDING_PAYMENT');
+          .eq('status', 'PENDING_PAYMENT')
+          .select('order_no, customer_name, customer_email, locale')
+          .maybeSingle();
 
-        secureLog('warn', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
+        if (canceledOrder) {
+          secureLog('warn', `Stripe webhook: order ${expiredPayment.order_id} cancelled due to session expiry`);
+
+          // キャンセル通知メール（顧客）
+          if (canceledOrder.customer_email) {
+            try {
+              await sendOrderCancellationEmail({
+                orderNo: canceledOrder.order_no,
+                customerName: canceledOrder.customer_name,
+                customerEmail: canceledOrder.customer_email,
+                locale: canceledOrder.locale || 'ja',
+              });
+            } catch (emailError) {
+              secureLog('error', 'Stripe webhook: failed to send cancellation email', safeErrorLog(emailError));
+            }
+          }
+        }
       }
     }
     return NextResponse.json({ ok: true, message: 'session expired handled' });
@@ -277,6 +298,41 @@ export async function POST(request: NextRequest) {
             locale: orderLocale,
           });
         }
+
+        // 管理者向け新規注文通知（配送・決済確定）
+        await sendAdminNewOrderEmail({
+          orderId: orderData.id,
+          orderNo: orderData.order_no,
+          orderType: 'SHIPPING',
+          paymentMethod: 'STRIPE',
+          customerName: orderData.customer_name,
+          customerPhone: orderData.customer_phone,
+          customerEmail: orderData.customer_email,
+          items: orderData.order_items.map(
+            (item: {
+              product_name: string;
+              qty: number;
+              unit_price_yen: number;
+              line_total_yen: number;
+            }) => ({
+              name: item.product_name,
+              qty: item.qty,
+              subtotal: item.line_total_yen,
+            })
+          ),
+          total: orderData.total_yen,
+          shippingAddress: addressData
+            ? {
+                postalCode: addressData.postal_code,
+                prefecture: addressData.pref,
+                city: addressData.city,
+                address1: addressData.address1,
+                address2: addressData.address2,
+              }
+            : undefined,
+          deliveryDate: orderData.delivery_date ?? undefined,
+          deliveryTimeSlot: orderData.delivery_time_slot ?? undefined,
+        });
       } else {
         await sendOrderConfirmationEmail({
           orderNo: orderData.order_no,
@@ -302,6 +358,32 @@ export async function POST(request: NextRequest) {
           pickupDate: orderData.pickup_date,
           pickupTime: orderData.pickup_time,
           locale: orderLocale,
+        });
+
+        // 管理者向け新規注文通知（店頭受取・決済確定）
+        await sendAdminNewOrderEmail({
+          orderId: orderData.id,
+          orderNo: orderData.order_no,
+          orderType: 'PICKUP',
+          paymentMethod: 'STRIPE',
+          customerName: orderData.customer_name,
+          customerPhone: orderData.customer_phone,
+          customerEmail: orderData.customer_email,
+          items: orderData.order_items.map(
+            (item: {
+              product_name: string;
+              qty: number;
+              unit_price_yen: number;
+              line_total_yen: number;
+            }) => ({
+              name: item.product_name,
+              qty: item.qty,
+              subtotal: item.line_total_yen,
+            })
+          ),
+          total: orderData.total_yen,
+          pickupDate: orderData.pickup_date,
+          pickupTime: orderData.pickup_time,
         });
       }
 

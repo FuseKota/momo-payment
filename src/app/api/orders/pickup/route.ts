@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { stripe, getStripeEnvironmentName } from '@/lib/stripe/client';
 import crypto from 'crypto';
 import { env } from '@/lib/env';
-import { sendOrderConfirmationEmail } from '@/lib/email/resend';
+import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/lib/email/resend';
 import { pickupOrderSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { orderGuard } from '@/lib/api/order-guards';
@@ -133,6 +133,29 @@ export async function POST(request: NextRequest) {
         } catch (emailError) {
           secureLog('error', 'Failed to send confirmation email', safeErrorLog(emailError));
         }
+      }
+
+      // 管理者向け新規注文通知（店頭払いは作成時点で確定）
+      try {
+        await sendAdminNewOrderEmail({
+          orderId: orderRow.id,
+          orderNo: orderRow.order_no,
+          orderType: 'PICKUP',
+          paymentMethod: 'PAY_AT_PICKUP',
+          customerName: body.customer.name,
+          customerPhone: body.customer.phone,
+          customerEmail: body.customer.email ?? null,
+          items: items.map((x) => ({
+            name: localizedProductName(x.product, locale),
+            qty: x.qty,
+            subtotal: x.lineTotal,
+          })),
+          total,
+          pickupDate: body.pickupDate,
+          pickupTime: body.pickupTime,
+        });
+      } catch (emailError) {
+        secureLog('error', 'Failed to send admin notification', safeErrorLog(emailError));
       }
 
       return NextResponse.json({
