@@ -8,10 +8,15 @@ import { checkAuthRateLimit, getClientIP } from '@/lib/security/rate-limit';
 
 /**
  * POST /api/auth/signup
- * サインアップ後のプロフィール・住所保存（service_role 経由）
+ * 認証済みユーザーの customer_profiles / customer_addresses を冪等に初期化する。
  *
- * Body: { name, phone, address? }
- * userId はセッションから取得（クライアントから受け取らない）
+ * 新規登録時の住所はクライアントが supabase.auth.signUp() の user_metadata に格納する。
+ * メール確認が有効な場合、サインアップ直後はセッションが無く本人を特定できないため、
+ * ここで「初回セッション確立時（SIGNED_IN）」に metadata から
+ * プロフィール＋デフォルト住所を作成する。冪等なので複数回呼ばれても安全。
+ *
+ * userId はセッションから取得（クライアントから受け取らない）。住所メタデータが無い
+ * ユーザー（管理者・本機能以前の旧ユーザー等）は初期化対象外としてスキップする。
  */
 export async function POST(request: Request) {
   try {
@@ -39,24 +44,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name: rawName, phone: rawPhone, address } = body;
+    // サインアップ時に格納した metadata を取得。住所が無ければ初期化対象外。
+    const metadata = (user.user_metadata ?? {}) as {
+      display_name?: unknown;
+      phone?: unknown;
+      address?: unknown;
+    };
 
-    const nameResult = nameSchema.safeParse(rawName);
-    if (!nameResult.success) {
-      return NextResponse.json({ error: 'name is required' }, { status: 400 });
+    if (!metadata.address) {
+      // 住所メタデータが無いユーザー（管理者・旧ユーザー等）はスキップ
+      return NextResponse.json({ success: true, skipped: true });
     }
-    const name = nameResult.data;
 
-    const phoneResult = rawPhone ? phoneSchema.safeParse(rawPhone) : null;
-    if (rawPhone && !phoneResult?.success) {
-      return NextResponse.json({ error: 'invalid phone format' }, { status: 400 });
+    const nameResult = nameSchema.safeParse(metadata.display_name);
+    const name = nameResult.success ? nameResult.data : (user.email ?? '');
+
+    const phoneResult = metadata.phone ? phoneSchema.safeParse(metadata.phone) : null;
+    const phone = phoneResult?.success ? phoneResult.data : null;
+
+    const addressResult = addressSchema.safeParse(metadata.address);
+    if (!addressResult.success) {
+      secureLog('warn', 'Signup ensure: invalid address metadata', { userId: user.id });
+      return NextResponse.json({ error: 'invalid_address_metadata' }, { status: 400 });
     }
-    const phone = phoneResult?.data ?? null;
+    const { postalCode, pref, city, address1, address2 } = addressResult.data;
 
     const supabase = getSupabaseAdmin();
 
-    // customer_profiles に INSERT
+    // customer_profiles を冪等に作成。
+    // UNIQUE(user_id) 制約の重複(23505)＝過去に初期化済みとして扱い、住所の再作成も行わない
+    // （ユーザーが意図的に住所を全削除したケースで復活させないため）。
     const { error: profileError } = await supabase
       .from('customer_profiles')
       .insert({
@@ -66,42 +83,38 @@ export async function POST(request: Request) {
       });
 
     if (profileError) {
+      if (profileError.code === '23505') {
+        return NextResponse.json({ success: true, alreadyInitialized: true });
+      }
       secureLog('error', 'Profile insert error', safeErrorLog(profileError));
       return NextResponse.json({ error: 'profile_save_failed' }, { status: 500 });
     }
 
-    // 住所が指定されていれば customer_addresses に INSERT
-    if (address) {
-      const addressResult = addressSchema.safeParse(address);
-      if (!addressResult.success) {
-        return NextResponse.json({ error: 'address fields incomplete' }, { status: 400 });
-      }
-      const { postalCode, pref, city, address1, address2 } = addressResult.data;
+    // プロフィールを新規作成できた初回のみ、デフォルト住所を作成
+    const { error: addressError } = await supabase
+      .from('customer_addresses')
+      .insert({
+        user_id: user.id,
+        label: '自宅',
+        postal_code: postalCode,
+        pref,
+        city,
+        address1,
+        address2: address2 || null,
+        recipient_name: name,
+        recipient_phone: phone || '',
+        is_default: true,
+      });
 
-      const { error: addressError } = await supabase
-        .from('customer_addresses')
-        .insert({
-          user_id: user.id,
-          label: '自宅',
-          postal_code: postalCode,
-          pref,
-          city,
-          address1,
-          address2: address2 || null,
-          recipient_name: name,
-          recipient_phone: phone || '',
-          is_default: true,
-        });
-
-      if (addressError) {
-        secureLog('error', 'Address insert error', safeErrorLog(addressError));
-        return NextResponse.json({ error: 'address_save_failed' }, { status: 500 });
-      }
+    if (addressError) {
+      // プロフィールは作成済み。住所作成失敗はログのみ（致命的でない）
+      secureLog('error', 'Address insert error', safeErrorLog(addressError));
+      return NextResponse.json({ success: true, addressFailed: true });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    secureLog('error', 'Signup API error', safeErrorLog(error));
+    secureLog('error', 'Signup ensure API error', safeErrorLog(error));
     return NextResponse.json({ error: 'internal_error' }, { status: 500 });
   }
 }

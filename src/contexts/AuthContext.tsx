@@ -1,8 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import type { User, Session } from '@supabase/supabase-js';
 
 export interface SignUpAddress {
@@ -32,6 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // 初回サインイン時に customer_profiles / customer_addresses を冪等に初期化済みの user.id を記録。
+  // 同一セッション内での重複呼び出しを防ぐ。
+  const ensuredProfileUsers = useRef<Set<string>>(new Set());
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -45,42 +47,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let mounted = true;
+
+    // セッション確定 → 管理者判定 → ローディング解除 の共通処理。
+    // 管理者判定は admin_users への別クエリだが、onAuthStateChange のコールバック内で
+    // Supabase 呼び出しを直接 await すると supabase-js が navigator.locks でデッドロックし、
+    // 以降のクエリが永久にハングする（= 無限ローディングの原因）。
+    // 必ず setTimeout(0) でコールバックのロック外に逃がしてから実行する。
+    // ref: https://supabase.com/docs/guides/troubleshooting/why-is-my-supabase-api-call-not-returning-PGzXw0
+    const resolveSession = (session: Session | null) => {
+      if (!mounted) return;
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      const currentUser = session?.user ?? null;
+      if (!currentUser) {
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setTimeout(async () => {
+        let admin = false;
+        try {
+          admin = await checkAdminStatus(currentUser.id);
+        } catch {
+          admin = false;
+        }
+        if (!mounted) return;
+        setIsAdmin(admin);
+        setIsLoading(false);
+      }, 0);
+    };
+
     const getSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          const admin = await checkAdminStatus(session.user.id);
-          setIsAdmin(admin);
-        }
+        resolveSession(session);
       } catch {
+        if (!mounted) return;
         setSession(null);
         setUser(null);
         setIsAdmin(false);
-      } finally {
         setIsLoading(false);
       }
     };
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // 新規登録の自動ログイン / メール確認リンク経由のログイン / 通常ログインのいずれでも
+    // SIGNED_IN が発火する。このタイミングで metadata 由来のプロフィール・デフォルト住所を
+    // 冪等に作成する（メール確認が有効でサインアップ直後にセッションが無いケースを確実に救う）。
+    const ensureProfile = (currentUser: User) => {
+      if (ensuredProfileUsers.current.has(currentUser.id)) return;
+      ensuredProfileUsers.current.add(currentUser.id);
+      // fetch は HTTP エラーステータス(4xx/5xx)では reject しないため res.ok を明示検査する。
+      // 429(レート制限)・500(一時的DBエラー)等で失敗した場合はフラグを戻し、
+      // 次回 SIGNED_IN で再試行できるようにする（戻さないと再試行されず住所未作成が恒久化する）。
+      fetch('/api/auth/signup', { method: 'POST' })
+        .then((res) => {
+          if (!res.ok) throw new Error(`ensure profile failed: ${res.status}`);
+        })
+        .catch(() => {
+          ensuredProfileUsers.current.delete(currentUser.id);
+        });
+    };
 
-        if (session?.user) {
-          const admin = await checkAdminStatus(session.user.id);
-          setIsAdmin(admin);
-        } else {
-          setIsAdmin(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        resolveSession(session);
+        if (event === 'SIGNED_IN' && session?.user) {
+          ensureProfile(session.user);
         }
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,11 +138,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase]);
 
   const signUp = useCallback(async (email: string, password: string, name: string, address?: SignUpAddress) => {
+    // プロフィール・住所は user_metadata に保持する。メール確認が有効だとサインアップ直後は
+    // セッションが無く本人を特定できないため、ここでは DB へ書き込まず、初回セッション確立時
+    // （SIGNED_IN）に /api/auth/signup（冪等 ensure）が metadata から作成する。
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { display_name: name },
+        data: {
+          display_name: name,
+          phone: address?.phone ?? '',
+          address: address
+            ? {
+                postalCode: address.postalCode,
+                pref: address.pref,
+                city: address.city,
+                address1: address.address1,
+                address2: address.address2 ?? '',
+              }
+            : null,
+        },
       },
     });
 
@@ -110,41 +168,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('signup_duplicate') };
     }
 
-    // service_role 経由でプロフィール+住所を保存（userId はサーバー側でセッションから取得）
-    if (data.user) {
-      try {
-        const res = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name,
-            phone: address?.phone || '',
-            address: address ? {
-              postalCode: address.postalCode,
-              pref: address.pref,
-              city: address.city,
-              address1: address.address1,
-              address2: address.address2,
-            } : undefined,
-          }),
-        });
-
-        if (!res.ok) {
-          const body = await res.json().catch(() => null);
-          secureLog('error', 'Failed to save profile/address via API', { status: res.status, body });
-          return { error: new Error('profile_save_failed') };
-        }
-      } catch (err) {
-        secureLog('error', 'Signup API call failed', safeErrorLog(err));
-        return { error: new Error('profile_save_failed') };
-      }
-    }
-
     return { error: null };
   }, [supabase]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    // 別アカウントで再ログインした際に ensure を再実行できるようリセットする
+    ensuredProfileUsers.current.clear();
     setUser(null);
     setSession(null);
     setIsAdmin(false);
