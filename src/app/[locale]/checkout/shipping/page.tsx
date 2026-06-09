@@ -91,7 +91,9 @@ export default function ShippingCheckoutPage() {
   // 認証ゲート: 未ログインならログインページへリダイレクト
   useEffect(() => {
     if (!authLoading && !user) {
-      window.location.replace(`/${locale}/login?callbackUrl=/${locale}/checkout/shipping`);
+      // callbackUrl はログインページ側で next-intl の router.push に渡され locale が
+      // 自動付与されるため、ここでは locale を付けない（付けると /ja/ja/... で 404 になる）。
+      window.location.replace(`/${locale}/login?callbackUrl=/checkout/shipping`);
     }
   }, [user, authLoading, locale]);
 
