@@ -51,7 +51,7 @@ export default function NewsListClient({ items }: Props) {
       <div className={styles.pageContent}>
         {/* Hero */}
         <Box className={styles.hero}>
-          <p className={styles.heroTitle}>NEWS</p>
+          <h1 className={styles.heroTitle}>NEWS</h1>
           <p className={styles.heroSubtitle}>{t('heading')}</p>
         </Box>
 
