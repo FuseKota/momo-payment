@@ -46,6 +46,27 @@ function redactPII(text: string): string {
 }
 
 /**
+ * ログで値を完全マスクするキー名の部分一致リスト
+ * （氏名・連絡先・住所・メモ・機密。ログは内部用途のため過剰マスク側に倒す）
+ */
+const SENSITIVE_KEY_PARTS = [
+  'email',
+  'phone',
+  'password',
+  'passwd',
+  'secret',
+  'token',
+  'name',
+  'recipient',
+  'address',
+  'addr',
+  'postal',
+  'zip',
+  'note',
+  'card',
+];
+
+/**
  * オブジェクトから個人情報を除去（再帰的）
  */
 function redactPIIFromObject(obj: unknown): unknown {
@@ -64,8 +85,9 @@ function redactPIIFromObject(obj: unknown): unknown {
   if (typeof obj === 'object') {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
-      // 特定のキーは完全にマスク
-      if (['email', 'phone', 'password', 'token', 'secret'].includes(key.toLowerCase())) {
+      // PII・機密を含みうるキーは値の中身に依らず完全マスク（部分一致）
+      const lowerKey = key.toLowerCase();
+      if (SENSITIVE_KEY_PARTS.some((part) => lowerKey.includes(part))) {
         result[key] = '[REDACTED]';
       } else {
         result[key] = redactPIIFromObject(value);

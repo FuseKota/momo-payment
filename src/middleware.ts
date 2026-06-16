@@ -23,7 +23,7 @@ function buildCsp(): string {
     // フォントは next/font で同一オリジン配信のため Google Fonts の外部許可は不要
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
-    "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://upload.wikimedia.org",
+    "img-src 'self' data: blob: https://*.supabase.co https://upload.wikimedia.org",
     "frame-src https://js.stripe.com https://hooks.stripe.com",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com",
     "frame-ancestors 'none'",
@@ -74,6 +74,15 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/api/orders/')) {
       response.headers.set('X-RateLimit-Limit', '10');
       response.headers.set('X-RateLimit-Window', '60');
+    }
+
+    // 個人情報を含む API レスポンスは共有キャッシュ（CDN 等）に保存させない
+    if (
+      pathname.startsWith('/api/mypage') ||
+      pathname.startsWith('/api/admin') ||
+      pathname.startsWith('/api/orders/by-no')
+    ) {
+      response.headers.set('Cache-Control', 'private, no-store');
     }
 
     if (pathname.startsWith('/admin')) {

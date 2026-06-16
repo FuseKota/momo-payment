@@ -95,9 +95,11 @@ export function checkAuthRateLimit(ip: string): Promise<RateLimitResult> {
 
 /**
  * リクエストからクライアントIPを取得
- * - Vercel は x-real-ip / x-forwarded-for を設定
- * - Netlify は x-nf-client-connection-ip を設定
- * - いずれもプラットフォーム側で上書きされるため偽装不可
+ * - Netlify は x-nf-client-connection-ip をエッジで付与（信頼可・最優先）
+ * - Vercel は x-real-ip を付与
+ * - x-forwarded-for はフォールバック。信頼できるプロキシ（Netlify/Vercel）配下で
+ *   のみ信用できる。これらの信頼ヘッダが無い環境ではクライアントが任意に偽装可能で、
+ *   レート制限キーとしての信頼性はホスティング前提に依存する点に注意。
  */
 export function getClientIP(request: Request): string {
   const nfIp = request.headers.get('x-nf-client-connection-ip');
