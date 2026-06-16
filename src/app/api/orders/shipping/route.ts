@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
       const { data: variantData, error: variantError } = await supabaseAdmin
         .from('product_variants')
         .select('id, product_id, size, price_yen, stock_qty')
-        .in('id', variantIds);
+        .in('id', variantIds)
+        .eq('is_active', true);
 
       if (variantError) {
         secureLog('error', 'Variant fetch error', safeErrorLog(variantError));
