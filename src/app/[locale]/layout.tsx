@@ -65,7 +65,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
   const tc = await getTranslations({ locale, namespace: "common" });
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://momomusume.com";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://taiwanyoichi-momomusume.com";
   const siteName = tc("siteName");
 
   return {

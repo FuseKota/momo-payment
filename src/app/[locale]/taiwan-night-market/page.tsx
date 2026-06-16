@@ -11,7 +11,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'metadata' });
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://momomusume.com';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
 
   return {
     title: t('taiwanNightMarket.title'),
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TaiwanNightMarketPage({ params }: Props) {
   const { locale } = await params;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://momomusume.com';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
 
   const supabase = getSupabaseAdmin();
   const [{ data: momoNews }, { data: domesticNews }, { data: taiwanArticles }] = await Promise.all([
