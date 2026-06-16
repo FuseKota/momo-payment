@@ -48,7 +48,8 @@ export interface ShippingNotificationData {
   locale?: string;
 }
 
-const FROM_EMAIL = env.EMAIL_FROM || 'noreply@momomusume.com';
+// 本番では env.EMAIL_FROM 必須（env.ts で検証）。以下は開発時のフォールバック。
+const FROM_EMAIL = env.EMAIL_FROM || 'info@sakura-sisters.com';
 
 /** ユーザー入力値をHTMLテンプレートに挿入する前にエスケープ */
 function escapeHtml(str: string): string {
