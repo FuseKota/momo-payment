@@ -38,11 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
 
   const checkAdminStatus = async (userId: string): Promise<boolean> => {
+    // maybeSingle: 一般顧客は admin_users に行が無く、single() だと 0 件で 406 を
+    // 返してコンソールにノイズが出る。maybeSingle なら 0 件は data=null で正常終了。
     const { data } = await supabase
       .from('admin_users')
       .select('user_id')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     return !!data;
   };
 
