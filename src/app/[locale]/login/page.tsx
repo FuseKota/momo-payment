@@ -108,7 +108,7 @@ function LoginPageContent() {
 
     if (!name.trim()) errors.name = t('nameRequired');
     if (!email.trim()) errors.email = t('emailRequired');
-    if (password.length < 6) errors.password = t('passwordTooShort');
+    if (password.length < 8) errors.password = t('passwordTooShort');
     if (!phone.trim()) {
       errors.phone = t('phoneRequired');
     } else if (!PHONE_REGEX.test(phone)) {
@@ -154,6 +154,12 @@ function LoginPageContent() {
     if (error) {
       if (error.message === 'signup_duplicate') {
         setError(t('signupDuplicate'));
+      } else if (
+        (error as { code?: string }).code === 'weak_password' ||
+        /weak|pwned|leaked|compromis/i.test(error.message)
+      ) {
+        // Supabase の漏洩/脆弱パスワード保護による拒否
+        setError(t('passwordWeak'));
       } else {
         setError(t('signupFailed'));
       }

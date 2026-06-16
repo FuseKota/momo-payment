@@ -274,7 +274,7 @@
     "signupTab": "註冊",
     "email": "電子信箱",
     "password": "密碼",
-    "passwordHint": "6個字元以上",
+    "passwordHint": "8個字元以上",
     "name": "姓名",
     "phone": "電話號碼",
     "phonePlaceholder": "090-1234-5678",
@@ -300,11 +300,12 @@
     "signingUp": "註冊中...",
     "loginFailed": "登入失敗。請確認電子信箱和密碼。",
     "loginError": "登入時發生錯誤。",
-    "passwordTooShort": "密碼需要6個字元以上。",
+    "passwordTooShort": "密碼需要8個字元以上。",
     "nameRequired": "請輸入姓名。",
     "emailRequired": "請輸入電子信箱。",
     "signupFailed": "註冊失敗。請嘗試其他電子信箱。",
     "signupDuplicate": "此電子信箱已被註冊。請直接登入。",
+    "passwordWeak": "此密碼容易被猜測或已知遭外洩，無法使用。請設定其他密碼。",
     "signupSuccess": "註冊完成。請確認驗證信件。"
   },
   "mypage": {

@@ -274,7 +274,7 @@
     "signupTab": "新規登録",
     "email": "メールアドレス",
     "password": "パスワード",
-    "passwordHint": "6文字以上",
+    "passwordHint": "8文字以上",
     "name": "お名前",
     "phone": "電話番号",
     "phonePlaceholder": "090-1234-5678",
@@ -300,11 +300,12 @@
     "signingUp": "登録中...",
     "loginFailed": "ログインに失敗しました。メールアドレスとパスワードを確認してください。",
     "loginError": "ログイン処理中にエラーが発生しました。",
-    "passwordTooShort": "パスワードは6文字以上で入力してください。",
+    "passwordTooShort": "パスワードは8文字以上で入力してください。",
     "nameRequired": "お名前を入力してください。",
     "emailRequired": "メールアドレスを入力してください。",
     "signupFailed": "登録に失敗しました。別のメールアドレスをお試しください。",
     "signupDuplicate": "このメールアドレスはすでに登録されています。ログインしてください。",
+    "passwordWeak": "このパスワードは推測されやすい、または漏洩が確認されているため使用できません。別のパスワードを設定してください。",
     "signupSuccess": "登録が完了しました。確認メールをご確認ください。"
   },
   "mypage": {
