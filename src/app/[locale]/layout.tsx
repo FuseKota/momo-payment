@@ -94,6 +94,11 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
     },
+    // Google Search Console の所有権確認（HTMLメタ方式）。
+    // GOOGLE_SITE_VERIFICATION 未設定ならメタタグは出力されない（DNS方式で確認する場合は未設定でOK）。
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION,
+    },
   };
 }
 
