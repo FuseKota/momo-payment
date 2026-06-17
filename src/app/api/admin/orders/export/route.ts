@@ -1,23 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
-import { adminOrdersQuerySchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { adminOrdersFilterSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
-
-/**
- * Supabase の .or() に渡す ilike パターン用エスケープ。
- * カンマ衝突や % _ \ によるパターン暴発を防ぐため、[%_,] を \\ でエスケープする。
- */
-function escapeOrPattern(value: string): string {
-  return value.replace(/[\\%_,]/g, (ch) => `\\${ch}`);
-}
+import type { AdminOrderExportRow } from '@/types/database';
+import { EXPORT_LIMIT, CSV_BOM, escapeOrPattern, buildCsv } from '@/lib/api/orders-csv';
 
 export async function GET(request: Request) {
   const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
 
   const { searchParams } = new URL(request.url);
-  const parsed = adminOrdersQuerySchema.safeParse(Object.fromEntries(searchParams));
+  const parsed = adminOrdersFilterSchema.safeParse(Object.fromEntries(searchParams));
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'validation_error', details: formatValidationErrors(parsed.error) },
@@ -25,7 +19,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const { type, status, q, from, to, limit, offset } = parsed.data;
+  const { type, status, q, from, to } = parsed.data;
 
   const supabase = getSupabaseAdmin();
 
@@ -58,20 +52,22 @@ export async function GET(request: Request) {
         created_at,
         updated_at,
         order_items (
-          id,
-          product_id,
           product_name,
-          qty,
-          unit_price_yen,
-          line_total_yen
+          qty
         ),
-        shipments (
-          id,
-          tracking_no,
-          shipped_at
+        shipping_addresses (
+          postal_code,
+          pref,
+          city,
+          address1,
+          address2,
+          recipient_name,
+          recipient_phone
+        ),
+        payments (
+          status
         )
-      `,
-        { count: 'exact' }
+      `
       )
       .order('created_at', { ascending: false });
 
@@ -98,23 +94,32 @@ export async function GET(request: Request) {
       );
     }
 
-    query = query.range(offset, offset + limit - 1);
+    query = query.limit(EXPORT_LIMIT);
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) {
-      secureLog('error', 'admin orders list query failed', safeErrorLog(error));
+      secureLog('error', 'admin orders export query failed', safeErrorLog(error));
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
-    return NextResponse.json({
-      orders: data ?? [],
-      total: count ?? 0,
-      limit,
-      offset,
+    const rows = (data ?? []) as unknown as AdminOrderExportRow[];
+    const csv = buildCsv(rows);
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    // CSV 本文には PII が含まれるため secureLog には渡さない（件数のみ記録）
+    secureLog('info', 'admin orders exported', { count: rows.length });
+
+    return new NextResponse(CSV_BOM + csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="orders_${dateStr}.csv"`,
+        'Cache-Control': 'no-store',
+      },
     });
   } catch (error) {
-    secureLog('error', 'admin orders list failed', safeErrorLog(error));
+    secureLog('error', 'admin orders export failed', safeErrorLog(error));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
