@@ -50,3 +50,6 @@ supabase/.temp/
 # claude code / playwright mcp 作業ファイル
 .claude/scheduled_tasks.lock
 .playwright-mcp/
+
+# Local Netlify folder
+.netlify
