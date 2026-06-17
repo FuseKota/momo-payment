@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Box, IconButton, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -24,6 +25,7 @@ export default function QuantityControl({
   variant = 'inline',
   size = 'small',
 }: QuantityControlProps) {
+  const t = useTranslations('common');
   const isInline = variant === 'inline';
 
   return (
@@ -40,7 +42,7 @@ export default function QuantityControl({
         size={size}
         onClick={onDecrement}
         disabled={disableDecrement}
-        aria-label="数量を減らす"
+        aria-label={t('quantityDecrease')}
         sx={isInline ? { color: 'primary.main' } : undefined}
       >
         <RemoveIcon fontSize={size} />
@@ -53,7 +55,7 @@ export default function QuantityControl({
           textAlign: 'center',
         }}
         aria-live="polite"
-        aria-label={`数量: ${qty}`}
+        aria-label={`${t('quantity')}: ${qty}`}
       >
         {qty}
       </Typography>
@@ -61,7 +63,7 @@ export default function QuantityControl({
         size={size}
         onClick={onIncrement}
         disabled={disableIncrement}
-        aria-label="数量を増やす"
+        aria-label={t('quantityIncrease')}
         sx={isInline ? { color: 'primary.main' } : undefined}
       >
         <AddIcon fontSize={size} />

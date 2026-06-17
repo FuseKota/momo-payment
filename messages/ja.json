@@ -57,6 +57,9 @@
     },
     "total": "合計",
     "quantity": "数量",
+    "quantityIncrease": "数量を増やす",
+    "quantityDecrease": "数量を減らす",
+    "openMenu": "メニューを開く",
     "taxIncluded": "(税込)",
     "outOfStock": "在庫切れ",
     "yen": "¥{price}",
@@ -267,7 +270,8 @@
     "shippingWithinDays": "商品は3営業日以内に発送いたします。",
     "trackingNotice": "発送完了後、追跡番号をメールでお知らせいたします。",
     "contactNotice": "ご不明な点がございましたら、お気軽にお問い合わせください。",
-    "backToTop": "トップページに戻る"
+    "backToTop": "トップページに戻る",
+    "honorific": "様"
   },
   "login": {
     "account": "アカウント",
@@ -421,6 +425,12 @@
     "backToList": "ニュース一覧",
     "noContent": "本文はありません"
   },
+  "footer": {
+    "brand": "福島もも娘",
+    "tagline": "おいしい魯肉飯とかわいいグッズをお届けします",
+    "order": "ご注文",
+    "support": "サポート"
+  },
   "status": {
     "RESERVED": "予約済",
     "PENDING_PAYMENT": "決済待ち",
@@ -428,7 +438,8 @@
     "PACKING": "梱包中",
     "SHIPPED": "発送済",
     "FULFILLED": "完了",
-    "CANCELED": "キャンセル"
+    "CANCELED": "キャンセル",
+    "REFUNDED": "返金済"
   },
   "cartContext": {
     "pickupInCartWarning": "キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。",
@@ -526,6 +537,7 @@
     "xiaolongbaoDesc": "薄い皮の中に熱々の肉汁がたっぷり。夜市の屋台でも本格的な味わいが楽しめます。",
     "stinkyTofuTitle": "臭豆腐 (チョウドウフ)",
     "stinkyTofuDesc": "独特の香りが特徴ですが、食べるとやみつきになる美味しさ。揚げたものが初心者にはおすすめです。",
+    "footerBrand": "福島もも娘",
     "footerTagline": "おいしい魯肉飯とかわいいグッズをお届けします",
     "footerOrder": "ご注文",
     "footerSupport": "サポート",

@@ -51,6 +51,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const t = useTranslations('mypage');
   const tc = useTranslations('common');
   const tComplete = useTranslations('complete');
+  const tStatus = useTranslations('status');
   const [order, setOrder] = useState<OrderDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,8 +122,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 {t('orderDetail')}
               </Typography>
               <Chip
-                label={(statusLabels[order.status] || { label: order.status }).label}
-                color={(statusLabels[order.status] || { color: 'default' as const }).color}
+                label={tStatus.has(order.status) ? tStatus(order.status) : order.status}
+                color={statusLabels[order.status]?.color ?? 'default'}
               />
             </Box>
 

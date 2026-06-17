@@ -28,6 +28,7 @@ export default function MyPage() {
   const { user, isLoading: authLoading } = useAuth();
   const t = useTranslations('mypage');
   const tc = useTranslations('common');
+  const tStatus = useTranslations('status');
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +122,8 @@ export default function MyPage() {
           </Paper>
         ) : (
           orders.map((order) => {
-            const statusInfo = statusLabels[order.status] || { label: order.status, color: 'default' as const };
+            const statusColor = statusLabels[order.status]?.color ?? 'default';
+            const statusLabel = tStatus.has(order.status) ? tStatus(order.status) : order.status;
             return (
               <Paper
                 key={order.id}
@@ -142,8 +144,8 @@ export default function MyPage() {
                     {t('orderNo', { orderNo: order.order_no })}
                   </Typography>
                   <Chip
-                    label={statusInfo.label}
-                    color={statusInfo.color}
+                    label={statusLabel}
+                    color={statusColor}
                     size="small"
                   />
                 </Box>

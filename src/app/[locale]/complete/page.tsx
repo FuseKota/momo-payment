@@ -309,7 +309,7 @@ function CompleteContent() {
               {order.shippingAddress && (
                 <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
                   <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
-                    {order.customer_name} 様
+                    {order.customer_name} {t('honorific')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     〒{order.shippingAddress.postal_code}

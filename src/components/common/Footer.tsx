@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Grid, IconButton } from '@mui/material';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -9,6 +10,9 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 import LanguageIcon from '@mui/icons-material/Language';
 
 export default function Footer() {
+  const t = useTranslations('footer');
+  const tc = useTranslations('common');
+  const tl = useTranslations('legal');
   return (
     <Box
       component="footer"
@@ -41,11 +45,11 @@ export default function Footer() {
                 />
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                福島もも娘
+                {t('brand')}
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              おいしい魯肉飯とかわいいグッズをお届けします
+              {t('tagline')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <IconButton
@@ -105,7 +109,7 @@ export default function Footer() {
 
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
-              ご注文
+              {t('order')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Link href="/news" style={{ textDecoration: 'none' }}>
@@ -116,7 +120,7 @@ export default function Footer() {
                     '&:hover': { color: 'primary.main' },
                   }}
                 >
-                  ニュース
+                  {tc('news')}
                 </Typography>
               </Link>
               <Link href="/shop" style={{ textDecoration: 'none' }}>
@@ -127,7 +131,7 @@ export default function Footer() {
                     '&:hover': { color: 'primary.main' },
                   }}
                 >
-                  配送注文
+                  {tc('shipping')}
                 </Typography>
               </Link>
             </Box>
@@ -135,7 +139,7 @@ export default function Footer() {
 
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
-              サポート
+              {t('support')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Link href="/legal/tokushoho" style={{ textDecoration: 'none' }}>
@@ -146,7 +150,7 @@ export default function Footer() {
                     '&:hover': { color: 'primary.main' },
                   }}
                 >
-                  特定商取引法に基づく表記
+                  {tl('tokushohoTitle')}
                 </Typography>
               </Link>
               <Link href="/legal/privacy" style={{ textDecoration: 'none' }}>
@@ -157,7 +161,7 @@ export default function Footer() {
                     '&:hover': { color: 'primary.main' },
                   }}
                 >
-                  プライバシーポリシー
+                  {tl('footerPrivacy')}
                 </Typography>
               </Link>
             </Box>
@@ -173,7 +177,7 @@ export default function Footer() {
           }}
         >
           <Typography variant="body2" color="text.secondary" suppressHydrationWarning>
-            © {new Date().getFullYear()} もも娘. All rights reserved.
+            © {new Date().getFullYear()} {tc('brandShort')}. All rights reserved.
           </Typography>
         </Box>
       </Container>

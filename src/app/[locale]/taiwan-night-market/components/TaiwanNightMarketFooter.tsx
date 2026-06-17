@@ -68,7 +68,7 @@ export default function TaiwanNightMarketFooter() {
                   />
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: gold }}>
-                  福島もも娘
+                  {t('footerBrand')}
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ mb: 2, color: 'rgba(255,255,255,0.5)' }}>
@@ -144,7 +144,7 @@ export default function TaiwanNightMarketFooter() {
             }}
           >
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.3)' }} suppressHydrationWarning>
-              © {new Date().getFullYear()} もも娘. All rights reserved.
+              © {new Date().getFullYear()} {tc('brandShort')}. All rights reserved.
             </Typography>
           </Box>
         </Container>
