@@ -4,6 +4,7 @@ import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { uuidSchema, adminShipSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { sendShippingNotificationEmail } from '@/lib/email/resend';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 export async function POST(
   request: NextRequest,
@@ -115,6 +116,16 @@ export async function POST(
         secureLog('error', 'Failed to send shipping notification email', safeErrorLog(emailError));
       }
     }
+
+    // 監査ログ（best-effort）。trackingNo/carrier は配送識別子でありPIIではない。
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'order.ship',
+      targetType: 'order',
+      targetId: orderForEmail?.order_no ?? orderId,
+      metadata: { carrier: body.carrier, trackingNo: body.trackingNo },
+    });
 
     return NextResponse.json({
       ok: true,

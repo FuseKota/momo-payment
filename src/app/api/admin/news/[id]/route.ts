@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { uuidSchema, adminNewsUpdateSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await adminWriteGuard(request);
@@ -40,6 +41,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.title_zh_tw !== undefined) updates.title_zh_tw = body.title_zh_tw;
   if (body.excerpt_zh_tw !== undefined) updates.excerpt_zh_tw = body.excerpt_zh_tw;
   if (body.content_zh_tw !== undefined) updates.content_zh_tw = body.content_zh_tw;
+  if (body.title_en !== undefined) updates.title_en = body.title_en;
+  if (body.excerpt_en !== undefined) updates.excerpt_en = body.excerpt_en;
+  if (body.content_en !== undefined) updates.content_en = body.content_en;
   if (body.is_published !== undefined) {
     updates.is_published = body.is_published;
     if (body.is_published && !body.published_at) {
@@ -60,6 +64,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (error) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'news.update',
+      targetType: 'news',
+      targetId: id,
+      metadata: { changedKeys: Object.keys(body) },
+    });
 
     return NextResponse.json(data);
   } catch {
@@ -85,6 +98,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (error) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'news.delete',
+      targetType: 'news',
+      targetId: id,
+      metadata: {},
+    });
 
     return NextResponse.json({ success: true });
   } catch {

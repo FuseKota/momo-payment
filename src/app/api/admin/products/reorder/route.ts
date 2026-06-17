@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { adminProductReorderSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 export async function PATCH(request: NextRequest) {
   const guard = await adminWriteGuard(request);
@@ -35,6 +36,14 @@ export async function PATCH(request: NextRequest) {
       secureLog('error', 'Product reorder error', safeErrorLog(error));
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'product.reorder',
+      targetType: 'product',
+      metadata: { count: items.length },
+    });
 
     return NextResponse.json({ updated: data ?? items.length });
   } catch (err) {

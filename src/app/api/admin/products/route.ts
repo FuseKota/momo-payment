@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminProductCreateSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -61,6 +62,15 @@ export async function POST(request: NextRequest) {
       secureLog('error', 'Admin product create error', safeErrorLog(error));
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'product.create',
+      targetType: 'product',
+      targetId: data.id,
+      metadata: { slug: data.slug, kind: data.kind },
+    });
 
     return NextResponse.json(data);
   } catch (error) {

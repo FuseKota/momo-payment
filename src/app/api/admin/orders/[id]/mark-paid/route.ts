@@ -4,6 +4,7 @@ import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { uuidSchema, adminMarkPaidSchema, formatValidationErrors } from '@/lib/validation/schemas';
 import { sendPickupPaymentReceivedEmail } from '@/lib/email/resend';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 export async function POST(
   request: NextRequest,
@@ -103,6 +104,16 @@ export async function POST(
         secureLog('error', 'Failed to send pickup payment received email', safeErrorLog(emailError));
       }
     }
+
+    // 監査ログ（best-effort）
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'order.mark_paid',
+      targetType: 'order',
+      targetId: order.order_no ?? orderId,
+      metadata: {},
+    });
 
     return NextResponse.json({
       ok: true,

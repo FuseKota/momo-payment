@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminProductUpdateSchema, formatValidationErrors, uuidSchema } from '@/lib/validation/schemas';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -71,6 +72,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'product.update',
+      targetType: 'product',
+      targetId: id,
+      metadata: {
+        slug: parseResult.data.slug,
+        changedKeys: Object.keys(parseResult.data),
+      },
+    });
+
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
@@ -100,6 +113,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (error) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'product.delete',
+      targetType: 'product',
+      targetId: id,
+      metadata: {},
+    });
 
     return NextResponse.json({ success: true });
   } catch {

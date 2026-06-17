@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { adminNewsCreateSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
     title_zh_tw,
     excerpt_zh_tw,
     content_zh_tw,
+    title_en,
+    excerpt_en,
+    content_en,
   } = parseResult.data;
 
   try {
@@ -72,6 +76,9 @@ export async function POST(request: NextRequest) {
         title_zh_tw: title_zh_tw || null,
         excerpt_zh_tw: excerpt_zh_tw || null,
         content_zh_tw: content_zh_tw || null,
+        title_en: title_en || null,
+        excerpt_en: excerpt_en || null,
+        content_en: content_en || null,
         is_published: is_published ?? false,
         published_at: is_published ? (published_at || new Date().toISOString()) : null,
       })
@@ -84,6 +91,15 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+
+    await writeAuditLog({
+      request,
+      actorId: guard.userId,
+      action: 'news.create',
+      targetType: 'news',
+      targetId: data.id,
+      metadata: { slug: data.slug, category: data.category },
+    });
 
     return NextResponse.json(data);
   } catch {
