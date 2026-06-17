@@ -259,11 +259,14 @@ export function shopItemListSchema(appUrl: string, locale: string, products: Pro
  */
 export function articleSchema(appUrl: string, locale: string, news: News) {
   const published = news.published_at || news.created_at;
+  const ja = isJa(locale);
+  const headline = ja ? news.title : news.title_zh_tw || news.title;
+  const description = (ja ? news.excerpt : news.excerpt_zh_tw || news.excerpt) || headline;
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: news.title,
-    description: news.excerpt || news.title,
+    headline,
+    description,
     image: logoUrl(appUrl),
     datePublished: published,
     dateModified: news.updated_at || published,

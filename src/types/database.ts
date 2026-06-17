@@ -227,6 +227,9 @@ export interface News {
   excerpt: string | null;
   category: string;
   slug: string;
+  title_zh_tw: string | null;
+  excerpt_zh_tw: string | null;
+  content_zh_tw: string | null;
   is_published: boolean;
   published_at: string | null;
   created_at: string;

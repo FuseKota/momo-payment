@@ -3,7 +3,7 @@
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Chip, Divider, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
@@ -11,6 +11,11 @@ import TaiwanNightMarketHeader from '../../taiwan-night-market/components/Taiwan
 import TaiwanNightMarketFooter from '../../taiwan-night-market/components/TaiwanNightMarketFooter';
 import type { News } from '@/types/database';
 import { formatNewsDate } from '@/lib/utils/format';
+import {
+  getLocalizedNewsTitle,
+  getLocalizedNewsContent,
+  getLocalizedNewsCategory,
+} from '@/lib/utils/localize-news';
 import styles from '../news.module.css';
 
 const gold = '#fbc02d';
@@ -22,6 +27,10 @@ interface Props {
 
 export default function NewsDetailClient({ news }: Props) {
   const t = useTranslations('news');
+  const locale = useLocale();
+  const title = getLocalizedNewsTitle(news, locale);
+  const content = getLocalizedNewsContent(news, locale);
+  const category = getLocalizedNewsCategory(news.category, locale);
 
   return (
     <>
@@ -45,7 +54,7 @@ export default function NewsDetailClient({ news }: Props) {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <Chip
-                label={news.category}
+                label={category}
                 size="small"
                 variant="outlined"
                 sx={{
@@ -61,7 +70,7 @@ export default function NewsDetailClient({ news }: Props) {
             </Box>
 
             <Typography component="h1" className={styles.detailTitle}>
-              {news.title}
+              {title}
             </Typography>
           </Container>
         </Box>
@@ -71,9 +80,9 @@ export default function NewsDetailClient({ news }: Props) {
           <Container maxWidth="md">
             <Divider sx={{ mb: 4, borderColor: dividerColor }} />
 
-            {news.content ? (
+            {content ? (
               <div className={styles.markdownContent}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{news.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
               </div>
             ) : (
               <Typography sx={{ color: 'rgba(255,255,255,0.4)' }}>{t('noContent')}</Typography>

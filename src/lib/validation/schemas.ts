@@ -235,6 +235,9 @@ export const adminNewsCreateSchema = z.object({
   content: z.string().max(50000).nullable().optional(),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.string().max(100).optional(),
+  title_zh_tw: z.string().max(200).nullable().optional(),
+  excerpt_zh_tw: z.string().max(500).nullable().optional(),
+  content_zh_tw: z.string().max(50000).nullable().optional(),
   is_published: z.boolean().optional(),
   published_at: z.string().nullable().optional(),
 });

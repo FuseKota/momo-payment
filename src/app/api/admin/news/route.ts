@@ -47,7 +47,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { title, content, excerpt, category, slug, is_published, published_at } = parseResult.data;
+  const {
+    title,
+    content,
+    excerpt,
+    category,
+    slug,
+    is_published,
+    published_at,
+    title_zh_tw,
+    excerpt_zh_tw,
+    content_zh_tw,
+  } = parseResult.data;
 
   try {
     const { data, error } = await supabase
@@ -58,6 +69,9 @@ export async function POST(request: NextRequest) {
         excerpt: excerpt || null,
         category: category || '福島もも娘',
         slug,
+        title_zh_tw: title_zh_tw || null,
+        excerpt_zh_tw: excerpt_zh_tw || null,
+        content_zh_tw: content_zh_tw || null,
         is_published: is_published ?? false,
         published_at: is_published ? (published_at || new Date().toISOString()) : null,
       })

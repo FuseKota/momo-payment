@@ -21,6 +21,7 @@ import {
   DialogActions,
   TextField,
   Grid,
+  Divider,
   CircularProgress,
   Snackbar,
   FormControl,
@@ -39,6 +40,9 @@ interface NewsFormData {
   content: string;
   category: string;
   slug: string;
+  title_zh_tw: string;
+  excerpt_zh_tw: string;
+  content_zh_tw: string;
   is_published: boolean;
 }
 
@@ -50,6 +54,9 @@ const defaultFormData: NewsFormData = {
   content: '',
   category: '福島もも娘',
   slug: '',
+  title_zh_tw: '',
+  excerpt_zh_tw: '',
+  content_zh_tw: '',
   is_published: false,
 };
 
@@ -113,6 +120,9 @@ export default function AdminNewsPage() {
         content: news.content ?? '',
         category: news.category,
         slug: news.slug,
+        title_zh_tw: news.title_zh_tw ?? '',
+        excerpt_zh_tw: news.excerpt_zh_tw ?? '',
+        content_zh_tw: news.content_zh_tw ?? '',
         is_published: news.is_published,
       });
     } else {
@@ -307,6 +317,42 @@ export default function AdminNewsPage() {
                 rows={8}
                 value={formData.content}
                 onChange={(e) => setFormData((p) => ({ ...p, content: e.target.value }))}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Divider textAlign="left" sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  繁體中文（台湾語）
+                </Typography>
+              </Divider>
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="タイトル（繁体字）"
+                fullWidth
+                value={formData.title_zh_tw}
+                onChange={(e) => setFormData((p) => ({ ...p, title_zh_tw: e.target.value }))}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="概要（繁体字）"
+                fullWidth
+                multiline
+                rows={2}
+                value={formData.excerpt_zh_tw}
+                onChange={(e) => setFormData((p) => ({ ...p, excerpt_zh_tw: e.target.value }))}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="本文（繁体字）"
+                fullWidth
+                multiline
+                rows={8}
+                value={formData.content_zh_tw}
+                onChange={(e) => setFormData((p) => ({ ...p, content_zh_tw: e.target.value }))}
               />
             </Grid>
           </Grid>

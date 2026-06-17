@@ -3,11 +3,16 @@
 import { useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Divider, Chip } from '@mui/material';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import TaiwanNightMarketHeader from '../taiwan-night-market/components/TaiwanNightMarketHeader';
 import TaiwanNightMarketFooter from '../taiwan-night-market/components/TaiwanNightMarketFooter';
 import type { News } from '@/types/database';
 import { formatNewsDate } from '@/lib/utils/format';
+import {
+  getLocalizedNewsTitle,
+  getLocalizedNewsExcerpt,
+  getLocalizedNewsCategory,
+} from '@/lib/utils/localize-news';
 import styles from './news.module.css';
 
 const gold = '#fbc02d';
@@ -27,6 +32,7 @@ interface Props {
 
 export default function NewsListClient({ items }: Props) {
   const t = useTranslations('news');
+  const locale = useLocale();
 
   useEffect(() => {
     const faders = document.querySelectorAll('.fade-in-up');
@@ -89,7 +95,7 @@ export default function NewsListClient({ items }: Props) {
                           }}
                         >
                           <Chip
-                            label={item.category}
+                            label={getLocalizedNewsCategory(item.category, locale)}
                             size="small"
                             variant="outlined"
                             sx={{
@@ -122,11 +128,11 @@ export default function NewsListClient({ items }: Props) {
                               lineHeight: 1.5,
                             }}
                           >
-                            {item.title}
+                            {getLocalizedNewsTitle(item, locale)}
                           </Typography>
-                          {item.excerpt && (
+                          {getLocalizedNewsExcerpt(item, locale) && (
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)' }}>
-                              {truncate(item.excerpt)}
+                              {truncate(getLocalizedNewsExcerpt(item, locale))}
                             </Typography>
                           )}
                         </Box>
