@@ -67,12 +67,15 @@ export async function generateMetadata({
   const tc = await getTranslations({ locale, namespace: "common" });
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://taiwanyoichi-momomusume.com";
   const siteName = tc("siteName");
+  // 各ページの <title> 末尾に付くサフィックスは短いブランド名（もも娘 / 桃娘）に統一し、
+  // SERP での文字数超過を避ける。OG/JSON-LD には正式名称の siteName を使う。
+  const brandShort = tc("brandShort");
 
   return {
     metadataBase: new URL(appUrl),
     title: {
       default: t("title"),
-      template: `%s | ${siteName}`,
+      template: `%s | ${brandShort}`,
     },
     description: t("description"),
     alternates: {

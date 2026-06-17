@@ -5,9 +5,24 @@ import { Link } from '@/i18n/navigation';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'legal' });
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
   return {
     title: t('privacyTitle'),
-    description: t('privacyTitle'),
+    description: t('privacyDescription'),
+    alternates: {
+      canonical: `${appUrl}/${locale}/legal/privacy`,
+      languages: {
+        ja: `${appUrl}/ja/legal/privacy`,
+        'zh-TW': `${appUrl}/zh-tw/legal/privacy`,
+        'x-default': `${appUrl}/ja/legal/privacy`,
+      },
+    },
+    openGraph: {
+      title: t('privacyTitle'),
+      description: t('privacyDescription'),
+      url: `${appUrl}/${locale}/legal/privacy`,
+      type: 'website',
+    },
   };
 }
 

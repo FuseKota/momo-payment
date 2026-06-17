@@ -8,10 +8,25 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'news' });
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
   return {
-    title: t('heading'),
-    description: t('heading'),
+    title: t('news.title'),
+    description: t('news.description'),
+    alternates: {
+      canonical: `${appUrl}/${locale}/news`,
+      languages: {
+        ja: `${appUrl}/ja/news`,
+        'zh-TW': `${appUrl}/zh-tw/news`,
+        'x-default': `${appUrl}/ja/news`,
+      },
+    },
+    openGraph: {
+      title: t('news.title'),
+      description: t('news.description'),
+      url: `${appUrl}/${locale}/news`,
+      type: 'website',
+    },
   };
 }
 
