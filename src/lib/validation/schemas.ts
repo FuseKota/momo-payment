@@ -207,6 +207,9 @@ export const adminProductCreateSchema = z.object({
   name_zh_tw: z.string().nullable().optional(),
   description_zh_tw: z.string().nullable().optional(),
   food_label_zh_tw: foodLabelSchema,
+  name_en: z.string().nullable().optional(),
+  description_en: z.string().nullable().optional(),
+  food_label_en: foodLabelSchema,
 });
 
 /**
@@ -238,6 +241,9 @@ export const adminNewsCreateSchema = z.object({
   title_zh_tw: z.string().max(200).nullable().optional(),
   excerpt_zh_tw: z.string().max(500).nullable().optional(),
   content_zh_tw: z.string().max(50000).nullable().optional(),
+  title_en: z.string().max(200).nullable().optional(),
+  excerpt_en: z.string().max(500).nullable().optional(),
+  content_en: z.string().max(50000).nullable().optional(),
   is_published: z.boolean().optional(),
   published_at: z.string().nullable().optional(),
 });
@@ -282,6 +288,86 @@ export const adminShipSchema = z.object({
  */
 export const adminMarkPaidSchema = z.object({
   note: z.string().max(500).optional(),
+});
+
+/**
+ * 管理者：全額返金スキーマ
+ * 全額返金のみ対応（部分返金なし）。reason は任意の管理メモ。
+ * manualMark は店頭現金払い(PAY_AT_PICKUP)を Stripe を介さず返金済みにする場合 true。
+ */
+export const adminRefundSchema = z.object({
+  reason: z.string().max(500).optional(),
+  manualMark: z.boolean().optional(),
+});
+
+/**
+ * 管理者：メール再送スキーマ
+ */
+export const adminResendEmailSchema = z.object({
+  type: z.enum(['ORDER_CONFIRMATION', 'PAYMENT_CONFIRMATION', 'SHIPPING_NOTIFICATION'], {
+    message: '再送するメール種別を選択してください',
+  }),
+});
+
+/**
+ * 管理者：注文一覧の絞り込み条件（GET /api/admin/orders と export で共用）
+ * searchParams は全て string なので coerce/transform で正規化する。
+ */
+export const adminOrdersFilterSchema = z.object({
+  type: z.enum(['PICKUP', 'SHIPPING']).optional(),
+  status: z
+    .enum(['RESERVED', 'PENDING_PAYMENT', 'PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED', 'REFUNDED'])
+    .optional(),
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  from: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  to: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+/**
+ * 管理者：注文一覧（ページネーション込み）クエリスキーマ
+ */
+export const adminOrdersQuerySchema = adminOrdersFilterSchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type AdminOrdersFilter = z.infer<typeof adminOrdersFilterSchema>;
+export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
+
+/**
+ * 管理者：監査ログ一覧クエリ（GET /api/admin/audit-logs）
+ */
+export const adminAuditLogQuerySchema = z.object({
+  action: z
+    .enum([
+      'product.create',
+      'product.update',
+      'product.delete',
+      'product.reorder',
+      'news.create',
+      'news.update',
+      'news.delete',
+      'order.status_update',
+      'order.mark_paid',
+      'order.ship',
+      'order.refund',
+      'order.email_resend',
+    ])
+    .optional(),
+  targetType: z.enum(['product', 'news', 'order', 'calendar']).optional(),
+  page: z.coerce.number().int().min(0).default(0),
+  perPage: z.coerce.number().int().min(1).max(100).default(50),
 });
 
 /**

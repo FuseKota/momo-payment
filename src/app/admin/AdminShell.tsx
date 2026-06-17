@@ -23,16 +23,20 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ArticleIcon from '@mui/icons-material/Article';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '@/contexts/AuthContext';
 
 const drawerWidth = 240;
 
 const menuItems = [
+  { text: 'ダッシュボード', icon: <DashboardIcon />, href: '/admin/dashboard' },
   { text: '注文管理', icon: <ShoppingCartIcon />, href: '/admin/orders' },
   { text: '商品管理', icon: <InventoryIcon />, href: '/admin/products' },
   { text: 'ニュース管理', icon: <ArticleIcon />, href: '/admin/news' },
   { text: '台湾夜市カレンダー', icon: <CalendarMonthIcon />, href: '/admin/iitate-calendar' },
+  { text: '監査ログ', icon: <HistoryIcon />, href: '/admin/audit-logs' },
 ];
 
 export default function AdminShell({

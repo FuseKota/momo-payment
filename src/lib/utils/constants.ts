@@ -9,4 +9,5 @@ export const statusLabels: Record<string, { label: string; color: 'default' | 'p
   SHIPPED: { label: '発送済', color: 'secondary' },
   FULFILLED: { label: '完了', color: 'default' },
   CANCELED: { label: 'キャンセル', color: 'error' },
+  REFUNDED: { label: '返金済', color: 'default' },
 };

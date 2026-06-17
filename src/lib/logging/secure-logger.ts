@@ -159,3 +159,11 @@ export function safeErrorLog(error: unknown): Record<string, unknown> {
 
   return { message: 'Unknown error' };
 }
+
+/**
+ * 監査ログ metadata 用の PII マスク。
+ * secureLog と同じ SENSITIVE_KEY_PARTS / PII パターンを適用する。
+ */
+export function redactForAudit(data: unknown): unknown {
+  return redactPIIFromObject(data);
+}
