@@ -20,11 +20,25 @@ import {
   Alert,
   CircularProgress,
   Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  FormControlLabel,
+  Checkbox,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EmailIcon from '@mui/icons-material/Email';
+import ReplayIcon from '@mui/icons-material/Replay';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
 
@@ -64,10 +78,29 @@ interface Order {
   delivery_time_slot: string | null;
   created_at: string;
   paid_at: string | null;
+  refunded_at: string | null;
   shipped_at: string | null;
   fulfilled_at: string | null;
   order_items: OrderItem[];
+  payments?: Array<{
+    id: string;
+    provider: string;
+    status: string;
+    amount_yen: number;
+    stripe_payment_intent_id: string | null;
+    refunded_at: string | null;
+    stripe_refund_id: string | null;
+  }>;
 }
+
+/** メール再送の種別（顧客向け） */
+type ResendEmailType = 'ORDER_CONFIRMATION' | 'PAYMENT_CONFIRMATION' | 'SHIPPING_NOTIFICATION';
+
+const RESEND_EMAIL_LABELS: Record<ResendEmailType, string> = {
+  ORDER_CONFIRMATION: '注文確認メール',
+  PAYMENT_CONFIRMATION: '支払い確認メール',
+  SHIPPING_NOTIFICATION: '発送通知メール',
+};
 
 /** 佐川急便の時間帯コード → 日本語ラベル（管理画面表示用） */
 const TIME_SLOT_LABELS: Record<string, string> = {
@@ -90,6 +123,14 @@ export default function AdminOrderDetailPage({ params }: Props) {
     message: '',
     severity: 'success',
   });
+  // 返金ダイアログ
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundCashConfirmed, setRefundCashConfirmed] = useState(false);
+  const [isRefunding, setIsRefunding] = useState(false);
+  // メール再送
+  const [resendType, setResendType] = useState<ResendEmailType>('ORDER_CONFIRMATION');
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -137,6 +178,79 @@ export default function AdminOrderDetailPage({ params }: Props) {
     updateOrderStatus('SHIPPED', { tracking_number: trackingNumber });
   };
 
+  const handleRefund = async () => {
+    if (!order) return;
+    setIsRefunding(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: refundReason || undefined,
+          manualMark: refundCashConfirmed || undefined,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (response.ok) {
+        setOrder({ ...order, status: 'REFUNDED', refunded_at: new Date().toISOString() });
+        setSnackbar({ open: true, message: '返金処理が完了しました', severity: 'success' });
+        setRefundDialogOpen(false);
+        setRefundReason('');
+        setRefundCashConfirmed(false);
+      } else {
+        let message = '返金処理に失敗しました';
+        if (data?.error === 'already_refunded') {
+          message = 'この注文は既に返金済みです';
+        } else if (data?.error === 'stripe_refund_failed') {
+          message = 'Stripeでの返金処理に失敗しました。時間をおいて再度お試しください';
+        } else if (data?.error === 'no_payment_intent') {
+          message = '決済情報が見つからないため返金できません';
+        } else if (data?.error === 'manual_mark_required') {
+          message = '現金返金の確認にチェックを入れてください';
+        } else if (data?.error === 'unsupported_payment_method') {
+          message = 'この決済方法は返金に対応していません';
+        }
+        setSnackbar({ open: true, message, severity: 'error' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: '返金処理に失敗しました', severity: 'error' });
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!order) return;
+    setIsResending(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${id}/resend-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: resendType }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (response.ok) {
+        setSnackbar({ open: true, message: 'メールを再送しました', severity: 'success' });
+      } else {
+        let message = 'メールの再送に失敗しました';
+        if (data?.error === 'no_customer_email') {
+          message = 'この注文にはメールアドレスが登録されていません';
+        } else if (data?.error === 'invalid_status_for_email') {
+          message = '現在のステータスではこのメールを再送できません';
+        } else if (data?.error === 'email_send_failed') {
+          message = 'メール送信に失敗しました。時間をおいて再度お試しください';
+        }
+        setSnackbar({ open: true, message, severity: 'error' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: 'メールの再送に失敗しました', severity: 'error' });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -160,6 +274,26 @@ export default function AdminOrderDetailPage({ params }: Props) {
       </Box>
     );
   }
+
+  // 返金関連の派生値
+  const isStripe = order.payment_method !== 'PAY_AT_PICKUP';
+  const isRefunded = order.status === 'REFUNDED' || !!order.refunded_at;
+  const canRefund = !isRefunded && ['PAID', 'PACKING', 'SHIPPED', 'FULFILLED'].includes(order.status);
+
+  // 現在のステータスで再送可能なメール種別
+  const availableResendTypes: ResendEmailType[] = (() => {
+    const types: ResendEmailType[] = ['ORDER_CONFIRMATION'];
+    if (['PAID', 'PACKING', 'SHIPPED', 'FULFILLED'].includes(order.status)) {
+      types.push('PAYMENT_CONFIRMATION');
+    }
+    if (order.order_type === 'SHIPPING' && ['SHIPPED', 'FULFILLED'].includes(order.status)) {
+      types.push('SHIPPING_NOTIFICATION');
+    }
+    return types;
+  })();
+  const effectiveResendType = availableResendTypes.includes(resendType)
+    ? resendType
+    : availableResendTypes[0];
 
   return (
     <Box>
@@ -353,6 +487,25 @@ export default function AdminOrderDetailPage({ params }: Props) {
             ) : (
               <Alert severity="warning">決済待ち</Alert>
             )}
+
+            {isRefunded && (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                返金済み{order.refunded_at ? `: ${formatDate(order.refunded_at)}` : ''}
+              </Alert>
+            )}
+
+            {canRefund && (
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={() => setRefundDialogOpen(true)}
+                disabled={isRefunding}
+              >
+                {isStripe ? '全額返金（Stripe）' : '返金済みにする'}
+              </Button>
+            )}
           </Paper>
 
           {/* Shipping (for SHIPPING orders) */}
@@ -437,15 +590,131 @@ export default function AdminOrderDetailPage({ params }: Props) {
               )}
             </Box>
           </Paper>
+
+          {/* Email Resend */}
+          <Paper sx={{ p: 3, mt: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <EmailIcon sx={{ color: 'primary.main' }} />
+              <Typography variant="h6">メール再送</Typography>
+            </Box>
+            {order.customer_email ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="resend-email-type-label">メール種別</InputLabel>
+                  <Select
+                    labelId="resend-email-type-label"
+                    label="メール種別"
+                    value={effectiveResendType}
+                    onChange={(e: SelectChangeEvent) =>
+                      setResendType(e.target.value as ResendEmailType)
+                    }
+                  >
+                    {availableResendTypes.map((t) => (
+                      <MenuItem key={t} value={t}>
+                        {RESEND_EMAIL_LABELS[t]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<ReplayIcon />}
+                  onClick={handleResendEmail}
+                  disabled={isResending}
+                >
+                  再送する
+                </Button>
+              </Box>
+            ) : (
+              <Alert severity="warning">
+                メールアドレスが登録されていないため再送できません
+              </Alert>
+            )}
+          </Paper>
         </Grid>
       </Grid>
 
+      {/* Refund Confirmation Dialog */}
+      <Dialog
+        open={refundDialogOpen}
+        onClose={() => (isRefunding ? undefined : setRefundDialogOpen(false))}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{isStripe ? '全額返金の確認' : '返金済みにする'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div" sx={{ mb: 2 }}>
+            <Box component="span" sx={{ display: 'block' }}>
+              注文番号: <strong>{order.order_no}</strong>
+            </Box>
+            <Box component="span" sx={{ display: 'block' }}>
+              返金額: <strong>¥{formatPrice(order.total_yen)}</strong>
+            </Box>
+          </DialogContentText>
+
+          {isStripe ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Stripeを通じて全額を返金します。この操作は取り消せません。
+            </Alert>
+          ) : (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              店頭現金払いのため、Stripeでの返金は行われません。現金での返金が完了したことを確認のうえチェックしてください。
+            </Alert>
+          )}
+
+          {!isStripe && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={refundCashConfirmed}
+                  onChange={(e) => setRefundCashConfirmed(e.target.checked)}
+                />
+              }
+              label="現金での返金が完了したことを確認しました"
+            />
+          )}
+
+          <TextField
+            label="返金理由（任意・管理用メモ）"
+            fullWidth
+            multiline
+            minRows={2}
+            value={refundReason}
+            onChange={(e) => setRefundReason(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRefundDialogOpen(false)} disabled={isRefunding}>
+            キャンセル
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleRefund}
+            disabled={isRefunding || (!isStripe && !refundCashConfirmed)}
+          >
+            {isStripe ? '全額返金する' : '返金済みにする'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={3000}
+        autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-      />
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

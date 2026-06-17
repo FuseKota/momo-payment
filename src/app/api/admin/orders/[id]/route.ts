@@ -4,6 +4,7 @@ import { sendShippingNotificationEmail } from '@/lib/email/resend';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { uuidSchema, adminOrderUpdateSchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { writeAuditLog } from '@/lib/logging/audit-log';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -46,6 +47,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         user_id,
         locale,
         paid_at,
+        refunded_at,
         created_at,
         updated_at,
         order_items (
@@ -55,6 +57,15 @@ export async function GET(request: Request, { params }: RouteParams) {
           qty,
           unit_price_yen,
           line_total_yen
+        ),
+        payments (
+          id,
+          provider,
+          status,
+          amount_yen,
+          stripe_payment_intent_id,
+          refunded_at,
+          stripe_refund_id
         )
       `)
       .eq('id', id)
@@ -141,6 +152,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+
+    // 監査ログ（status 更新時のみ・best-effort）
+    if (body.status) {
+      await writeAuditLog({
+        request,
+        actorId: guard.userId,
+        action: 'order.status_update',
+        targetType: 'order',
+        targetId: data?.order_no ?? id,
+        metadata: { status: body.status },
+      });
     }
 
     // Send shipping notification email when status changes to SHIPPED
