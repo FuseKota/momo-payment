@@ -36,6 +36,8 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbar();
   const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode, items, updateQty } = useCart();
 
+  const isOutOfStock = (p: Product) => p.stock_qty !== null && p.stock_qty <= 0;
+
   const getDisplayProducts = (): Product[] => {
     switch (tab) {
       case 'frozen':
@@ -49,6 +51,10 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
 
   const handleAddToCart = (product: Product) => {
     if (product.has_variants) return;
+    if (isOutOfStock(product)) {
+      showSnackbar(tc('outOfStock'), 'error');
+      return;
+    }
     const messageKey = getIncompatibleModeMessage(product);
     if (messageKey) {
       showSnackbar(tRoot(messageKey), 'error');
@@ -135,7 +141,9 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
                 cartQty={getCartQty(product.id)}
                 onAdd={() => handleAddToCart(product)}
                 onUpdateQty={(delta) => handleUpdateQty(product.id, delta)}
-                disabled={!canAddProduct(product)}
+                disabled={!canAddProduct(product) || isOutOfStock(product)}
+                isOutOfStock={isOutOfStock(product)}
+                outOfStockLabel={tc('outOfStock')}
                 variantLink={product.has_variants ? `/shop/${product.slug}` : undefined}
                 variantLinkLabel={product.has_variants ? t('selectSize') : undefined}
                 addLabel={tc('add')}

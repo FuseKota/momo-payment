@@ -82,7 +82,10 @@ export default function ProductDetailClient({ product }: Props) {
     );
   }
 
+  const outOfStock = product.stock_qty !== null && product.stock_qty <= 0;
+
   const handleAddToCart = () => {
+    if (outOfStock) return;
     // If product has variants but none selected, don't add
     if (product.has_variants && !selectedVariant) {
       return;
@@ -92,7 +95,7 @@ export default function ProductDetailClient({ product }: Props) {
   };
 
   // Check if add to cart should be disabled
-  const isAddToCartDisabled = product.has_variants && !selectedVariant;
+  const isAddToCartDisabled = (product.has_variants && !selectedVariant) || outOfStock;
 
   return (
     <Layout cartItemCount={itemCount}>
@@ -212,6 +215,12 @@ export default function ProductDetailClient({ product }: Props) {
                 </Typography>
               </Typography>
 
+              {outOfStock && (
+                <Box sx={{ mb: 3 }}>
+                  <Chip color="error" label={tc('outOfStock')} />
+                </Box>
+              )}
+
               <Typography
                 variant="body1"
                 color="text.secondary"
@@ -286,7 +295,11 @@ export default function ProductDetailClient({ product }: Props) {
                 disabled={isAddToCartDisabled}
                 sx={{ mb: 3, py: 1.5 }}
               >
-                {isAddToCartDisabled ? t('selectSizeFirst') : t('addToCart')}
+                {outOfStock
+                  ? tc('outOfStock')
+                  : isAddToCartDisabled
+                    ? t('selectSizeFirst')
+                    : t('addToCart')}
               </Button>
 
               </Box>
@@ -296,7 +309,7 @@ export default function ProductDetailClient({ product }: Props) {
         {/* Food Label (for frozen food) */}
         {(() => {
           const foodLabel = getLocalizedFoodLabel(product, locale);
-          if (!foodLabel) return null;
+          if (product.kind !== 'FROZEN_FOOD' || !foodLabel) return null;
           return (
             <Paper sx={{ mt: 4, p: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>

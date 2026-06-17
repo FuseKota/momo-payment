@@ -43,36 +43,46 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SaveIcon from '@mui/icons-material/Save';
 import Tooltip from '@mui/material/Tooltip';
 import { formatPrice } from '@/lib/utils/format';
-import type { Product } from '@/types/database';
+import type { Product, FoodLabel } from '@/types/database';
 
 interface ProductFormData {
   name: string;
   name_zh_tw: string;
+  name_en: string;
   slug: string;
   kind: 'FROZEN_FOOD' | 'GOODS';
   temp_zone: 'FROZEN' | 'AMBIENT';
   price_yen: number;
   description: string;
   description_zh_tw: string;
+  description_en: string;
   is_active: boolean;
   can_pickup: boolean;
   can_ship: boolean;
   image_url: string | null;
+  stock_qty: number | null;
+  food_label: FoodLabel | null;
+  food_label_zh_tw: FoodLabel | null;
 }
 
 const defaultFormData: ProductFormData = {
   name: '',
   name_zh_tw: '',
+  name_en: '',
   slug: '',
   kind: 'FROZEN_FOOD',
   temp_zone: 'FROZEN',
   price_yen: 0,
   description: '',
   description_zh_tw: '',
+  description_en: '',
   is_active: true,
   can_pickup: true,
   can_ship: true,
   image_url: null,
+  stock_qty: null,
+  food_label: null,
+  food_label_zh_tw: null,
 };
 
 export default function AdminProductsPage() {
@@ -142,16 +152,21 @@ export default function AdminProductsPage() {
       setFormData({
         name: product.name,
         name_zh_tw: product.name_zh_tw || '',
+        name_en: product.name_en || '',
         slug: product.slug,
         kind: product.kind,
         temp_zone: product.temp_zone,
         price_yen: product.price_yen,
         description: product.description || '',
         description_zh_tw: product.description_zh_tw || '',
+        description_en: product.description_en || '',
         is_active: product.is_active,
         can_pickup: product.can_pickup,
         can_ship: product.can_ship,
         image_url: product.image_url,
+        stock_qty: product.stock_qty,
+        food_label: product.food_label,
+        food_label_zh_tw: product.food_label_zh_tw,
       });
     } else {
       setEditingProduct(null);
@@ -350,6 +365,69 @@ export default function AdminProductsPage() {
     });
   };
 
+  const numericFoodLabelFields = ['net_weight_grams'] as const;
+  const nutritionFields = ['calories', 'protein', 'fat', 'carbohydrates', 'sodium'] as const;
+  type NutritionField = (typeof nutritionFields)[number];
+
+  const handleFoodLabelChange = (
+    locale: 'ja' | 'zh_tw',
+    field: keyof FoodLabel | `nutrition.${NutritionField}`,
+    value: string
+  ) => {
+    const key = locale === 'ja' ? 'food_label' : 'food_label_zh_tw';
+    setFormData((prev) => {
+      const current: FoodLabel = { ...(prev[key] ?? {}) };
+
+      if (field.startsWith('nutrition.')) {
+        const nutritionKey = field.slice('nutrition.'.length) as NutritionField;
+        const nextNutrition = { ...(current.nutrition ?? {}) };
+        if (value === '') {
+          delete nextNutrition[nutritionKey];
+        } else {
+          const parsed = nutritionKey === 'calories' ? parseInt(value, 10) : parseFloat(value);
+          if (!Number.isNaN(parsed)) {
+            nextNutrition[nutritionKey] = parsed;
+          }
+        }
+        if (Object.keys(nextNutrition).length === 0) {
+          delete current.nutrition;
+        } else {
+          current.nutrition = nextNutrition;
+        }
+      } else if ((numericFoodLabelFields as readonly string[]).includes(field)) {
+        const numericKey = field as 'net_weight_grams';
+        if (value === '') {
+          delete current[numericKey];
+        } else {
+          const parsed = parseInt(value, 10);
+          if (!Number.isNaN(parsed)) {
+            current[numericKey] = parsed;
+          }
+        }
+      } else {
+        const stringKey = field as 'ingredients' | 'allergens' | 'expiry_info' | 'storage_method' | 'manufacturer';
+        if (value === '') {
+          delete current[stringKey];
+        } else {
+          current[stringKey] = value;
+        }
+      }
+
+      return { ...prev, [key]: current };
+    });
+  };
+
+  const normalizeFoodLabel = (label: FoodLabel | null): FoodLabel | null => {
+    if (!label) return null;
+    const { nutrition, ...rest } = label;
+    const hasNutrition = nutrition && Object.keys(nutrition).length > 0;
+    const hasRest = Object.values(rest).some(
+      (v) => v !== undefined && v !== null && v !== ''
+    );
+    if (!hasNutrition && !hasRest) return null;
+    return label;
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -358,10 +436,22 @@ export default function AdminProductsPage() {
         : '/api/admin/products';
       const method = editingProduct ? 'PATCH' : 'POST';
 
+      const normalizedStockQty =
+        formData.stock_qty === null || Number.isNaN(formData.stock_qty)
+          ? null
+          : formData.stock_qty;
+
+      const payload = {
+        ...formData,
+        stock_qty: normalizedStockQty,
+        food_label: normalizeFoodLabel(formData.food_label),
+        food_label_zh_tw: normalizeFoodLabel(formData.food_label_zh_tw),
+      };
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -765,6 +855,15 @@ export default function AdminProductsPage() {
                 placeholder="未入力の場合は日本語名が表示されます"
               />
             </Grid>
+            <Grid size={12}>
+              <TextField
+                label="商品名（英語）"
+                fullWidth
+                value={formData.name_en}
+                onChange={(e) => handleFormChange('name_en', e.target.value)}
+                placeholder="未入力の場合は日本語名が表示されます"
+              />
+            </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="スラッグ"
@@ -825,6 +924,21 @@ export default function AdminProductsPage() {
                 InputProps={{ startAdornment: '¥' }}
               />
             </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="在庫数"
+                type="number"
+                fullWidth
+                value={formData.stock_qty ?? ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    stock_qty: e.target.value === '' ? null : parseInt(e.target.value, 10),
+                  }))
+                }
+                helperText="空欄=在庫管理しない（無制限）／0=売り切れ"
+              />
+            </Grid>
             <Grid size={12}>
               <TextField
                 label="説明"
@@ -846,6 +960,269 @@ export default function AdminProductsPage() {
                 placeholder="未入力の場合は日本語の説明が表示されます"
               />
             </Grid>
+            <Grid size={12}>
+              <TextField
+                label="説明（英語）"
+                fullWidth
+                multiline
+                rows={3}
+                value={formData.description_en}
+                onChange={(e) => handleFormChange('description_en', e.target.value)}
+                placeholder="未入力の場合は日本語の説明が表示されます"
+              />
+            </Grid>
+
+            {formData.kind === 'FROZEN_FOOD' && (
+              <>
+                {/* 食品表示ラベル（日本語） */}
+                <Grid size={12}>
+                  <Typography variant="subtitle2" sx={{ mt: 2 }}>
+                    食品表示ラベル（冷凍食品）
+                  </Typography>
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    label="原材料名"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={formData.food_label?.ingredients ?? ''}
+                    onChange={(e) => handleFoodLabelChange('ja', 'ingredients', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="アレルゲン"
+                    fullWidth
+                    value={formData.food_label?.allergens ?? ''}
+                    onChange={(e) => handleFoodLabelChange('ja', 'allergens', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="内容量（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label?.net_weight_grams ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('ja', 'net_weight_grams', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="賞味期限"
+                    fullWidth
+                    value={formData.food_label?.expiry_info ?? ''}
+                    onChange={(e) => handleFoodLabelChange('ja', 'expiry_info', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="保存方法"
+                    fullWidth
+                    value={formData.food_label?.storage_method ?? ''}
+                    onChange={(e) => handleFoodLabelChange('ja', 'storage_method', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    label="製造者"
+                    fullWidth
+                    value={formData.food_label?.manufacturer ?? ''}
+                    onChange={(e) => handleFoodLabelChange('ja', 'manufacturer', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <Typography variant="caption" color="text.secondary">
+                    栄養成分（1食あたり）
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="熱量（kcal）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label?.nutrition?.calories ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('ja', 'nutrition.calories', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="たんぱく質（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label?.nutrition?.protein ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('ja', 'nutrition.protein', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="脂質（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label?.nutrition?.fat ?? ''}
+                    onChange={(e) => handleFoodLabelChange('ja', 'nutrition.fat', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="炭水化物（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label?.nutrition?.carbohydrates ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('ja', 'nutrition.carbohydrates', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="食塩相当量（mg）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label?.nutrition?.sodium ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('ja', 'nutrition.sodium', e.target.value)
+                    }
+                    helperText="栄養成分の食塩相当量（sodium）は mg で入力"
+                  />
+                </Grid>
+
+                {/* 食品表示ラベル（繁体字中文） */}
+                <Grid size={12}>
+                  <Typography variant="subtitle2" sx={{ mt: 2 }}>
+                    食品表示ラベル（繁体字中文）
+                  </Typography>
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    label="原材料名"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={formData.food_label_zh_tw?.ingredients ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'ingredients', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="アレルゲン"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.allergens ?? ''}
+                    onChange={(e) => handleFoodLabelChange('zh_tw', 'allergens', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="内容量（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.net_weight_grams ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'net_weight_grams', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="賞味期限"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.expiry_info ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'expiry_info', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="保存方法"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.storage_method ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'storage_method', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    label="製造者"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.manufacturer ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'manufacturer', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <Typography variant="caption" color="text.secondary">
+                    栄養成分（1食あたり）
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="熱量（kcal）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.nutrition?.calories ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'nutrition.calories', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="たんぱく質（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.nutrition?.protein ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'nutrition.protein', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="脂質（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.nutrition?.fat ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'nutrition.fat', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="炭水化物（g）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.nutrition?.carbohydrates ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'nutrition.carbohydrates', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <TextField
+                    label="食塩相当量（mg）"
+                    type="number"
+                    fullWidth
+                    value={formData.food_label_zh_tw?.nutrition?.sodium ?? ''}
+                    onChange={(e) =>
+                      handleFoodLabelChange('zh_tw', 'nutrition.sodium', e.target.value)
+                    }
+                    helperText="繁体字を入力した場合は栄養成分含め全項目を埋めてください（未入力なら日本語が表示されます）"
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
