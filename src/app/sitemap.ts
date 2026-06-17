@@ -1,18 +1,20 @@
 import type { MetadataRoute } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { localeUrl } from '@/lib/seo/locale-url';
 
-const locales = ['ja', 'zh-tw'] as const;
+const locales = ['ja', 'zh-tw', 'en'] as const;
 type Locale = (typeof locales)[number];
 
 const localeToHreflang: Record<Locale, string> = {
   ja: 'ja',
   'zh-tw': 'zh-TW',
+  en: 'en',
 };
 
 function buildAlternates(path: string, appUrl: string) {
   return {
     languages: Object.fromEntries(
-      locales.map((l) => [localeToHreflang[l], `${appUrl}/${l}${path}`])
+      locales.map((l) => [localeToHreflang[l], localeUrl(appUrl, l, path)])
     ) as Record<string, string>,
   };
 }
@@ -40,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const route of staticRoutes) {
     for (const locale of locales) {
       entries.push({
-        url: `${appUrl}/${locale}${route.path}`,
+        url: localeUrl(appUrl, locale, route.path),
         lastModified: now,
         changeFrequency: route.changeFrequency,
         priority: route.priority,
@@ -62,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const path = `/shop/${product.slug}`;
         for (const locale of locales) {
           entries.push({
-            url: `${appUrl}/${locale}${path}`,
+            url: localeUrl(appUrl, locale, path),
             lastModified: product.updated_at ? new Date(product.updated_at) : now,
             changeFrequency: 'weekly',
             priority: 0.8,
@@ -88,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const path = `/news/${item.slug}`;
         for (const locale of locales) {
           entries.push({
-            url: `${appUrl}/${locale}${path}`,
+            url: localeUrl(appUrl, locale, path),
             lastModified: item.published_at ? new Date(item.published_at) : now,
             changeFrequency: 'monthly',
             priority: 0.6,

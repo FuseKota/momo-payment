@@ -9,6 +9,7 @@ import { orderGuard } from '@/lib/api/order-guards';
 import { fetchAndValidateProducts } from '@/lib/api/product-helpers';
 import { calculateOrderItems, calculateSubtotal } from '@/lib/api/price-calc';
 import { localizedProductName } from '@/lib/api/localize';
+import { localeUrl } from '@/lib/seo/locale-url';
 import {
   calcShippingFee,
   isDeliveryDateInRange,
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = parseResult.data;
-    const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : 'ja') as string;
+    const locale = (rawBody.locale === 'zh-tw' ? 'zh-tw' : rawBody.locale === 'en' ? 'en' : 'ja') as string;
 
     // 送料を配送先（都道府県）から算出（運賃表60サイズ + 箱代）
     const shippingFeeYen = calcShippingFee(body.address.pref);
@@ -250,15 +251,15 @@ export async function POST(request: NextRequest) {
       price_data: {
         currency: 'jpy',
         product_data: {
-          name: locale === 'zh-tw' ? '運費' : '送料',
+          name: locale === 'zh-tw' ? '運費' : locale === 'en' ? 'Shipping Fee' : '送料',
         },
         unit_amount: shippingFeeYen,
       },
       quantity: 1,
     });
 
-    const successUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/complete?orderNo=${orderRow.order_no}&token=${orderRow.lookup_token ?? ''}`;
-    const cancelUrl = `${env.NEXT_PUBLIC_APP_URL}/${locale}/checkout/shipping?canceled=true`;
+    const successUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/complete?orderNo=${orderRow.order_no}&token=${orderRow.lookup_token ?? ''}`);
+    const cancelUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/checkout/shipping?canceled=true`);
 
     let session;
     try {
@@ -273,7 +274,7 @@ export async function POST(request: NextRequest) {
             order_no: orderRow.order_no,
             order_id: orderRow.id,
           },
-          locale: locale === 'zh-tw' ? 'zh' : 'ja',
+          locale: locale === 'zh-tw' ? 'zh' : locale === 'en' ? 'en' : 'ja',
           customer_email: body.customer.email || undefined,
         },
         {

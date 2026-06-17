@@ -4,9 +4,10 @@
  * DBから取得した部分的な型でも動作する
  */
 export function localizedProductName(
-  product: { name: string; name_zh_tw?: string | null },
+  product: { name: string; name_zh_tw?: string | null; name_en?: string | null },
   locale: string
 ): string {
   if (locale === 'zh-tw' && product.name_zh_tw) return product.name_zh_tw;
+  if (locale === 'en' && product.name_en) return product.name_en;
   return product.name;
 }

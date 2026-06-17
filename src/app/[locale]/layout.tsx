@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP, Noto_Sans_TC, Noto_Serif_JP, Noto_Serif_TC } from "next/font/google";
+import { Noto_Sans_JP, Noto_Sans_TC, Noto_Serif_JP, Noto_Serif_TC, Inter, Noto_Serif } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { routing, type Locale } from "@/i18n/routing";
+import { localeUrl, languageAlternates } from "@/lib/seo/locale-url";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -46,15 +47,34 @@ const notoSerifTC = Noto_Serif_TC({
   preload: false,
 });
 
+// 英語(en)はラテン文字のためサブセット先読みが有効（preload: true）
+const inter = Inter({
+  variable: "--app-font-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  preload: true,
+});
+
+const notoSerifEn = Noto_Serif({
+  variable: "--app-font-serif",
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  display: "swap",
+  preload: true,
+});
+
 const htmlLangMap: Record<Locale, string> = {
   ja: "ja",
   "zh-tw": "zh-Hant-TW",
+  en: "en",
 };
 
 // ロケールごとに Sans + Serif の両変数を body に適用する
 const fontClassMap: Record<Locale, string> = {
   ja: `${notoSansJP.variable} ${notoSerifJP.variable}`,
   "zh-tw": `${notoSansTC.variable} ${notoSerifTC.variable}`,
+  en: `${inter.variable} ${notoSerifEn.variable}`,
 };
 
 export async function generateMetadata({
@@ -79,16 +99,12 @@ export async function generateMetadata({
     },
     description: t("description"),
     alternates: {
-      canonical: `${appUrl}/${locale}`,
-      languages: {
-        ja: `${appUrl}/ja`,
-        "zh-TW": `${appUrl}/zh-tw`,
-        "x-default": `${appUrl}/ja`,
-      },
+      canonical: localeUrl(appUrl, locale),
+      languages: languageAlternates(appUrl),
     },
     openGraph: {
       siteName,
-      locale: locale === "zh-tw" ? "zh_TW" : "ja_JP",
+      locale: locale === "zh-tw" ? "zh_TW" : locale === "en" ? "en_US" : "ja_JP",
       type: "website",
     },
     twitter: {

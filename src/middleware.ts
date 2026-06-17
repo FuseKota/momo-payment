@@ -117,7 +117,8 @@ export async function middleware(request: NextRequest) {
   const response = intlMiddleware(request);
   response.headers.set('Content-Security-Policy', csp);
 
-  const localePattern = /^\/(ja|zh-tw)\/(mypage|login|checkout\/shipping|checkout\/pickup)(\/|$)/;
+  // as-needed のため ja はプレフィックスなし（/mypage 等）、zh-tw/en はプレフィックス付き
+  const localePattern = /^\/(?:(?:zh-tw|en)\/)?(mypage|login|checkout\/shipping|checkout\/pickup)(\/|$)/;
   if (localePattern.test(pathname)) {
     await refreshSupabaseSession(request, response);
     response.headers.set('Content-Security-Policy', csp);

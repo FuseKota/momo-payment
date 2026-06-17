@@ -485,6 +485,9 @@
     "cancelSubject": "【もも娘】ご注文キャンセルのお知らせ - {orderNo}",
     "cancelGreeting": "ご注文キャンセルのお知らせ",
     "cancelMessage": "お支払い期限が過ぎたため、ご注文をキャンセルさせていただきました。\n再度ご注文をご希望の場合は、お手数ですが改めてお手続きをお願いいたします。",
+    "refundSubject": "【もも娘】ご返金のお知らせ（注文番号: {orderNo}）",
+    "refundGreeting": "ご返金手続きが完了しました",
+    "refundMessage": "ご注文のキャンセルに伴い、下記の通り全額をご返金いたしました。\nご利用のカード会社により、明細への反映までお時間をいただく場合がございます。",
     "adminNewOrderSubject": "【新規注文】{orderNo}（{orderType}）",
     "adminNewOrderGreeting": "新しい注文が入りました",
     "adminNewOrderMessage": "以下の注文を受け付けました。詳細は管理画面でご確認ください。",
@@ -505,9 +508,12 @@
   },
   "languageSwitcher": {
     "ja": "日本語",
-    "zh-tw": "繁體中文"
+    "zh-tw": "繁體中文",
+    "en": "English"
   },
   "taiwanNightMarket": {
+    "siteTitle": "台湾夜市紹介サイト",
+    "lanternAlt": "提灯",
     "heroTitle": "台湾夜市へようこそ",
     "heroSubtitle": "もも娘が贈る\n台湾夜市の世界",
     "eventTitle": "開催情報",

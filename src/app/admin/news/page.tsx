@@ -43,6 +43,9 @@ interface NewsFormData {
   title_zh_tw: string;
   excerpt_zh_tw: string;
   content_zh_tw: string;
+  title_en: string;
+  excerpt_en: string;
+  content_en: string;
   is_published: boolean;
 }
 
@@ -57,6 +60,9 @@ const defaultFormData: NewsFormData = {
   title_zh_tw: '',
   excerpt_zh_tw: '',
   content_zh_tw: '',
+  title_en: '',
+  excerpt_en: '',
+  content_en: '',
   is_published: false,
 };
 
@@ -123,6 +129,9 @@ export default function AdminNewsPage() {
         title_zh_tw: news.title_zh_tw ?? '',
         excerpt_zh_tw: news.excerpt_zh_tw ?? '',
         content_zh_tw: news.content_zh_tw ?? '',
+        title_en: news.title_en ?? '',
+        excerpt_en: news.excerpt_en ?? '',
+        content_en: news.content_en ?? '',
         is_published: news.is_published,
       });
     } else {
@@ -353,6 +362,42 @@ export default function AdminNewsPage() {
                 rows={8}
                 value={formData.content_zh_tw}
                 onChange={(e) => setFormData((p) => ({ ...p, content_zh_tw: e.target.value }))}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Divider textAlign="left" sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  English
+                </Typography>
+              </Divider>
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Title (English)"
+                fullWidth
+                value={formData.title_en}
+                onChange={(e) => setFormData((p) => ({ ...p, title_en: e.target.value }))}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Excerpt (English)"
+                fullWidth
+                multiline
+                rows={2}
+                value={formData.excerpt_en}
+                onChange={(e) => setFormData((p) => ({ ...p, excerpt_en: e.target.value }))}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Content (English)"
+                fullWidth
+                multiline
+                rows={8}
+                value={formData.content_en}
+                onChange={(e) => setFormData((p) => ({ ...p, content_en: e.target.value }))}
               />
             </Grid>
           </Grid>

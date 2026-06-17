@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
 import { getShippingProducts } from '@/lib/api/product-queries';
 import ShopClient from './ShopClient';
 import { JsonLd } from '@/components/JsonLd';
@@ -22,17 +23,13 @@ export async function generateMetadata({
     title: t('shop.title'),
     description: t('shop.description'),
     alternates: {
-      canonical: `${appUrl}/${locale}/shop`,
-      languages: {
-        ja: `${appUrl}/ja/shop`,
-        'zh-TW': `${appUrl}/zh-tw/shop`,
-        'x-default': `${appUrl}/ja/shop`,
-      },
+      canonical: localeUrl(appUrl, locale, '/shop'),
+      languages: languageAlternates(appUrl, '/shop'),
     },
     openGraph: {
       title: t('shop.title'),
       description: t('shop.description'),
-      url: `${appUrl}/${locale}/shop`,
+      url: localeUrl(appUrl, locale, '/shop'),
       type: 'website',
     },
   };
@@ -46,16 +43,17 @@ export default async function ShopPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
-  const ja = locale === 'ja';
-
   const products = await getShippingProducts();
+
+  const homeLabel = locale === 'zh-tw' ? '首頁' : locale === 'en' ? 'Home' : 'ホーム';
+  const shopLabel = locale === 'zh-tw' ? '商店' : locale === 'en' ? 'Shop' : 'ショップ';
 
   return (
     <>
       <JsonLd
         data={breadcrumbSchema(appUrl, locale, [
-          { name: ja ? 'ホーム' : '首頁', path: '' },
-          { name: ja ? 'ショップ' : '商店', path: '/shop' },
+          { name: homeLabel, path: '' },
+          { name: shopLabel, path: '/shop' },
         ])}
       />
       <JsonLd data={shopItemListSchema(appUrl, locale, products)} />

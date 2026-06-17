@@ -11,6 +11,9 @@
 // - ロゴ: public/images/momo-main-logo.png
 
 import type { News, Product, ProductWithVariants } from '@/types/database';
+import { getLocalizedName, getLocalizedDescription } from '@/lib/utils/localize-product';
+import { getLocalizedNewsTitle, getLocalizedNewsExcerpt } from '@/lib/utils/localize-news';
+import { localeUrl } from './locale-url';
 
 /** SNS 公式アカウント（Organization.sameAs に使用。ナレッジパネル/エンティティ解決を補助） */
 const SOCIAL_LINKS = [
@@ -30,13 +33,25 @@ const CONTACT_EMAIL = 'info@sakura-sisters.com';
 
 type Trail = Array<{ name: string; path: string }>;
 
-function isJa(locale: string): boolean {
-  return locale !== 'zh-tw';
-}
-
 /** ブランド名（taiwan-night-market の既存 JSON-LD と表記を統一） */
 function brandName(locale: string): string {
-  return isJa(locale) ? 'もも娘' : '桃娘';
+  if (locale === 'zh-tw') return '桃娘';
+  if (locale === 'en') return 'Momomusume';
+  return 'もも娘';
+}
+
+/** WebSite.name 等で使うサイト正式名称 */
+function siteName(locale: string): string {
+  if (locale === 'zh-tw') return '福島桃娘商品網站';
+  if (locale === 'en') return 'Fukushima Momomusume Shop';
+  return '福島もも娘物販サイト';
+}
+
+/** JSON-LD inLanguage 用の言語タグ */
+function inLanguageTag(locale: string): string {
+  if (locale === 'zh-tw') return 'zh-Hant-TW';
+  if (locale === 'en') return 'en';
+  return 'ja';
 }
 
 /** Organization の安定した @id（ページをまたいで同一エンティティとして参照する） */
@@ -68,7 +83,7 @@ function organizationRef(appUrl: string, locale: string) {
     '@type': 'Organization',
     '@id': orgId(appUrl),
     name: brandName(locale),
-    url: `${appUrl}/${locale}`,
+    url: localeUrl(appUrl, locale),
     logo: {
       '@type': 'ImageObject',
       url: logoUrl(appUrl),
@@ -84,7 +99,7 @@ export function organizationSchema(appUrl: string, locale: string) {
     '@id': orgId(appUrl),
     name: brandName(locale),
     legalName: LEGAL_NAME,
-    url: `${appUrl}/${locale}`,
+    url: localeUrl(appUrl, locale),
     logo: {
       '@type': 'ImageObject',
       url: logoUrl(appUrl),
@@ -100,9 +115,9 @@ export function websiteSchema(appUrl: string, locale: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     '@id': `${appUrl}/#website`,
-    name: isJa(locale) ? '福島もも娘物販サイト' : '福島桃娘商品網站',
-    url: `${appUrl}/${locale}`,
-    inLanguage: isJa(locale) ? 'ja' : 'zh-Hant-TW',
+    name: siteName(locale),
+    url: localeUrl(appUrl, locale),
+    inLanguage: inLanguageTag(locale),
     publisher: { '@id': orgId(appUrl) },
   };
 }
@@ -119,14 +134,14 @@ export function localBusinessSchema(appUrl: string, locale: string) {
     '@id': `${appUrl}/#localbusiness`,
     name: brandName(locale),
     image: logoUrl(appUrl),
-    url: `${appUrl}/${locale}`,
-    servesCuisine: isJa(locale) ? '台湾料理' : '台灣料理',
+    url: localeUrl(appUrl, locale),
+    servesCuisine: locale === 'zh-tw' ? '台灣料理' : locale === 'en' ? 'Taiwanese Cuisine' : '台湾料理',
     priceRange: '¥¥',
     email: CONTACT_EMAIL,
     address: {
       '@type': 'PostalAddress',
       postalCode: '960-1721',
-      addressRegion: isJa(locale) ? '福島県' : '福島縣',
+      addressRegion: locale === 'zh-tw' ? '福島縣' : locale === 'en' ? 'Fukushima' : '福島県',
       addressLocality: '相馬郡飯舘村',
       streetAddress: '飯樋字原361番地',
       addressCountry: 'JP',
@@ -144,7 +159,7 @@ export function breadcrumbSchema(appUrl: string, locale: string, trail: Trail) {
       '@type': 'ListItem',
       position: i + 1,
       name: item.name,
-      item: `${appUrl}/${locale}${item.path}`,
+      item: localeUrl(appUrl, locale, item.path),
     })),
   };
 }
@@ -173,11 +188,9 @@ export function productSchema(
   locale: string,
   product: ProductWithVariants
 ) {
-  const ja = isJa(locale);
-  const name = ja ? product.name : product.name_zh_tw || product.name;
-  const description =
-    (ja ? product.description : product.description_zh_tw || product.description) || name;
-  const url = `${appUrl}/${locale}/shop/${product.slug}`;
+  const name = getLocalizedName(product, locale);
+  const description = getLocalizedDescription(product, locale) || name;
+  const url = localeUrl(appUrl, locale, `/shop/${product.slug}`);
 
   // 画像（メイン + ギャラリーを絶対 URL 化して重複排除）
   const images: string[] = [];
@@ -239,15 +252,14 @@ export function productSchema(
 
 /** ショップ一覧用: ItemList（掲載商品の並び順を構造化） */
 export function shopItemListSchema(appUrl: string, locale: string, products: Product[]) {
-  const ja = isJa(locale);
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     itemListElement: products.map((p, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      url: `${appUrl}/${locale}/shop/${p.slug}`,
-      name: ja ? p.name : p.name_zh_tw || p.name,
+      url: localeUrl(appUrl, locale, `/shop/${p.slug}`),
+      name: getLocalizedName(p, locale),
     })),
   };
 }
@@ -259,9 +271,8 @@ export function shopItemListSchema(appUrl: string, locale: string, products: Pro
  */
 export function articleSchema(appUrl: string, locale: string, news: News) {
   const published = news.published_at || news.created_at;
-  const ja = isJa(locale);
-  const headline = ja ? news.title : news.title_zh_tw || news.title;
-  const description = (ja ? news.excerpt : news.excerpt_zh_tw || news.excerpt) || headline;
+  const headline = getLocalizedNewsTitle(news, locale);
+  const description = getLocalizedNewsExcerpt(news, locale) || headline;
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -270,9 +281,9 @@ export function articleSchema(appUrl: string, locale: string, news: News) {
     image: logoUrl(appUrl),
     datePublished: published,
     dateModified: news.updated_at || published,
-    inLanguage: isJa(locale) ? 'ja' : 'zh-Hant-TW',
+    inLanguage: inLanguageTag(locale),
     author: organizationRef(appUrl, locale),
     publisher: organizationRef(appUrl, locale),
-    mainEntityOfPage: `${appUrl}/${locale}/news/${news.slug}`,
+    mainEntityOfPage: localeUrl(appUrl, locale, `/news/${news.slug}`),
   };
 }

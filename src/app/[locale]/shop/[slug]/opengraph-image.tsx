@@ -21,19 +21,19 @@ export default async function Image({
     const supabase = getSupabaseAdmin();
     const { data: product } = await supabase
       .from('products')
-      .select('name, name_zh_tw, description, description_zh_tw, image_url, price_yen')
+      .select('name, name_zh_tw, name_en, description, description_zh_tw, description_en, image_url, price_yen')
       .eq('slug', slug)
       .single();
 
     if (product) {
       productName =
-        locale === 'zh-tw'
-          ? (product.name_zh_tw || product.name)
-          : product.name;
+        locale === 'zh-tw' ? (product.name_zh_tw || product.name)
+        : locale === 'en' ? (product.name_en || product.name)
+        : product.name;
       productDescription =
-        locale === 'zh-tw'
-          ? (product.description_zh_tw || product.description || '')
-          : (product.description || '');
+        locale === 'zh-tw' ? (product.description_zh_tw || product.description || '')
+        : locale === 'en' ? (product.description_en || product.description || '')
+        : (product.description || '');
       productImage = product.image_url;
       priceYen = product.price_yen;
     }

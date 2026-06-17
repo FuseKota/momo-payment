@@ -93,7 +93,7 @@ export default function ShippingCheckoutPage() {
     if (!authLoading && !user) {
       // callbackUrl はログインページ側で next-intl の router.push に渡され locale が
       // 自動付与されるため、ここでは locale を付けない（付けると /ja/ja/... で 404 になる）。
-      window.location.replace(`/${locale}/login?callbackUrl=/checkout/shipping`);
+      window.location.replace(`${locale === 'ja' ? '' : `/${locale}`}/login?callbackUrl=/checkout/shipping`);
     }
   }, [user, authLoading, locale]);
 

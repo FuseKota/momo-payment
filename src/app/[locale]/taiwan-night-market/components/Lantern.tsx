@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import styles from '../taiwan-night-market.module.css';
 
 type LanternSize = 'sm' | 'md' | 'lg';
@@ -17,6 +18,7 @@ const sizeConfig: Record<LanternSize, { w: number; animDur: string }> = {
 };
 
 export default function Lantern({ size, positionClass = '', heroGroup }: LanternProps) {
+  const t = useTranslations('taiwanNightMarket');
   const { w, animDur } = sizeConfig[size];
 
   return (
@@ -28,7 +30,7 @@ export default function Lantern({ size, positionClass = '', heroGroup }: Lantern
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/lantern.png"
-        alt="提灯"
+        alt={t('lanternAlt')}
         width={w}
         style={{ display: 'block' }}
         draggable={false}

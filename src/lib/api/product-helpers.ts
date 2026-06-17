@@ -7,6 +7,7 @@ export interface FetchedProduct {
   id: string;
   name: string;
   name_zh_tw: string | null;
+  name_en: string | null;
   kind: string;
   temp_zone: string;
   price_yen: number;
@@ -38,7 +39,7 @@ export async function fetchAndValidateProducts(
 
   const { data: products, error: productError } = await supabaseAdmin
     .from('products')
-    .select(`id, name, name_zh_tw, kind, temp_zone, price_yen, can_pickup, can_ship, is_active`)
+    .select(`id, name, name_zh_tw, name_en, kind, temp_zone, price_yen, can_pickup, can_ship, is_active`)
     .in('id', productIds);
 
   if (productError) {

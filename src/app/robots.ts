@@ -7,12 +7,17 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/ja/', '/zh-tw/'],
+        allow: ['/'],
         disallow: [
+          '/cart',
           '/*/cart',
+          '/checkout',
           '/*/checkout',
+          '/complete',
           '/*/complete',
+          '/login',
           '/*/login',
+          '/mypage',
           '/*/mypage',
           '/admin',
           '/api/',

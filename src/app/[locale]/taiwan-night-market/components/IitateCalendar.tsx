@@ -163,7 +163,7 @@ export default function IitateCalendar() {
       return { year: d.getFullYear(), month: d.getMonth() };
     });
 
-  const monthLabel = new Intl.DateTimeFormat(locale === 'zh-tw' ? 'zh-TW' : 'ja-JP', {
+  const monthLabel = new Intl.DateTimeFormat(locale === 'zh-tw' ? 'zh-TW' : locale === 'en' ? 'en-US' : 'ja-JP', {
     year: 'numeric',
     month: 'long',
   }).format(new Date(cursor.year, cursor.month, 1));

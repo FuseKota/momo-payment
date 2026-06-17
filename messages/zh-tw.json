@@ -485,6 +485,9 @@
     "cancelSubject": "【桃娘】訂單取消通知 - {orderNo}",
     "cancelGreeting": "訂單取消通知",
     "cancelMessage": "由於已超過付款期限，您的訂單已被取消。\n如需重新訂購，敬請再次完成下單手續。",
+    "refundSubject": "【桃娘】退款通知（訂單編號：{orderNo}）",
+    "refundGreeting": "退款手續已完成",
+    "refundMessage": "因訂單取消，我們已依下列內容全額退款。\n依您使用的信用卡公司不同，反映至帳單明細可能需要一些時間，敬請見諒。",
     "adminNewOrderSubject": "【新訂單】{orderNo}（{orderType}）",
     "adminNewOrderGreeting": "有新的訂單",
     "adminNewOrderMessage": "已收到以下訂單。詳情請於管理後台確認。",
@@ -505,9 +508,12 @@
   },
   "languageSwitcher": {
     "ja": "日本語",
-    "zh-tw": "繁體中文"
+    "zh-tw": "繁體中文",
+    "en": "English"
   },
   "taiwanNightMarket": {
+    "siteTitle": "台灣夜市介紹網站",
+    "lanternAlt": "燈籠",
     "heroTitle": "歡迎來到台灣夜市",
     "heroSubtitle": "桃娘帶您體驗\n台灣夜市的世界",
     "eventTitle": "活動資訊",

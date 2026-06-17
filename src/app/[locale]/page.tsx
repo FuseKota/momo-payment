@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import HomeClient from './HomeClient';
 import { JsonLd } from '@/components/JsonLd';
@@ -25,17 +26,13 @@ export async function generateMetadata({
     title: t('home.title'),
     description: t('home.description'),
     alternates: {
-      canonical: `${appUrl}/${locale}`,
-      languages: {
-        ja: `${appUrl}/ja`,
-        'zh-TW': `${appUrl}/zh-tw`,
-        'x-default': `${appUrl}/ja`,
-      },
+      canonical: localeUrl(appUrl, locale),
+      languages: languageAlternates(appUrl),
     },
     openGraph: {
       title: t('home.title'),
       description: t('home.description'),
-      url: `${appUrl}/${locale}`,
+      url: localeUrl(appUrl, locale),
       type: 'website',
     },
   };

@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -10,17 +11,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: t('tokushohoTitle'),
     description: t('tokushohoDescription'),
     alternates: {
-      canonical: `${appUrl}/${locale}/legal/tokushoho`,
-      languages: {
-        ja: `${appUrl}/ja/legal/tokushoho`,
-        'zh-TW': `${appUrl}/zh-tw/legal/tokushoho`,
-        'x-default': `${appUrl}/ja/legal/tokushoho`,
-      },
+      canonical: localeUrl(appUrl, locale, '/legal/tokushoho'),
+      languages: languageAlternates(appUrl, '/legal/tokushoho'),
     },
     openGraph: {
       title: t('tokushohoTitle'),
       description: t('tokushohoDescription'),
-      url: `${appUrl}/${locale}/legal/tokushoho`,
+      url: localeUrl(appUrl, locale, '/legal/tokushoho'),
       type: 'website',
     },
   };

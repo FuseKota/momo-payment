@@ -48,6 +48,7 @@ export default function TaiwanNightMarketHeader() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const t = useTranslations('common');
+  const tt = useTranslations('taiwanNightMarket');
 
   const navItems = [
     { label: t('home'), href: '/' as const, icon: <HomeIcon /> },
@@ -117,7 +118,7 @@ export default function TaiwanNightMarketHeader() {
                 whiteSpace: 'nowrap',
               }}
             >
-              台湾夜市紹介サイト
+              {tt('siteTitle')}
             </Typography>
           </Link>
 
@@ -203,7 +204,7 @@ export default function TaiwanNightMarketHeader() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              台湾夜市紹介サイト
+              {tt('siteTitle')}
             </Typography>
           </Box>
           <List>

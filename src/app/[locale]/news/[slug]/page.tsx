@@ -4,6 +4,7 @@ import NewsDetailClient from './NewsDetailClient';
 import { JsonLd } from '@/components/JsonLd';
 import { articleSchema, breadcrumbSchema } from '@/lib/seo/structured-data';
 import { getLocalizedNewsTitle, getLocalizedNewsExcerpt } from '@/lib/utils/localize-news';
+import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
 
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: Props) {
   const supabase = getSupabaseAdmin();
   const { data: news } = await supabase
     .from('news')
-    .select('title, excerpt, title_zh_tw, excerpt_zh_tw')
+    .select('title, excerpt, title_zh_tw, excerpt_zh_tw, title_en, excerpt_en')
     .eq('slug', slug)
     .eq('is_published', true)
     .single();
@@ -29,17 +30,13 @@ export async function generateMetadata({ params }: Props) {
     title,
     description: excerpt || title,
     alternates: {
-      canonical: `${appUrl}/${locale}/news/${slug}`,
-      languages: {
-        ja: `${appUrl}/ja/news/${slug}`,
-        'zh-TW': `${appUrl}/zh-tw/news/${slug}`,
-        'x-default': `${appUrl}/ja/news/${slug}`,
-      },
+      canonical: localeUrl(appUrl, locale, `/news/${slug}`),
+      languages: languageAlternates(appUrl, `/news/${slug}`),
     },
     openGraph: {
       title,
       description: excerpt || title,
-      url: `${appUrl}/${locale}/news/${slug}`,
+      url: localeUrl(appUrl, locale, `/news/${slug}`),
       type: 'article',
     },
   };
@@ -48,7 +45,6 @@ export async function generateMetadata({ params }: Props) {
 export default async function NewsDetailPage({ params }: Props) {
   const { slug, locale } = await params;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
-  const ja = locale === 'ja';
   const supabase = getSupabaseAdmin();
 
   const { data: news, error } = await supabase
@@ -62,12 +58,15 @@ export default async function NewsDetailPage({ params }: Props) {
     notFound();
   }
 
+  const homeLabel = locale === 'zh-tw' ? '首頁' : locale === 'en' ? 'Home' : 'ホーム';
+  const newsLabel = locale === 'zh-tw' ? '最新消息' : locale === 'en' ? 'News' : 'ニュース';
+
   return (
     <>
       <JsonLd
         data={breadcrumbSchema(appUrl, locale, [
-          { name: ja ? 'ホーム' : '首頁', path: '' },
-          { name: ja ? 'ニュース' : '最新消息', path: '/news' },
+          { name: homeLabel, path: '' },
+          { name: newsLabel, path: '/news' },
           { name: getLocalizedNewsTitle(news, locale), path: `/news/${news.slug}` },
         ])}
       />

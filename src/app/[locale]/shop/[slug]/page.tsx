@@ -5,6 +5,8 @@ import { getProductBySlug } from '@/lib/api/product-queries';
 import ProductDetailClient from './ProductDetailClient';
 import { JsonLd } from '@/components/JsonLd';
 import { breadcrumbSchema, productSchema } from '@/lib/seo/structured-data';
+import { getLocalizedName } from '@/lib/utils/localize-product';
+import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
 
 // ISR: 商品詳細をサーバー側でプリレンダリングし、LCP 画像を初期 HTML に含める。
 // 商品カタログは更新頻度が低いため 300 秒でエッジキャッシュを長めに保ち TTFB を安定させる
@@ -35,35 +37,31 @@ export async function generateMetadata({
     const supabase = getSupabaseAdmin();
     const { data: product } = await supabase
       .from('products')
-      .select('name, name_zh_tw, description, description_zh_tw, image_url')
+      .select('name, name_zh_tw, name_en, description, description_zh_tw, description_en, image_url')
       .eq('slug', slug)
       .single();
 
     if (!product) return {};
 
     const name =
-      locale === 'zh-tw'
-        ? (product.name_zh_tw || product.name)
-        : product.name;
+      locale === 'zh-tw' ? (product.name_zh_tw || product.name)
+      : locale === 'en' ? (product.name_en || product.name)
+      : product.name;
     const description =
-      locale === 'zh-tw'
-        ? (product.description_zh_tw || product.description)
-        : product.description;
+      locale === 'zh-tw' ? (product.description_zh_tw || product.description)
+      : locale === 'en' ? (product.description_en || product.description)
+      : product.description;
     return {
       title: name,
       description: description || name,
       alternates: {
-        canonical: `${appUrl}/${locale}/shop/${slug}`,
-        languages: {
-          ja: `${appUrl}/ja/shop/${slug}`,
-          'zh-TW': `${appUrl}/zh-tw/shop/${slug}`,
-          'x-default': `${appUrl}/ja/shop/${slug}`,
-        },
+        canonical: localeUrl(appUrl, locale, `/shop/${slug}`),
+        languages: languageAlternates(appUrl, `/shop/${slug}`),
       },
       openGraph: {
         title: name,
         description: description || '',
-        url: `${appUrl}/${locale}/shop/${slug}`,
+        url: localeUrl(appUrl, locale, `/shop/${slug}`),
         images: product.image_url
           ? [{ url: product.image_url, width: 1200, height: 630, alt: name }]
           : undefined,
@@ -88,9 +86,10 @@ export default async function ProductDetailPage({
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
-  const ja = locale === 'ja';
-
   const product = await getProductBySlug(slug);
+
+  const homeLabel = locale === 'zh-tw' ? '首頁' : locale === 'en' ? 'Home' : 'ホーム';
+  const shopLabel = locale === 'zh-tw' ? '商店' : locale === 'en' ? 'Shop' : 'ショップ';
 
   return (
     <>
@@ -98,10 +97,10 @@ export default async function ProductDetailPage({
         <>
           <JsonLd
             data={breadcrumbSchema(appUrl, locale, [
-              { name: ja ? 'ホーム' : '首頁', path: '' },
-              { name: ja ? 'ショップ' : '商店', path: '/shop' },
+              { name: homeLabel, path: '' },
+              { name: shopLabel, path: '/shop' },
               {
-                name: ja ? product.name : product.name_zh_tw || product.name,
+                name: getLocalizedName(product, locale),
                 path: `/shop/${slug}`,
               },
             ])}

@@ -3,13 +3,16 @@ import { env } from '@/lib/env';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import jaMessages from '../../../messages/ja.json';
 import zhTwMessages from '../../../messages/zh-tw.json';
+import enMessages from '../../../messages/en.json';
 
 const resend = new Resend(env.RESEND_API_KEY);
 
 type Messages = typeof jaMessages;
 
 function getMessages(locale: string): Messages {
-  return locale === 'zh-tw' ? zhTwMessages : jaMessages;
+  if (locale === 'zh-tw') return zhTwMessages;
+  if (locale === 'en') return enMessages;
+  return jaMessages;
 }
 
 export interface OrderConfirmationData {
@@ -508,6 +511,86 @@ export async function sendOrderCancellationEmail(data: {
     return { success: true, messageId: result?.id };
   } catch (error) {
     secureLog('error', 'Failed to send order cancellation email', safeErrorLog(error));
+    return { success: false, error };
+  }
+}
+
+/**
+ * 返金通知メール（顧客向け）
+ * 管理者が注文を全額返金した際に送信する。
+ * ステータスは送信前に確定済みのため、送信失敗は呼び出し側でログのみ扱う。
+ */
+export async function sendRefundNotificationEmail(data: {
+  orderNo: string;
+  customerName: string;
+  customerEmail: string;
+  total: number;
+  locale?: string;
+}) {
+  const m = getMessages(data.locale || 'ja');
+  const e = m.email;
+  const fromName = e.brandName;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
+        <p style="color: #666; margin: 8px 0 0;">${e.refundGreeting}</p>
+      </div>
+
+      <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+        <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
+        <p style="margin: 0;">
+          ${e.refundMessage.replace(/\n/g, '<br>')}
+        </p>
+      </div>
+
+      <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px;">
+        <p style="margin: 0;">
+          <strong>${e.orderNo}</strong> ${data.orderNo}<br>
+          <strong>${e.paymentAmount}</strong> ¥${data.total.toLocaleString()}
+        </p>
+      </div>
+
+      <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px; font-size: 12px; color: #666;">
+        <p style="margin: 0 0 8px;">
+          ${e.contactNotice}
+        </p>
+        <p style="margin: 0;">
+          ${e.autoSendNotice}
+        </p>
+      </div>
+
+      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
+        <p style="margin: 0;">© ${e.brandName}</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const subject = e.refundSubject.replace('{orderNo}', data.orderNo);
+    const { data: result, error } = await resend.emails.send({
+      from: `${fromName} <${FROM_EMAIL}>`,
+      to: data.customerEmail,
+      subject,
+      html,
+    });
+
+    if (error) {
+      secureLog('error', 'Failed to send refund notification email', safeErrorLog(error));
+      return { success: false, error };
+    }
+
+    return { success: true, messageId: result?.id };
+  } catch (error) {
+    secureLog('error', 'Failed to send refund notification email', safeErrorLog(error));
     return { success: false, error };
   }
 }

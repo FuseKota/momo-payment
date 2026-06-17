@@ -7,7 +7,7 @@ import { IconButton, Menu, MenuItem, ListItemText } from '@mui/material';
 import TranslateIcon from '@mui/icons-material/Translate';
 import type { Locale } from '@/i18n/routing';
 
-const locales: Locale[] = ['ja', 'zh-tw'];
+const locales: Locale[] = ['ja', 'zh-tw', 'en'];
 
 export default function LanguageSwitcher() {
   const locale = useLocale();

@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -10,17 +11,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: t('privacyTitle'),
     description: t('privacyDescription'),
     alternates: {
-      canonical: `${appUrl}/${locale}/legal/privacy`,
-      languages: {
-        ja: `${appUrl}/ja/legal/privacy`,
-        'zh-TW': `${appUrl}/zh-tw/legal/privacy`,
-        'x-default': `${appUrl}/ja/legal/privacy`,
-      },
+      canonical: localeUrl(appUrl, locale, '/legal/privacy'),
+      languages: languageAlternates(appUrl, '/legal/privacy'),
     },
     openGraph: {
       title: t('privacyTitle'),
       description: t('privacyDescription'),
-      url: `${appUrl}/${locale}/legal/privacy`,
+      url: localeUrl(appUrl, locale, '/legal/privacy'),
       type: 'website',
     },
   };
