@@ -20,6 +20,8 @@ import styles from '../news.module.css';
 
 const gold = '#fbc02d';
 const dividerColor = 'rgba(251, 192, 45, 0.2)';
+// 本文画像は自前Storageに配置（wikimediaのthumbはホットリンク制限で400になるため）
+const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/product-images/night-market`;
 
 interface Props {
   news: News;
@@ -82,7 +84,21 @@ export default function NewsDetailClient({ news }: Props) {
 
             {content ? (
               <div className={styles.markdownContent}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeSanitize]}
+                  components={{
+                    img: ({ src, alt }) => {
+                      // wikimediaのホットリンクは400になるため、本文画像は記事slugの自前Storage画像に差し替え
+                      const finalSrc =
+                        typeof src === 'string' && src.includes('wikimedia.org')
+                          ? `${STORAGE_BASE}/${news.slug}.jpg`
+                          : (src as string | undefined);
+                      // eslint-disable-next-line @next/next/no-img-element
+                      return <img src={finalSrc} alt={alt ?? ''} style={{ maxWidth: '100%', height: 'auto', borderRadius: 8 }} />;
+                    },
+                  }}
+                >{content}</ReactMarkdown>
               </div>
             ) : (
               <Typography sx={{ color: 'rgba(255,255,255,0.4)' }}>{t('noContent')}</Typography>
