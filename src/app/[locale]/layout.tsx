@@ -47,13 +47,15 @@ const notoSerifTC = Noto_Serif_TC({
   preload: false,
 });
 
-// 英語(en)はラテン文字のためサブセット先読みが有効（preload: true）
+// 英語(en)用。layout で複数ロケールのフォントを条件適用するため preload: true だと
+// 全ページで先読みされ、ja/zh-tw では未使用のまま「preloaded but not used」警告になる。
+// CJK フォントと同様 preload: false にして不要な先読みを避ける（display: swap で FOIT なし）。
 const inter = Inter({
   variable: "--app-font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   display: "swap",
-  preload: true,
+  preload: false,
 });
 
 const notoSerifEn = Noto_Serif({
@@ -61,7 +63,7 @@ const notoSerifEn = Noto_Serif({
   subsets: ["latin"],
   weight: ["400", "700", "900"],
   display: "swap",
-  preload: true,
+  preload: false,
 });
 
 const htmlLangMap: Record<Locale, string> = {
