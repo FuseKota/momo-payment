@@ -28,6 +28,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 interface OrderItem {
   id: string;
@@ -136,7 +137,7 @@ export default function AdminOrdersPage() {
         setTotal(data.total ?? 0);
       }
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      secureLog('error', 'Failed to fetch orders', safeErrorLog(error));
     } finally {
       setIsLoading(false);
     }

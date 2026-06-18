@@ -44,6 +44,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import Tooltip from '@mui/material/Tooltip';
 import { formatPrice } from '@/lib/utils/format';
 import type { Product, FoodLabel } from '@/types/database';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 interface ProductFormData {
   name: string;
@@ -117,7 +118,7 @@ export default function AdminProductsPage() {
         setProducts(data);
       }
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      secureLog('error', 'Failed to fetch products', safeErrorLog(error));
     } finally {
       setIsLoading(false);
     }

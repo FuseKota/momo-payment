@@ -23,6 +23,7 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 interface RecentOrder {
   id: string;
@@ -83,7 +84,7 @@ export default function AdminDashboardPage() {
         setData(json);
       }
     } catch (error) {
-      console.error('Failed to fetch dashboard:', error);
+      secureLog('error', 'Failed to fetch dashboard', safeErrorLog(error));
     } finally {
       setIsLoading(false);
     }
