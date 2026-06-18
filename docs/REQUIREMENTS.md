@@ -1,10 +1,10 @@
-# momo-payment 要件定義書 v2.0
+# momo-payment 要件定義書 v3.0
 
-**最終更新**: 2026-06-16
+**最終更新**: 2026-06-18
 **ステータス**: 本番リリース版
-**改訂履歴**: v1.0 (MVP, 決済=Square 想定) → **v2.0（決済を Stripe に変更、顧客アカウント・マイページ・ニュース・多言語・商品バリエーション・配送日時指定・台湾夜市カレンダーを反映）**
+**改訂履歴**: v1.0 (MVP, 決済=Square 想定) → v2.0（決済を Stripe に変更、顧客アカウント・マイページ・ニュース・多言語・商品バリエーション・配送日時指定・台湾夜市カレンダーを反映） → **v3.0（店頭受け取り／店頭払い／Square を全廃し、配送EC・Stripe オンライン決済専用に一本化）**
 
-> **重要な変更点（v1.0 → v2.0）**: MVP 設計時は決済プロバイダに **Square** を想定していましたが、実装では **Stripe** を採用しました。本書はすべて現行実装（Stripe）に整合しています。DB 内に残る `square_webhook_events` テーブルや `payment_method` enum の `SQUARE` 値は旧仕様の名残であり、現行フローでは使用しません。
+> **重要な変更点（v2.0 → v3.0）**: 「店頭受け取り（PICKUP）」「店頭払い（`PAY_AT_PICKUP`）」「`RESERVED` ステータス」「入金確認（mark-paid）」を撤去し、本システムは **配送EC（SHIPPING）専用・Stripe オンライン決済のみ** になりました。決済プロバイダは Stripe です（MVP で想定していた Square は不採用）。DB 内に残る `square_webhook_events` テーブル等は旧仕様の名残であり、現行フローでは使用しません。
 
 ## 目次
 
@@ -23,7 +23,7 @@
 
 ## 概要
 
-「もも娘」のオンライン注文システム。店頭受け取りと配送ECの2つの購入体験を提供する。
+「もも娘」のオンライン注文システム。冷凍食品・グッズの配送EC（オンライン注文・Stripe 決済・宅配）を提供する。
 
 ### 技術スタック
 
@@ -39,12 +39,7 @@
 
 ## 購入体験
 
-### A. 店頭受け取り（PICKUP）
-
-- **支払い**: Stripe 事前決済 / 店頭払い を選べる
-- **受取日時**: 任意（必須にしない）
-
-### B. 配送EC（SHIPPING）
+### 配送EC（SHIPPING）
 
 - **対象**: 冷凍の魯肉飯＋もも娘グッズ
 - **支払い**: オンライン決済必須（**Stripe**）
@@ -66,9 +61,9 @@
 - **冷凍食品（FROZEN）とグッズ（AMBIENT）の同時購入は不可**
 - 別注文にする運用
 
-### 配送はオンライン決済必須
+### オンライン決済必須
 
-- SHIPPING 注文は `payment_method = STRIPE` かつ `temp_zone` 必須（DB制約 `orders_shipping_rules` で担保）
+- 注文は `payment_method = STRIPE` かつ `temp_zone` 必須（DB制約 `orders_shipping_rules` で担保）
 
 ---
 
@@ -76,30 +71,25 @@
 
 | ステータス | 説明 |
 |-----------|------|
-| `RESERVED` | 店頭払い受付 |
 | `PENDING_PAYMENT` | **Stripe** 決済待ち |
 | `PAID` | 入金済 |
 | `PACKING` | 発送準備 |
 | `SHIPPED` | 発送済 |
 | `FULFILLED` | 完了 |
-| `CANCELED` | キャンセル |
+| `CANCELED` | キャンセル（決済前失効等） |
 | `REFUNDED` | 返金済 |
 
 ### 業務フロー
 
-#### 店頭受け取り（店頭払い）
+#### 配送EC（Stripe決済）
 ```
-注文作成 → RESERVED → [管理画面で入金確認] → PAID → 受け渡し → FULFILLED
-```
-
-#### 店頭受け取り（Stripe事前決済）
-```
-注文作成 → PENDING_PAYMENT → Stripe決済 → [Webhook] → PAID → 受け渡し → FULFILLED
+注文作成 → PENDING_PAYMENT → Stripe決済 → [Webhook] → PAID → PACKING → [発送登録] → SHIPPED → FULFILLED
 ```
 
-#### 配送EC
+#### キャンセル・返金
 ```
-注文作成 → PENDING_PAYMENT → Stripe決済 → [Webhook] → PAID → PACKING → SHIPPED → FULFILLED
+PENDING_PAYMENT → [Webhook: checkout.session.expired] → CANCELED
+PAID 以降 → [管理画面で返金] → REFUNDED
 ```
 
 ---
@@ -109,36 +99,41 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       トップ (/[locale])                            │
-│                     [店頭受け取り]  [配送注文]                        │
-└───────────┬─────────────────────────────────┬───────────────────────┘
-            │                                 │
-            ▼                                 ▼
-┌───────────────────────┐         ┌───────────────────────┐
-│  店頭受け取り /pickup  │         │   配送EC /shop        │
-│  - 商品選択            │         │  - カテゴリ選択       │
-│  - 顧客情報入力        │         │    (冷凍食品/グッズ)  │
-└───────────┬───────────┘         └───────────┬───────────┘
-            │                                 │
-            ▼                                 ▼
-┌───────────────────────┐         ┌───────────────────────┐
-│ 決済選択               │         │ 商品詳細 /shop/[slug] │
-│ /checkout/pickup       │         │  - 食品表示情報       │
-│  [店頭払い] [Stripe]   │         │  - バリエーション選択 │
-└─────┬─────────┬───────┘         │  - カートに追加       │
-      │         │                 └───────────┬───────────┘
-      │         ▼                             ▼
-      │  ┌──────────────┐         ┌───────────────────────┐
-      │  │Stripe Checkout│        │ カート /cart          │
-      │  │(外部ページ)  │         │  ※温度帯混在不可     │
-      │  └──────┬───────┘         └───────────┬───────────┘
-      │         │                             │
-      ▼         ▼                             ▼
-┌───────────────────────┐         ┌───────────────────────┐
-│ 完了 /complete         │         │ 配送チェックアウト    │
-│  - 注文番号表示        │◄────────│ /checkout/shipping    │
-│  - 注意事項            │         │  - 住所/配送日時入力  │
-└───────────────────────┘         │  - Stripe Checkout    │
-                                  └───────────────────────┘
+│                          [配送注文]                                 │
+└─────────────────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+                        ┌───────────────────────┐
+                        │   配送EC /shop        │
+                        │  - カテゴリ選択       │
+                        │    (冷凍食品/グッズ)  │
+                        └───────────┬───────────┘
+                                    │
+                                    ▼
+                        ┌───────────────────────┐
+                        │ 商品詳細 /shop/[slug] │
+                        │  - 食品表示情報       │
+                        │  - バリエーション選択 │
+                        │  - カートに追加       │
+                        └───────────┬───────────┘
+                                    ▼
+                        ┌───────────────────────┐
+                        │ カート /cart          │
+                        │  ※温度帯混在不可     │
+                        └───────────┬───────────┘
+                                    ▼
+                        ┌───────────────────────┐
+                        │ 配送チェックアウト    │
+                        │ /checkout/shipping    │
+                        │  - 住所/配送日時入力  │
+                        │  - Stripe Checkout    │
+                        └───────────┬───────────┘
+                                    ▼
+                        ┌───────────────────────┐
+                        │ 完了 /complete         │
+                        │  - 注文番号表示        │
+                        │  - 注意事項            │
+                        └───────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       顧客アカウント                                 │
@@ -154,7 +149,7 @@
 │ /admin/products         → 商品管理（区分/公開/在庫/バリエーション） │
 │ /admin/news             → ニュース管理                             │
 │ /admin/orders           → 注文一覧                                  │
-│ /admin/orders/[id]      → 注文詳細（入金/発送/追跡）               │
+│ /admin/orders/[id]      → 注文詳細（発送/追跡/返金）               │
 │ /admin/iitate-calendar  → 台湾夜市カレンダー管理                   │
 └─────────────────────────────────────────────────────────────────────┘
 
@@ -182,41 +177,6 @@
 // エラー
 { "ok": false, "error": "error_code", "message": "詳細メッセージ" }
 ```
-
-### POST /api/orders/pickup
-
-店頭受け取り注文を作成する。
-
-#### Request
-
-```json
-{
-  "customer": { "name": "山田 太郎", "phone": "09012345678", "email": "taro@example.com" },
-  "items": [ { "productId": "uuid-1", "qty": 2 }, { "productId": "uuid-2", "qty": 1 } ],
-  "paymentMethod": "PAY_AT_PICKUP",
-  "agreementAccepted": true
-}
-```
-
-#### Response（店頭払い）
-
-```json
-{
-  "ok": true,
-  "data": { "orderId": "uuid-order", "orderNo": "20260616-ABCDEF12", "status": "RESERVED", "paymentMethod": "PAY_AT_PICKUP", "totalYen": 1800 }
-}
-```
-
-#### Response（Stripe決済）
-
-```json
-{
-  "ok": true,
-  "data": { "orderId": "uuid-order", "orderNo": "20260616-ABCDEF12", "status": "PENDING_PAYMENT", "paymentMethod": "STRIPE", "totalYen": 1800, "checkoutUrl": "https://checkout.stripe.com/c/pay/cs_..." }
-}
-```
-
----
 
 ### POST /api/orders/shipping
 
@@ -273,13 +233,13 @@ Stripe Webhook を受信し、支払い完了を処理する。
 
 ---
 
-### POST /api/admin/orders/{orderId}/mark-paid
-
-管理者が店頭入金を確認する（`RESERVED → PAID`）。
-
 ### POST /api/admin/orders/{orderId}/ship
 
 発送情報（`carrier` / `trackingNo`）を登録する（`PACKING/PAID → SHIPPED`）。発送通知メールを送信。
+
+### POST /api/admin/orders/{orderId}/refund
+
+Stripe 返金を実行し、注文を `REFUNDED` に更新する。
 
 > その他の API は `docs/FEATURE_LIST.md`（機能一覧）の API 章、および `docs/TECHNICAL.md`「8. APIリファレンス」を参照。
 

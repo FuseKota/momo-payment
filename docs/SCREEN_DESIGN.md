@@ -16,9 +16,7 @@
 
 | ID | 画面 | パス | 権限 | 目的 |
 |----|------|------|:---:|------|
-| C-01 | トップ | `/` | 🌐 | Hero + 購入方法選択（店頭/配送） |
-| C-02 | 店頭受け取り注文 | `/pickup` | 🌐 | 商品選択・顧客情報入力 |
-| C-03 | 店頭決済選択 | `/checkout/pickup` | 🌐 | 店頭払い / Stripe 決済の選択 |
+| C-01 | トップ | `/` | 🌐 | Hero + 配送ECへの導線 |
 | C-04 | 配送EC商品一覧 | `/shop` | 🌐 | 商品一覧・カテゴリフィルタ |
 | C-05 | 商品詳細 | `/shop/[slug]` | 🌐 | 商品情報・食品表示・バリエーション・カート追加 |
 | C-06 | カート | `/cart` | 🌐 | 数量変更・温度帯混在チェック・小計表示 |
@@ -41,7 +39,7 @@
 | A-01 | 管理者ログイン | `/admin/login` | 🌐 | 管理者認証 |
 | A-02 | 商品管理 | `/admin/products` | 🛠 | 商品 CRUD・画像・バリエーション・並び替え |
 | A-03 | 注文一覧 | `/admin/orders` | 🛠 | 注文の検索・一覧 |
-| A-04 | 注文詳細 | `/admin/orders/[id]` | 🛠 | 入金確認・発送登録・追跡番号 |
+| A-04 | 注文詳細 | `/admin/orders/[id]` | 🛠 | 発送登録・追跡番号・返金・メール再送 |
 | A-05 | ニュース管理 | `/admin/news` | 🛠 | ニュース CRUD・公開制御 |
 | A-06 | 夜市カレンダー管理 | `/admin/iitate-calendar` | 🛠 | 開催日・月メモ編集 |
 
@@ -55,18 +53,12 @@
 graph TD
     Top["C-01 トップ /"]
 
-    Top -->|店頭受け取り| Pickup["C-02 /pickup"]
-    Pickup --> CkPickup["C-03 /checkout/pickup"]
-    CkPickup -->|店頭払い| Complete["C-08 /complete"]
-    CkPickup -->|Stripe| StripeP["Stripe Checkout（外部）"]
-    StripeP --> Complete
-
     Top -->|配送注文| Shop["C-04 /shop"]
     Shop --> Detail["C-05 /shop/[slug]"]
     Detail --> Cart["C-06 /cart"]
     Cart --> CkShip["C-07 /checkout/shipping"]
     CkShip --> StripeS["Stripe Checkout（外部）"]
-    StripeS --> Complete
+    StripeS --> Complete["C-08 /complete"]
 
     Top -.-> Login["C-09 /login"]
     Login --> MyPage["C-10 /mypage"]
@@ -85,8 +77,8 @@ graph TD
     ALogin["A-01 /admin/login"] --> AProducts["A-02 商品管理"]
     ALogin --> AOrders["A-03 注文一覧"]
     AOrders --> AOrderDetail["A-04 注文詳細"]
-    AOrderDetail -->|入金確認| AOrderDetail
     AOrderDetail -->|発送登録| AOrderDetail
+    AOrderDetail -->|返金| AOrderDetail
     ALogin --> ANews["A-05 ニュース管理"]
     ALogin --> ACal["A-06 夜市カレンダー管理"]
 ```
@@ -97,19 +89,8 @@ graph TD
 
 ### C-01 トップ（`/`）🌐
 - **目的**: 購入導線の起点。
-- **表示**: Hero ビジュアル、購入方法選択（店頭受け取り／配送注文）、ニュース抜粋、フッター（法定リンク）。
-- **遷移**: → `/pickup`（店頭）／ `/shop`（配送）／ `/news` ／ `/taiwan-night-market`。
-
-### C-02 店頭受け取り注文（`/pickup`）🌐
-- **目的**: 店頭受取商品の選択と顧客情報入力。
-- **入力**: 商品・数量、顧客（氏名・電話・メール）、受取日時（任意）、規約同意。
-- **バリデーション**: 電話/メール形式、必須項目。
-- **遷移**: → `/checkout/pickup`。
-
-### C-03 店頭決済選択（`/checkout/pickup`）🌐
-- **目的**: 支払い方法の選択。
-- **操作**: [店頭払い]→注文作成（`RESERVED`）→ `/complete`。[Stripe 決済]→Checkout Session 作成→外部決済→ `/complete`。
-- **API**: `POST /api/orders/pickup`。
+- **表示**: Hero ビジュアル、配送ECへの導線、ニュース抜粋、フッター（法定リンク）。
+- **遷移**: → `/shop`（配送）／ `/news` ／ `/taiwan-night-market`。
 
 ### C-04 配送EC商品一覧（`/shop`）🌐
 - **目的**: 配送対象商品の一覧。
@@ -184,8 +165,8 @@ graph TD
 
 ### A-04 注文詳細（`/admin/orders/[id]`）🛠
 - **表示**: 明細・顧客・配送先・決済・ステータス履歴。
-- **操作**: **入金確認**（店頭払い `RESERVED→PAID`）、**発送登録**（配送業者・追跡番号 `→SHIPPED`、発送通知メール送信）。
-- **API**: `GET /api/admin/orders/[id]`、`/mark-paid`、`/ship`。
+- **操作**: **発送登録**（配送業者・追跡番号 `→SHIPPED`、発送通知メール送信）、**返金**、**メール再送**。
+- **API**: `GET /api/admin/orders/[id]`、`/ship`。
 
 ### A-05 ニュース管理（`/admin/news`）🛠
 - **操作**: ニュース CRUD、公開/非公開、多言語。
