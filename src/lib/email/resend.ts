@@ -15,6 +15,132 @@ function getMessages(locale: string): Messages {
   return jaMessages;
 }
 
+// 本番では env.EMAIL_FROM 必須（env.ts で検証）。以下は開発時のフォールバック。
+const FROM_EMAIL = env.EMAIL_FROM || 'info@sakura-sisters.com';
+
+/** ユーザー入力値をHTMLテンプレートに挿入する前にエスケープ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/**
+ * 全メール共通の HTML 外枠（DOCTYPE / ヘッダ（ブランド名＋挨拶）/ フッタ）。
+ * 各テンプレートは中身（innerHtml）のみを組み立てて渡す。
+ */
+function emailLayout(brandName: string, greeting: string, innerHtml: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="color: #FF6680; margin: 0;">${brandName}</h1>
+        <p style="color: #666; margin: 8px 0 0;">${greeting}</p>
+      </div>
+${innerHtml}
+      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
+        <p style="margin: 0;">© ${brandName}</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+type SendResult = { success: boolean; messageId?: string; error?: unknown; skipped?: boolean };
+
+/** Resend 送信 + 共通エラーハンドリング。errorLabel は失敗ログ用。 */
+async function sendEmail(opts: {
+  brandName: string;
+  to: string;
+  subject: string;
+  html: string;
+  errorLabel: string;
+}): Promise<SendResult> {
+  try {
+    const { data: result, error } = await resend.emails.send({
+      from: `${opts.brandName} <${FROM_EMAIL}>`,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    });
+
+    if (error) {
+      secureLog('error', opts.errorLabel, safeErrorLog(error));
+      return { success: false, error };
+    }
+
+    return { success: true, messageId: result?.id };
+  } catch (error) {
+    secureLog('error', opts.errorLabel, safeErrorLog(error));
+    return { success: false, error };
+  }
+}
+
+/** 注文明細テーブルの行 HTML を生成（顧客確認 / 管理者通知で共用） */
+function renderItemsRows(items: Array<{ name: string; qty: number; subtotal: number }>): string {
+  return items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.name)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.qty}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">¥${item.subtotal.toLocaleString()}</td>
+      </tr>
+    `
+    )
+    .join('');
+}
+
+/** 配送先住所ブロック HTML（顧客確認 / 管理者通知で共用） */
+function renderShippingAddress(
+  e: Messages['email'],
+  address?: {
+    postalCode: string;
+    prefecture: string;
+    city: string;
+    address1: string;
+    address2?: string | null;
+  }
+): string {
+  if (!address) return '';
+  return `
+      <h3 style="color: #FF6680; margin-top: 24px;">${e.shippingDestination}</h3>
+      <p style="margin: 0;">
+        〒${escapeHtml(address.postalCode)}<br>
+        ${escapeHtml(address.prefecture)}${escapeHtml(address.city)}${escapeHtml(address.address1)}<br>
+        ${address.address2 ? escapeHtml(address.address2) : ''}
+      </p>
+    `;
+}
+
+/** 配送希望日時ブロック HTML（顧客確認 / 管理者通知で共用） */
+function renderDeliverySchedule(
+  m: Messages,
+  deliveryDate?: string | null,
+  deliveryTimeSlot?: string | null
+): string {
+  const e = m.email;
+  const slotLabel =
+    deliveryTimeSlot && deliveryTimeSlot !== 'UNSPECIFIED'
+      ? (m.common.timeSlots as Record<string, string>)[deliveryTimeSlot] ?? ''
+      : '';
+  if (!deliveryDate && !slotLabel) return '';
+  return `
+      <h3 style="color: #FF6680; margin-top: 24px;">${e.deliverySchedule}</h3>
+      <p style="margin: 0;">
+        ${escapeHtml(deliveryDate || '')} ${escapeHtml(slotLabel)}
+      </p>
+    `;
+}
+
 export interface OrderConfirmationData {
   orderNo: string;
   customerName: string;
@@ -49,76 +175,11 @@ export interface ShippingNotificationData {
   locale?: string;
 }
 
-// 本番では env.EMAIL_FROM 必須（env.ts で検証）。以下は開発時のフォールバック。
-const FROM_EMAIL = env.EMAIL_FROM || 'info@sakura-sisters.com';
-
-/** ユーザー入力値をHTMLテンプレートに挿入する前にエスケープ */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-}
-
-export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
+export async function sendOrderConfirmationEmail(data: OrderConfirmationData): Promise<SendResult> {
   const m = getMessages(data.locale || 'ja');
   const e = m.email;
-  const fromName = e.brandName;
 
-  const itemsHtml = data.items
-    .map(
-      (item) => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.name)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.qty}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">¥${item.subtotal.toLocaleString()}</td>
-      </tr>
-    `
-    )
-    .join('');
-
-  const shippingAddressHtml = data.shippingAddress
-    ? `
-      <h3 style="color: #FF6680; margin-top: 24px;">${e.shippingDestination}</h3>
-      <p style="margin: 0;">
-        〒${escapeHtml(data.shippingAddress.postalCode)}<br>
-        ${escapeHtml(data.shippingAddress.prefecture)}${escapeHtml(data.shippingAddress.city)}${escapeHtml(data.shippingAddress.address1)}<br>
-        ${data.shippingAddress.address2 ? escapeHtml(data.shippingAddress.address2) : ''}
-      </p>
-    `
-    : '';
-
-  const deliverySlotLabel =
-    data.deliveryTimeSlot && data.deliveryTimeSlot !== 'UNSPECIFIED'
-      ? (m.common.timeSlots as Record<string, string>)[data.deliveryTimeSlot] ?? ''
-      : '';
-  const deliveryScheduleHtml =
-    data.deliveryDate || deliverySlotLabel
-      ? `
-      <h3 style="color: #FF6680; margin-top: 24px;">${e.deliverySchedule}</h3>
-      <p style="margin: 0;">
-        ${escapeHtml(data.deliveryDate || '')} ${escapeHtml(deliverySlotLabel)}
-      </p>
-    `
-      : '';
-
-  const orderTypeLabel = e.orderTypeShipping;
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
-        <p style="color: #666; margin: 8px 0 0;">${e.orderConfirmGreeting}</p>
-      </div>
-
+  const inner = `
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
@@ -130,7 +191,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
         <h3 style="color: #FF6680; margin-top: 0;">${e.orderInfo}</h3>
         <p style="margin: 0 0 8px;">
           <strong>${e.orderNo}</strong> ${data.orderNo}<br>
-          <strong>${e.orderType}</strong> ${orderTypeLabel}
+          <strong>${e.orderType}</strong> ${e.orderTypeShipping}
         </p>
 
         <h3 style="color: #FF6680; margin-top: 24px;">${e.orderedItems}</h3>
@@ -143,7 +204,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
             </tr>
           </thead>
           <tbody>
-            ${itemsHtml}
+            ${renderItemsRows(data.items)}
           </tbody>
         </table>
 
@@ -155,8 +216,8 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
           </p>
         </div>
 
-        ${shippingAddressHtml}
-        ${deliveryScheduleHtml}
+        ${renderShippingAddress(e, data.shippingAddress)}
+        ${renderDeliverySchedule(m, data.deliveryDate, data.deliveryTimeSlot)}
       </div>
 
       <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px; font-size: 12px; color: #666;">
@@ -167,61 +228,30 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
           ${e.autoSendNotice}
         </p>
       </div>
+`;
 
-      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© ${e.brandName}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const subject = e.orderConfirmSubject.replace('{orderNo}', data.orderNo);
-    const { data: result, error } = await resend.emails.send({
-      from: `${fromName} <${FROM_EMAIL}>`,
-      to: data.customerEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      secureLog('error', 'Failed to send order confirmation email', safeErrorLog(error));
-      return { success: false, error };
-    }
-
-    return { success: true, messageId: result?.id };
-  } catch (error) {
-    secureLog('error', 'Failed to send order confirmation email', safeErrorLog(error));
-    return { success: false, error };
-  }
+  return sendEmail({
+    brandName: e.brandName,
+    to: data.customerEmail,
+    subject: e.orderConfirmSubject.replace('{orderNo}', data.orderNo),
+    html: emailLayout(e.brandName, e.orderConfirmGreeting, inner),
+    errorLabel: 'Failed to send order confirmation email',
+  });
 }
 
-export async function sendShippingNotificationEmail(data: ShippingNotificationData) {
+export async function sendShippingNotificationEmail(data: ShippingNotificationData): Promise<SendResult> {
   const m = getMessages(data.locale || 'ja');
   const e = m.email;
-  const fromName = e.brandName;
 
   const trackingHtml = data.trackingNumber
     ? `
-      <p style="margin: 16px 0;">
-        <strong>${e.trackingNo}</strong> ${data.trackingNumber}
-      </p>
-    `
+        <p style="margin: 16px 0;">
+          <strong>${e.trackingNo}</strong> ${data.trackingNumber}
+        </p>
+      `
     : '';
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
-        <p style="color: #666; margin: 8px 0 0;">${e.shippingGreeting}</p>
-      </div>
-
+  const inner = `
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
@@ -244,33 +274,15 @@ export async function sendShippingNotificationEmail(data: ShippingNotificationDa
           ${e.autoSendNotice}
         </p>
       </div>
+`;
 
-      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© ${e.brandName}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const subject = e.shippingSubject.replace('{orderNo}', data.orderNo);
-    const { data: result, error } = await resend.emails.send({
-      from: `${fromName} <${FROM_EMAIL}>`,
-      to: data.customerEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      secureLog('error', 'Failed to send shipping notification email', safeErrorLog(error));
-      return { success: false, error };
-    }
-
-    return { success: true, messageId: result?.id };
-  } catch (error) {
-    secureLog('error', 'Failed to send shipping notification email', safeErrorLog(error));
-    return { success: false, error };
-  }
+  return sendEmail({
+    brandName: e.brandName,
+    to: data.customerEmail,
+    subject: e.shippingSubject.replace('{orderNo}', data.orderNo),
+    html: emailLayout(e.brandName, e.shippingGreeting, inner),
+    errorLabel: 'Failed to send shipping notification email',
+  });
 }
 
 export async function sendPaymentConfirmationEmail(data: {
@@ -279,24 +291,11 @@ export async function sendPaymentConfirmationEmail(data: {
   customerEmail: string;
   total: number;
   locale?: string;
-}) {
+}): Promise<SendResult> {
   const m = getMessages(data.locale || 'ja');
   const e = m.email;
-  const fromName = e.brandName;
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
-        <p style="color: #666; margin: 8px 0 0;">${e.paymentGreeting}</p>
-      </div>
-
+  const inner = `
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
@@ -319,33 +318,15 @@ export async function sendPaymentConfirmationEmail(data: {
           ${e.autoSendNotice}
         </p>
       </div>
+`;
 
-      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© ${e.brandName}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const subject = e.paymentSubject.replace('{orderNo}', data.orderNo);
-    const { data: result, error } = await resend.emails.send({
-      from: `${fromName} <${FROM_EMAIL}>`,
-      to: data.customerEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      secureLog('error', 'Failed to send payment confirmation email', safeErrorLog(error));
-      return { success: false, error };
-    }
-
-    return { success: true, messageId: result?.id };
-  } catch (error) {
-    secureLog('error', 'Failed to send payment confirmation email', safeErrorLog(error));
-    return { success: false, error };
-  }
+  return sendEmail({
+    brandName: e.brandName,
+    to: data.customerEmail,
+    subject: e.paymentSubject.replace('{orderNo}', data.orderNo),
+    html: emailLayout(e.brandName, e.paymentGreeting, inner),
+    errorLabel: 'Failed to send payment confirmation email',
+  });
 }
 
 /**
@@ -357,24 +338,11 @@ export async function sendOrderCancellationEmail(data: {
   customerName: string;
   customerEmail: string;
   locale?: string;
-}) {
+}): Promise<SendResult> {
   const m = getMessages(data.locale || 'ja');
   const e = m.email;
-  const fromName = e.brandName;
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
-        <p style="color: #666; margin: 8px 0 0;">${e.cancelGreeting}</p>
-      </div>
-
+  const inner = `
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
@@ -396,33 +364,15 @@ export async function sendOrderCancellationEmail(data: {
           ${e.autoSendNotice}
         </p>
       </div>
+`;
 
-      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© ${e.brandName}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const subject = e.cancelSubject.replace('{orderNo}', data.orderNo);
-    const { data: result, error } = await resend.emails.send({
-      from: `${fromName} <${FROM_EMAIL}>`,
-      to: data.customerEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      secureLog('error', 'Failed to send order cancellation email', safeErrorLog(error));
-      return { success: false, error };
-    }
-
-    return { success: true, messageId: result?.id };
-  } catch (error) {
-    secureLog('error', 'Failed to send order cancellation email', safeErrorLog(error));
-    return { success: false, error };
-  }
+  return sendEmail({
+    brandName: e.brandName,
+    to: data.customerEmail,
+    subject: e.cancelSubject.replace('{orderNo}', data.orderNo),
+    html: emailLayout(e.brandName, e.cancelGreeting, inner),
+    errorLabel: 'Failed to send order cancellation email',
+  });
 }
 
 /**
@@ -436,24 +386,11 @@ export async function sendRefundNotificationEmail(data: {
   customerEmail: string;
   total: number;
   locale?: string;
-}) {
+}): Promise<SendResult> {
   const m = getMessages(data.locale || 'ja');
   const e = m.email;
-  const fromName = e.brandName;
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
-        <p style="color: #666; margin: 8px 0 0;">${e.refundGreeting}</p>
-      </div>
-
+  const inner = `
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <p style="margin: 0 0 16px;">${e.orderConfirmHonorific.replace('{name}', escapeHtml(data.customerName))}</p>
         <p style="margin: 0;">
@@ -476,33 +413,15 @@ export async function sendRefundNotificationEmail(data: {
           ${e.autoSendNotice}
         </p>
       </div>
+`;
 
-      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© ${e.brandName}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const subject = e.refundSubject.replace('{orderNo}', data.orderNo);
-    const { data: result, error } = await resend.emails.send({
-      from: `${fromName} <${FROM_EMAIL}>`,
-      to: data.customerEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      secureLog('error', 'Failed to send refund notification email', safeErrorLog(error));
-      return { success: false, error };
-    }
-
-    return { success: true, messageId: result?.id };
-  } catch (error) {
-    secureLog('error', 'Failed to send refund notification email', safeErrorLog(error));
-    return { success: false, error };
-  }
+  return sendEmail({
+    brandName: e.brandName,
+    to: data.customerEmail,
+    subject: e.refundSubject.replace('{orderNo}', data.orderNo),
+    html: emailLayout(e.brandName, e.refundGreeting, inner),
+    errorLabel: 'Failed to send refund notification email',
+  });
 }
 
 export interface AdminNewOrderData {
@@ -531,7 +450,7 @@ export interface AdminNewOrderData {
  * Stripe 決済成功時に送信する。
  * 文面は店舗運営者向けのため日本語固定。ADMIN_EMAIL 未設定時はスキップ。
  */
-export async function sendAdminNewOrderEmail(data: AdminNewOrderData) {
+export async function sendAdminNewOrderEmail(data: AdminNewOrderData): Promise<SendResult> {
   const adminEmail = env.ADMIN_EMAIL;
   if (!adminEmail) {
     secureLog('warn', 'ADMIN_EMAIL not configured, skipping admin new-order notification');
@@ -540,63 +459,9 @@ export async function sendAdminNewOrderEmail(data: AdminNewOrderData) {
 
   const m = getMessages('ja');
   const e = m.email;
-  const fromName = e.brandName;
-
-  const orderTypeLabel = e.orderTypeShipping;
-  const paymentLabel = e.adminPaymentStripe;
-
-  const itemsHtml = data.items
-    .map(
-      (item) => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.name)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.qty}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">¥${item.subtotal.toLocaleString()}</td>
-      </tr>
-    `
-    )
-    .join('');
-
-  const shippingAddressHtml = data.shippingAddress
-    ? `
-      <h3 style="color: #FF6680; margin-top: 24px;">${e.shippingDestination}</h3>
-      <p style="margin: 0;">
-        〒${escapeHtml(data.shippingAddress.postalCode)}<br>
-        ${escapeHtml(data.shippingAddress.prefecture)}${escapeHtml(data.shippingAddress.city)}${escapeHtml(data.shippingAddress.address1)}<br>
-        ${data.shippingAddress.address2 ? escapeHtml(data.shippingAddress.address2) : ''}
-      </p>
-    `
-    : '';
-
-  const deliverySlotLabel =
-    data.deliveryTimeSlot && data.deliveryTimeSlot !== 'UNSPECIFIED'
-      ? (m.common.timeSlots as Record<string, string>)[data.deliveryTimeSlot] ?? ''
-      : '';
-  const deliveryScheduleHtml =
-    data.deliveryDate || deliverySlotLabel
-      ? `
-      <h3 style="color: #FF6680; margin-top: 24px;">${e.deliverySchedule}</h3>
-      <p style="margin: 0;">
-        ${escapeHtml(data.deliveryDate || '')} ${escapeHtml(deliverySlotLabel)}
-      </p>
-    `
-      : '';
-
   const dashboardUrl = `${env.NEXT_PUBLIC_APP_URL}/admin/orders/${data.orderId}`;
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #FF6680; margin: 0;">${e.brandName}</h1>
-        <p style="color: #666; margin: 8px 0 0;">${e.adminNewOrderGreeting}</p>
-      </div>
-
+  const inner = `
       <div style="background: #FFF0F3; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <p style="margin: 0;">${e.adminNewOrderMessage}</p>
       </div>
@@ -605,8 +470,8 @@ export async function sendAdminNewOrderEmail(data: AdminNewOrderData) {
         <h3 style="color: #FF6680; margin-top: 0;">${e.orderInfo}</h3>
         <p style="margin: 0 0 8px;">
           <strong>${e.orderNo}</strong> ${data.orderNo}<br>
-          <strong>${e.orderType}</strong> ${orderTypeLabel}<br>
-          <strong>${e.adminPaymentMethod}</strong> ${paymentLabel}
+          <strong>${e.orderType}</strong> ${e.orderTypeShipping}<br>
+          <strong>${e.adminPaymentMethod}</strong> ${e.adminPaymentStripe}
         </p>
 
         <h3 style="color: #FF6680; margin-top: 24px;">${e.adminCustomerInfo}</h3>
@@ -626,7 +491,7 @@ export async function sendAdminNewOrderEmail(data: AdminNewOrderData) {
             </tr>
           </thead>
           <tbody>
-            ${itemsHtml}
+            ${renderItemsRows(data.items)}
           </tbody>
         </table>
 
@@ -636,8 +501,8 @@ export async function sendAdminNewOrderEmail(data: AdminNewOrderData) {
           </p>
         </div>
 
-        ${shippingAddressHtml}
-        ${deliveryScheduleHtml}
+        ${renderShippingAddress(e, data.shippingAddress)}
+        ${renderDeliverySchedule(m, data.deliveryDate, data.deliveryTimeSlot)}
       </div>
 
       <div style="text-align: center; margin: 24px 0;">
@@ -645,33 +510,15 @@ export async function sendAdminNewOrderEmail(data: AdminNewOrderData) {
           ${e.adminViewInDashboard}
         </a>
       </div>
+`;
 
-      <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
-        <p style="margin: 0;">© ${e.brandName}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const subject = e.adminNewOrderSubject
+  return sendEmail({
+    brandName: e.brandName,
+    to: adminEmail,
+    subject: e.adminNewOrderSubject
       .replace('{orderNo}', data.orderNo)
-      .replace('{orderType}', orderTypeLabel);
-    const { data: result, error } = await resend.emails.send({
-      from: `${fromName} <${FROM_EMAIL}>`,
-      to: adminEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      secureLog('error', 'Failed to send admin new-order email', safeErrorLog(error));
-      return { success: false, error };
-    }
-
-    return { success: true, messageId: result?.id };
-  } catch (error) {
-    secureLog('error', 'Failed to send admin new-order email', safeErrorLog(error));
-    return { success: false, error };
-  }
+      .replace('{orderType}', e.orderTypeShipping),
+    html: emailLayout(e.brandName, e.adminNewOrderGreeting, inner),
+    errorLabel: 'Failed to send admin new-order email',
+  });
 }
