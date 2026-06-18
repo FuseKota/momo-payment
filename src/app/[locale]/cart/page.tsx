@@ -24,6 +24,7 @@ import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
 import { getLocalizedName } from '@/lib/utils/localize-product';
 import { MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
+import { peachPink } from '@/lib/mui/theme';
 
 export default function CartPage() {
   const t = useTranslations('cart');
@@ -45,7 +46,7 @@ export default function CartPage() {
               width: 120,
               height: 120,
               borderRadius: '50%',
-              backgroundColor: '#FFF0F3',
+              backgroundColor: peachPink[50],
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -55,7 +56,7 @@ export default function CartPage() {
           >
             <ShoppingCartIcon sx={{ fontSize: 48, color: 'primary.main' }} />
           </Box>
-          <Typography variant="h4" sx={{ mb: 2, color: '#1a1a1a' }}>
+          <Typography variant="h4" sx={{ mb: 2, color: 'text.primary' }}>
             {t('empty')}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
@@ -84,7 +85,7 @@ export default function CartPage() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
-            <Typography variant="h3" sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: { xs: '1.75rem', md: '3rem' } }}>
+            <Typography variant="h3" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.75rem', md: '3rem' } }}>
               {t('title')}
             </Typography>
             <Chip icon={<LocalShippingIcon />} label={t('shippingMode')} color="primary" variant="outlined" />
@@ -126,7 +127,7 @@ export default function CartPage() {
                           sx={{
                             width: { xs: 80, md: 100 },
                             height: { xs: 80, md: 100 },
-                            backgroundColor: '#FFF0F3',
+                            backgroundColor: peachPink[50],
                             borderRadius: 2,
                             display: 'flex',
                             alignItems: 'center',

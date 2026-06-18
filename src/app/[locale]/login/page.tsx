@@ -24,6 +24,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout, PostalCodeField } from '@/components/common';
 import { PHONE_REGEX, validateAddressFields } from '@/lib/utils/form-validators';
+import { peachPink } from '@/lib/mui/theme';
 
 export default function LoginPage() {
   return (
@@ -201,7 +202,7 @@ function LoginPageContent() {
                 width: 60,
                 height: 60,
                 borderRadius: '50%',
-                backgroundColor: '#FFF0F3',
+                backgroundColor: peachPink[50],
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -3,7 +3,8 @@
 import { createTheme } from '@mui/material/styles';
 
 // 桃をイメージしたピンク系カラーパレット
-const peachPink = {
+// パレット未登録の淡色（例: peachPink[50]=#FFF0F3）を sx で参照するため export する
+export const peachPink = {
   50: '#FFF0F3',
   100: '#FFE0E6',
   200: '#FFC2CC',

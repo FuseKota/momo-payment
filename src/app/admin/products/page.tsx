@@ -45,6 +45,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { formatPrice } from '@/lib/utils/format';
 import type { Product, FoodLabel } from '@/types/database';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { peachPink } from '@/lib/mui/theme';
 
 interface ProductFormData {
   name: string;
@@ -593,7 +594,7 @@ export default function AdminProductsPage() {
                           width: 48,
                           height: 48,
                           borderRadius: 1,
-                          backgroundColor: '#FFF0F3',
+                          backgroundColor: peachPink[50],
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -754,7 +755,7 @@ export default function AdminProductsPage() {
                   borderRadius: 2,
                   border: '2px dashed',
                   borderColor: isDragging ? 'primary.main' : 'transparent',
-                  backgroundColor: isDragging ? '#FFF0F3' : 'transparent',
+                  backgroundColor: isDragging ? peachPink[50] : 'transparent',
                   transition: 'border-color 0.2s, background-color 0.2s',
                 }}
               >
@@ -794,7 +795,7 @@ export default function AdminProductsPage() {
                       width: 120,
                       height: 120,
                       borderRadius: 2,
-                      backgroundColor: '#FFF0F3',
+                      backgroundColor: peachPink[50],
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

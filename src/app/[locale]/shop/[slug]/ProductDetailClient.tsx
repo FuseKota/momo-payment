@@ -18,6 +18,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InfoIcon from '@mui/icons-material/Info';
+import { peachPink } from '@/lib/mui/theme';
 import { Layout, QuantityControl } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
@@ -121,7 +122,7 @@ export default function ProductDetailClient({ product }: Props) {
                   <Paper
                     sx={{
                       height: { xs: 240, sm: 320, md: 400 },
-                      backgroundColor: '#FFF0F3',
+                      backgroundColor: peachPink[50],
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -197,7 +198,7 @@ export default function ProductDetailClient({ product }: Props) {
           {/* Product Info */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box>
-              <Typography component="h1" variant="h3" sx={{ mb: 2, fontWeight: 700, color: '#1a1a1a' }}>
+              <Typography component="h1" variant="h3" sx={{ mb: 2, fontWeight: 700, color: 'text.primary' }}>
                 {getLocalizedName(product, locale)}
               </Typography>
 
@@ -232,7 +233,7 @@ export default function ProductDetailClient({ product }: Props) {
               {/* Size Selector */}
               {product.has_variants && product.variants && product.variants.length > 0 && (
                 <Box sx={{ mb: 4 }}>
-                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 600, color: '#1a1a1a' }}>
+                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
                     {t('selectSize')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -272,7 +273,7 @@ export default function ProductDetailClient({ product }: Props) {
 
               {/* Quantity Selector */}
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                <Typography variant="body1" sx={{ mr: 3, color: '#1a1a1a' }}>
+                <Typography variant="body1" sx={{ mr: 3, color: 'text.primary' }}>
                   {t('quantity')}
                 </Typography>
                 <QuantityControl
