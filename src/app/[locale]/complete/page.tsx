@@ -17,7 +17,6 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import HomeIcon from '@mui/icons-material/Home';
-import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { Layout } from '@/components/common';
 import { formatPrice } from '@/lib/utils/format';
@@ -145,7 +144,6 @@ function CompleteContent() {
 
   const isPaymentComplete = order.status === 'PAID' || order.status === 'RESERVED';
   const isPendingPayment = order.status === 'PENDING_PAYMENT';
-  const isPickup = order.order_type === 'PICKUP';
 
   return (
     <Layout>
@@ -174,9 +172,7 @@ function CompleteContent() {
 
           <Typography variant="h4" sx={{ mb: 2, fontWeight: 700 }}>
             {isPaymentComplete
-              ? isPickup
-                ? t('reservationComplete')
-                : t('orderComplete')
+              ? t('orderComplete')
               : isPendingPayment
               ? t('paymentProcessing')
               : t('orderAccepted')}
@@ -184,9 +180,7 @@ function CompleteContent() {
 
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             {isPaymentComplete
-              ? isPickup
-                ? t('reservationMessage')
-                : t('orderConfirmMessage')
+              ? t('orderConfirmMessage')
               : isPendingPayment
               ? t('pendingPaymentMessage')
               : t('checkOrderMessage')}
@@ -284,21 +278,7 @@ function CompleteContent() {
           <Divider sx={{ my: 3 }} />
 
           {/* Shipping Address or Pickup Info */}
-          {isPickup ? (
-            <Box sx={{ textAlign: 'left', mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <StorefrontIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {t('pickupInfoTitle')}
-                </Typography>
-              </Box>
-              {order.payment_method === 'PAY_AT_PICKUP' && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  {t('payAtPickupNotice')}
-                </Alert>
-              )}
-            </Box>
-          ) : (
+          {order.order_type === 'SHIPPING' && (
             <Box sx={{ textAlign: 'left', mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <LocalShippingIcon sx={{ color: 'primary.main' }} />
