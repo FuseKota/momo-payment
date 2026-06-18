@@ -4,10 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-momo-payment は「もも娘」のオンライン注文システム。店頭受け取りと配送ECの2つの購入体験を提供する。
+momo-payment は「もも娘」のオンライン注文システム。冷凍食品・グッズを配送するECを提供する。
 
 ### 主な機能
-- **店頭受け取り（PICKUP）**: Stripe事前決済 or 店頭払いを選択可能
 - **配送EC（SHIPPING）**: 冷凍食品・グッズをオンライン決済（Stripe必須）で配送
 - **ニュース**: お知らせ一覧・詳細
 - **マイページ**: 注文履歴・配送先住所管理
@@ -68,14 +67,12 @@ next-intl v4.8.3 を使用。全URLにロケールプレフィックスが付く
 ```
 src/app/
 ├── [locale]/                       # ロケールプレフィックス付きルート
-│   ├── page.tsx                    # トップページ（Hero + 購入方法選択）
+│   ├── page.tsx                    # トップページ（Hero）
 │   ├── layout.tsx                  # ロケール別レイアウト（フォント切替）
-│   ├── pickup/                     # 店頭受け取り注文フォーム
 │   ├── shop/                       # 配送EC商品一覧（フィルタ機能）
 │   │   └── [slug]/                 # 商品詳細
 │   ├── cart/                       # カート（温度帯混在チェック）
 │   ├── checkout/
-│   │   ├── pickup/                 # 店頭受け取り決済選択
 │   │   └── shipping/               # 配送チェックアウト（住所入力）
 │   ├── complete/                   # 注文完了
 │   ├── login/                      # ユーザーログイン
@@ -102,7 +99,6 @@ src/app/
     ├── auth/signup/                # POST: ユーザー登録
     ├── postal-code/lookup/         # GET: 郵便番号検索
     ├── orders/
-    │   ├── pickup/                 # POST: 店頭受け取り注文作成
     │   ├── shipping/               # POST: 配送注文作成
     │   └── by-no/[orderNo]/        # GET: 注文番号検索
     ├── mypage/
@@ -117,8 +113,9 @@ src/app/
             ├── route.ts            # GET: 注文一覧
             └── [id]/
                 ├── route.ts        # GET: 注文詳細
-                ├── mark-paid/      # POST: 入金確認
-                └── ship/           # POST: 発送登録
+                ├── ship/           # POST: 発送登録
+                ├── refund/         # POST: 全額返金（Stripe）
+                └── resend-email/   # POST: メール再送
 ```
 
 ### ライブラリ構成
@@ -184,13 +181,12 @@ news ── (独立テーブル)
 
 ### ステータスフロー
 
-**店頭払い**: `RESERVED` → `PAID` → `FULFILLED`
-**Stripe決済（店頭受取）**: `PENDING_PAYMENT` → `PAID` → `FULFILLED`
-**Stripe決済（配送）**: `PENDING_PAYMENT` → `PAID` → `PACKING` → `SHIPPED` → `FULFILLED`
+**配送（Stripe決済）**: `PENDING_PAYMENT` → `PAID` → `PACKING` → `SHIPPED` → `FULFILLED`
+（キャンセル時は `CANCELED`、返金時は `REFUNDED`）
 
 ### 重要な制約
+- **配送EC専用**: 全注文が SHIPPING（Stripeオンライン決済）。店頭受け取り（PICKUP）/店頭払いは廃止済み
 - **温度帯混在禁止**: 冷凍食品（FROZEN）とグッズ（AMBIENT）の同時購入は不可
-- **配送はオンライン決済必須**: SHIPPING注文はStripe決済のみ
 
 ## Key Files
 

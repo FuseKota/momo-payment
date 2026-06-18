@@ -25,8 +25,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  FormControlLabel,
-  Checkbox,
   Select,
   MenuItem,
   FormControl,
@@ -58,7 +56,7 @@ interface OrderItem {
 interface Order {
   id: string;
   order_no: string;
-  order_type: 'SHIPPING' | 'PICKUP';
+  order_type: 'SHIPPING';
   status: string;
   payment_status: string;
   payment_method: string;
@@ -126,7 +124,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
   // 返金ダイアログ
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [refundReason, setRefundReason] = useState('');
-  const [refundCashConfirmed, setRefundCashConfirmed] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   // メール再送
   const [resendType, setResendType] = useState<ResendEmailType>('ORDER_CONFIRMATION');
@@ -187,7 +184,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reason: refundReason || undefined,
-          manualMark: refundCashConfirmed || undefined,
         }),
       });
       const data = await response.json().catch(() => null);
@@ -197,7 +193,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
         setSnackbar({ open: true, message: '返金処理が完了しました', severity: 'success' });
         setRefundDialogOpen(false);
         setRefundReason('');
-        setRefundCashConfirmed(false);
       } else {
         let message = '返金処理に失敗しました';
         if (data?.error === 'already_refunded') {
@@ -206,8 +201,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
           message = 'Stripeでの返金処理に失敗しました。時間をおいて再度お試しください';
         } else if (data?.error === 'no_payment_intent') {
           message = '決済情報が見つからないため返金できません';
-        } else if (data?.error === 'manual_mark_required') {
-          message = '現金返金の確認にチェックを入れてください';
         } else if (data?.error === 'unsupported_payment_method') {
           message = 'この決済方法は返金に対応していません';
         }
@@ -276,7 +269,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
   }
 
   // 返金関連の派生値
-  const isStripe = order.payment_method !== 'PAY_AT_PICKUP';
   const isRefunded = order.status === 'REFUNDED' || !!order.refunded_at;
   const canRefund = !isRefunded && ['PAID', 'PACKING', 'SHIPPED', 'FULFILLED'].includes(order.status);
 
@@ -336,12 +328,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                 <Typography variant="body2" color="text.secondary">
                   種別
                 </Typography>
-                <Chip
-                  label={order.order_type === 'SHIPPING' ? '配送' : 'キッチンカー'}
-                  size="small"
-                  variant="outlined"
-                  color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
-                />
+                <Chip label="配送" size="small" variant="outlined" color="primary" />
               </Grid>
               <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">
@@ -353,9 +340,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                 <Typography variant="body2" color="text.secondary">
                   決済方法
                 </Typography>
-                <Typography>
-                  {order.payment_method === 'PAY_AT_PICKUP' ? '現地払い' : 'オンライン決済'}
-                </Typography>
+                <Typography>オンライン決済</Typography>
               </Grid>
               {order.order_type === 'SHIPPING' &&
                 (order.delivery_date ||
@@ -503,7 +488,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                 onClick={() => setRefundDialogOpen(true)}
                 disabled={isRefunding}
               >
-                {isStripe ? '全額返金（Stripe）' : '返金済みにする'}
+                全額返金（Stripe）
               </Button>
             )}
           </Paper>
@@ -642,7 +627,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>{isStripe ? '全額返金の確認' : '返金済みにする'}</DialogTitle>
+        <DialogTitle>全額返金の確認</DialogTitle>
         <DialogContent>
           <DialogContentText component="div" sx={{ mb: 2 }}>
             <Box component="span" sx={{ display: 'block' }}>
@@ -653,27 +638,9 @@ export default function AdminOrderDetailPage({ params }: Props) {
             </Box>
           </DialogContentText>
 
-          {isStripe ? (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              Stripeを通じて全額を返金します。この操作は取り消せません。
-            </Alert>
-          ) : (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              店頭現金払いのため、Stripeでの返金は行われません。現金での返金が完了したことを確認のうえチェックしてください。
-            </Alert>
-          )}
-
-          {!isStripe && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={refundCashConfirmed}
-                  onChange={(e) => setRefundCashConfirmed(e.target.checked)}
-                />
-              }
-              label="現金での返金が完了したことを確認しました"
-            />
-          )}
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Stripeを通じて全額を返金します。この操作は取り消せません。
+          </Alert>
 
           <TextField
             label="返金理由（任意・管理用メモ）"
@@ -693,9 +660,9 @@ export default function AdminOrderDetailPage({ params }: Props) {
             color="error"
             variant="contained"
             onClick={handleRefund}
-            disabled={isRefunding || (!isStripe && !refundCashConfirmed)}
+            disabled={isRefunding}
           >
-            {isStripe ? '全額返金する' : '返金済みにする'}
+            全額返金する
           </Button>
         </DialogActions>
       </Dialog>

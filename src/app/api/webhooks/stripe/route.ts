@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
             orderNo: orderData.order_no,
             customerName: orderData.customer_name,
             customerEmail: orderData.customer_email,
-            orderType: orderData.order_type,
+            orderType: 'SHIPPING',
             items: orderData.order_items.map(
               (item: {
                 product_name: string;
@@ -332,58 +332,6 @@ export async function POST(request: NextRequest) {
             : undefined,
           deliveryDate: orderData.delivery_date ?? undefined,
           deliveryTimeSlot: orderData.delivery_time_slot ?? undefined,
-        });
-      } else {
-        await sendOrderConfirmationEmail({
-          orderNo: orderData.order_no,
-          customerName: orderData.customer_name,
-          customerEmail: orderData.customer_email,
-          orderType: orderData.order_type,
-          items: orderData.order_items.map(
-            (item: {
-              product_name: string;
-              qty: number;
-              unit_price_yen: number;
-              line_total_yen: number;
-            }) => ({
-              name: item.product_name,
-              qty: item.qty,
-              unitPrice: item.unit_price_yen,
-              subtotal: item.line_total_yen,
-            })
-          ),
-          subtotal: orderData.subtotal_yen,
-          shippingFee: orderData.shipping_fee_yen,
-          total: orderData.total_yen,
-          pickupDate: orderData.pickup_date,
-          pickupTime: orderData.pickup_time,
-          locale: orderLocale,
-        });
-
-        // 管理者向け新規注文通知（店頭受取・決済確定）
-        await sendAdminNewOrderEmail({
-          orderId: orderData.id,
-          orderNo: orderData.order_no,
-          orderType: 'PICKUP',
-          paymentMethod: 'STRIPE',
-          customerName: orderData.customer_name,
-          customerPhone: orderData.customer_phone,
-          customerEmail: orderData.customer_email,
-          items: orderData.order_items.map(
-            (item: {
-              product_name: string;
-              qty: number;
-              unit_price_yen: number;
-              line_total_yen: number;
-            }) => ({
-              name: item.product_name,
-              qty: item.qty,
-              subtotal: item.line_total_yen,
-            })
-          ),
-          total: orderData.total_yen,
-          pickupDate: orderData.pickup_date,
-          pickupTime: orderData.pickup_time,
         });
       }
 

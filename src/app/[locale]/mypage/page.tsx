@@ -152,7 +152,7 @@ export default function MyPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   {formatDate(order.created_at)}
                   {' / '}
-                  {order.order_type === 'PICKUP' ? t('orderTypePickup') : t('orderTypeShipping')}
+                  {t('orderTypeShipping')}
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   {order.order_items.map((item) => item.product_name).join(', ')}

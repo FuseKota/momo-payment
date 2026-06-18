@@ -58,7 +58,6 @@ interface ProductFormData {
   description_zh_tw: string;
   description_en: string;
   is_active: boolean;
-  can_pickup: boolean;
   can_ship: boolean;
   image_url: string | null;
   stock_qty: number | null;
@@ -78,7 +77,6 @@ const defaultFormData: ProductFormData = {
   description_zh_tw: '',
   description_en: '',
   is_active: true,
-  can_pickup: true,
   can_ship: true,
   image_url: null,
   stock_qty: null,
@@ -162,7 +160,6 @@ export default function AdminProductsPage() {
         description_zh_tw: product.description_zh_tw || '',
         description_en: product.description_en || '',
         is_active: product.is_active,
-        can_pickup: product.can_pickup,
         can_ship: product.can_ship,
         image_url: product.image_url,
         stock_qty: product.stock_qty,
@@ -892,16 +889,6 @@ export default function AdminProductsPage() {
                 販売設定
               </Typography>
               <Box sx={{ display: 'flex', gap: 3 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.can_pickup}
-                      onChange={(e) => handleFormChange('can_pickup', e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label="店頭受け取り"
-                />
                 <FormControlLabel
                   control={
                     <Switch

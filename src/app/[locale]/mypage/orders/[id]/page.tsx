@@ -138,25 +138,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">{t('orderType')}</Typography>
-                  <Typography>{order.order_type === 'PICKUP' ? t('orderTypePickup') : t('orderTypeShipping')}</Typography>
+                  <Typography>{t('orderTypeShipping')}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">{t('paymentMethod')}</Typography>
-                  <Typography>
-                    {order.payment_method === 'PAY_AT_PICKUP' ? t('payAtPickup') : t('creditCard')}
-                  </Typography>
+                  <Typography>{t('creditCard')}</Typography>
                 </Box>
               </Box>
-
-              {order.pickup_date && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary">{t('pickupDate')}</Typography>
-                  <Typography>
-                    {order.pickup_date}
-                    {order.pickup_time && ` ${order.pickup_time}`}
-                  </Typography>
-                </Box>
-              )}
 
               {(order.delivery_date ||
                 (order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED')) && (

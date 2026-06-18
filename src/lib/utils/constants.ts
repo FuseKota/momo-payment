@@ -2,7 +2,6 @@
 export const MAX_ITEM_QUANTITY = 10;
 
 export const statusLabels: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
-  RESERVED: { label: '予約済', color: 'info' },
   PENDING_PAYMENT: { label: '決済待ち', color: 'warning' },
   PAID: { label: '入金済', color: 'success' },
   PACKING: { label: '梱包中', color: 'primary' },

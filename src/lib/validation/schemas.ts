@@ -175,7 +175,6 @@ export const adminProductCreateSchema = z.object({
   kind: z.enum(['FROZEN_FOOD', 'GOODS']),
   temp_zone: z.enum(['FROZEN', 'AMBIENT']).nullable().optional(),
   price_yen: z.number().int().min(0).max(1000000),
-  can_pickup: z.boolean().optional(),
   can_ship: z.boolean().optional(),
   is_active: z.boolean().optional(),
   image_url: z.string().url().nullable().optional(),
@@ -264,20 +263,11 @@ export const adminShipSchema = z.object({
 });
 
 /**
- * 管理者：入金確認スキーマ
- */
-export const adminMarkPaidSchema = z.object({
-  note: z.string().max(500).optional(),
-});
-
-/**
  * 管理者：全額返金スキーマ
  * 全額返金のみ対応（部分返金なし）。reason は任意の管理メモ。
- * manualMark は店頭現金払い(PAY_AT_PICKUP)を Stripe を介さず返金済みにする場合 true。
  */
 export const adminRefundSchema = z.object({
   reason: z.string().max(500).optional(),
-  manualMark: z.boolean().optional(),
 });
 
 /**
@@ -294,9 +284,9 @@ export const adminResendEmailSchema = z.object({
  * searchParams は全て string なので coerce/transform で正規化する。
  */
 export const adminOrdersFilterSchema = z.object({
-  type: z.enum(['PICKUP', 'SHIPPING']).optional(),
+  type: z.enum(['SHIPPING']).optional(),
   status: z
-    .enum(['RESERVED', 'PENDING_PAYMENT', 'PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED', 'REFUNDED'])
+    .enum(['PENDING_PAYMENT', 'PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED', 'REFUNDED'])
     .optional(),
   q: z
     .string()

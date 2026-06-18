@@ -1,11 +1,10 @@
 // Database types matching Supabase schema (MVP v1.0)
 
-export type OrderType = 'PICKUP' | 'SHIPPING';
-export type PaymentMethod = 'SQUARE' | 'STRIPE' | 'PAY_AT_PICKUP';
+export type OrderType = 'SHIPPING';
+export type PaymentMethod = 'STRIPE';
 export type TempZone = 'AMBIENT' | 'FROZEN';
 export type ProductKind = 'FROZEN_FOOD' | 'GOODS';
 export type OrderStatus =
-  | 'RESERVED'
   | 'PENDING_PAYMENT'
   | 'PAID'
   | 'PACKING'
@@ -45,7 +44,6 @@ export interface Product {
   name: string;
   description: string | null;
   price_yen: number;
-  can_pickup: boolean;
   can_ship: boolean;
   temp_zone: TempZone;
   stock_qty: number | null;
@@ -94,8 +92,6 @@ export interface Order {
   customer_name: string;
   customer_phone: string;
   customer_email: string | null;
-  pickup_date: string | null;
-  pickup_time: string | null;
   delivery_date: string | null;
   delivery_time_slot: string | null;
   agreement_accepted: boolean;
@@ -149,7 +145,7 @@ export interface Shipment {
 export interface Payment {
   id: string;
   order_id: string;
-  provider: string; // 'square' | 'stripe' | 'on_site'
+  provider: string; // 'stripe'
   status: PaymentStatus;
   amount_yen: number;
   // Square関連（レガシー）

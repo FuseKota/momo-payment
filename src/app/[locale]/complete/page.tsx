@@ -40,7 +40,7 @@ interface ShippingAddress {
 interface OrderData {
   id: string;
   order_no: string;
-  order_type: 'SHIPPING' | 'PICKUP';
+  order_type: 'SHIPPING';
   status: string;
   payment_method: string;
   temp_zone: string | null;
@@ -48,8 +48,6 @@ interface OrderData {
   shipping_fee_yen: number;
   total_yen: number;
   customer_name: string;
-  pickup_date?: string;
-  pickup_time?: string;
   delivery_date?: string;
   delivery_time_slot?: string;
   created_at: string;
@@ -142,7 +140,7 @@ function CompleteContent() {
     );
   }
 
-  const isPaymentComplete = order.status === 'PAID' || order.status === 'RESERVED';
+  const isPaymentComplete = order.status === 'PAID';
   const isPendingPayment = order.status === 'PENDING_PAYMENT';
 
   return (
@@ -277,7 +275,7 @@ function CompleteContent() {
 
           <Divider sx={{ my: 3 }} />
 
-          {/* Shipping Address or Pickup Info */}
+          {/* Shipping Address */}
           {order.order_type === 'SHIPPING' && (
             <Box sx={{ textAlign: 'left', mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>

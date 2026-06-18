@@ -46,9 +46,6 @@ export function paymentStatusLabel(o: {
   payments: { status: string }[] | null;
 }): string {
   if (o.status === 'REFUNDED') return '返金済';
-  if (o.payment_method === 'PAY_AT_PICKUP') {
-    return o.paid_at ? '決済完了' : '決済待ち';
-  }
   const paymentStatus = o.payments?.[0]?.status;
   if (paymentStatus === 'SUCCEEDED' || o.paid_at) return '決済完了';
   if (paymentStatus === 'FAILED') return '決済失敗';
@@ -60,20 +57,13 @@ export function paymentMethodLabel(method: string): string {
   switch (method) {
     case 'STRIPE':
       return 'オンライン決済';
-    case 'PAY_AT_PICKUP':
-      return '店頭払い';
-    case 'SQUARE':
-      return 'Square';
     default:
       return method;
   }
 }
 
-/** 受取（PICKUP）or 配送（SHIPPING）の希望日時 */
+/** 配送希望日時 */
 export function preferredSchedule(o: AdminOrderExportRow): string {
-  if (o.order_type === 'PICKUP') {
-    return [o.pickup_date, o.pickup_time].filter(Boolean).join(' ');
-  }
   return [o.delivery_date, o.delivery_time_slot].filter(Boolean).join(' ');
 }
 
@@ -119,7 +109,7 @@ export function buildCsv(rows: AdminOrderExportRow[]): string {
     const row = [
       o.order_no,
       o.created_at,
-      o.order_type === 'SHIPPING' ? '配送' : 'キッチンカー',
+      '配送',
       statusLabels[o.status]?.label ?? o.status,
       o.customer_name,
       o.customer_email ?? '',

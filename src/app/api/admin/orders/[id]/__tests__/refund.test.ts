@@ -228,50 +228,8 @@ describe('POST /api/admin/orders/[id]/refund', () => {
     expect(mockRefundsCreate).not.toHaveBeenCalled();
   });
 
-  it('店頭払い(PAY_AT_PICKUP)でmanualMark無し: 400 manual_mark_required', async () => {
-    state.orderResult = { data: baseOrder({ payment_method: 'PAY_AT_PICKUP' }), error: null };
-    state.paymentResult = {
-      data: basePayment({ stripe_payment_intent_id: null }),
-      error: null,
-    };
-
-    const res = await POST(makeRequest(), makeParams());
-    const data = await res.json();
-
-    expect(res.status).toBe(400);
-    expect(data.error).toBe('manual_mark_required');
-    expect(mockRefundsCreate).not.toHaveBeenCalled();
-    expect(mockOrderUpdate).not.toHaveBeenCalled();
-  });
-
-  it('店頭払い(PAY_AT_PICKUP)でmanualMark:true: Stripe未呼び出しでREFUNDED・refund_id=null', async () => {
-    state.orderResult = { data: baseOrder({ payment_method: 'PAY_AT_PICKUP' }), error: null };
-    state.paymentResult = {
-      data: basePayment({ stripe_payment_intent_id: null }),
-      error: null,
-    };
-
-    const res = await POST(makeRequest({ manualMark: true }), makeParams());
-    const data = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(data.ok).toBe(true);
-    expect(data.data.status).toBe('REFUNDED');
-    expect(data.data.refundId).toBeNull();
-
-    // Stripe は呼ばれない
-    expect(mockRefundsCreate).not.toHaveBeenCalled();
-    // orders は REFUNDED、payments の stripe_refund_id は null
-    expect(mockOrderUpdate).toHaveBeenCalledTimes(1);
-    expect(mockPaymentUpdate).toHaveBeenCalledTimes(1);
-    expect(mockPaymentUpdate.mock.calls[0][0]).toMatchObject({
-      status: 'REFUNDED',
-      stripe_refund_id: null,
-    });
-  });
-
-  it('Square(SQUARE): 400 unsupported_payment_method', async () => {
-    state.orderResult = { data: baseOrder({ payment_method: 'SQUARE' }), error: null };
+  it('非対応の決済方法: 400 unsupported_payment_method', async () => {
+    state.orderResult = { data: baseOrder({ payment_method: 'UNKNOWN' }), error: null };
 
     const res = await POST(makeRequest(), makeParams());
     const data = await res.json();

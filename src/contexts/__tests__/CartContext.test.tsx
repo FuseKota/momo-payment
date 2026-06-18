@@ -26,7 +26,6 @@ const makeProduct = (overrides: Partial<Product> = {}): Product => ({
   kind: 'FROZEN_FOOD',
   temp_zone: 'FROZEN',
   price_yen: 1000,
-  can_pickup: false,
   can_ship: true,
   is_active: true,
   image_url: null,

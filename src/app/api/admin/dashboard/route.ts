@@ -41,9 +41,7 @@ export async function GET() {
       todayRes,
       monthRes,
       statusRes,
-      typeRes,
       toShipRes,
-      awaitingPaymentRes,
       recentRes,
     ] = await Promise.all([
       // ① 本日売上 + 件数
@@ -60,24 +58,16 @@ export async function GET() {
         .in('status', SALES_STATUSES),
       // ③ ステータス別件数
       supabase.from('orders').select('status'),
-      // ④ 種別別件数
-      supabase.from('orders').select('order_type'),
-      // ⑤ 要発送件数（SHIPPING かつ PAID/PACKING）
+      // ④ 要発送件数（SHIPPING かつ PAID/PACKING）
       supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('order_type', 'SHIPPING')
         .in('status', ['PAID', 'PACKING']),
-      // ⑤ 入金待ち件数（店頭払い かつ RESERVED）
+      // ⑤ 直近注文10件
       supabase
         .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('payment_method', 'PAY_AT_PICKUP')
-        .eq('status', 'RESERVED'),
-      // ⑥ 直近注文10件
-      supabase
-        .from('orders')
-        .select('id, order_no, order_type, status, total_yen, customer_name, created_at')
+        .select('id, order_no, status, total_yen, customer_name, created_at')
         .order('created_at', { ascending: false })
         .limit(10),
     ]);
@@ -86,9 +76,7 @@ export async function GET() {
       todayRes.error ||
       monthRes.error ||
       statusRes.error ||
-      typeRes.error ||
       toShipRes.error ||
-      awaitingPaymentRes.error ||
       recentRes.error;
 
     if (firstError) {
@@ -108,22 +96,12 @@ export async function GET() {
       byStatus[s] = (byStatus[s] ?? 0) + 1;
     }
 
-    const byType = { PICKUP: 0, SHIPPING: 0 };
-    for (const row of typeRes.data ?? []) {
-      const t = row.order_type as 'PICKUP' | 'SHIPPING';
-      if (t === 'PICKUP' || t === 'SHIPPING') {
-        byType[t] += 1;
-      }
-    }
-
     return NextResponse.json({
       today: { sales: todaySales, count: todayRows.length },
       month: { sales: monthSales, count: monthRows.length },
       byStatus,
-      byType,
       pending: {
         toShip: toShipRes.count ?? 0,
-        awaitingPayment: awaitingPaymentRes.count ?? 0,
       },
       recentOrders: recentRes.data ?? [],
     });

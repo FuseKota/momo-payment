@@ -6,7 +6,6 @@ import { uuidSchema, adminResendEmailSchema, formatValidationErrors } from '@/li
 import {
   sendOrderConfirmationEmail,
   sendPaymentConfirmationEmail,
-  sendPickupPaymentReceivedEmail,
   sendShippingNotificationEmail,
 } from '@/lib/email/resend';
 import { writeAuditLog } from '@/lib/logging/audit-log';
@@ -60,8 +59,6 @@ export async function POST(
         subtotal_yen,
         shipping_fee_yen,
         total_yen,
-        pickup_date,
-        pickup_time,
         delivery_date,
         delivery_time_slot,
         locale,
@@ -91,23 +88,13 @@ export async function POST(
       if (!PAID_OR_LATER.includes(order.status)) {
         return NextResponse.json({ ok: false, error: 'invalid_status_for_email' }, { status: 400 });
       }
-      if (order.payment_method === 'PAY_AT_PICKUP') {
-        result = await sendPickupPaymentReceivedEmail({
-          orderNo: order.order_no,
-          customerName: order.customer_name,
-          customerEmail: order.customer_email,
-          total: order.total_yen,
-          locale,
-        });
-      } else {
-        result = await sendPaymentConfirmationEmail({
-          orderNo: order.order_no,
-          customerName: order.customer_name,
-          customerEmail: order.customer_email,
-          total: order.total_yen,
-          locale,
-        });
-      }
+      result = await sendPaymentConfirmationEmail({
+        orderNo: order.order_no,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        total: order.total_yen,
+        locale,
+      });
     } else if (type === 'SHIPPING_NOTIFICATION') {
       if (order.order_type !== 'SHIPPING' || !['SHIPPED', 'FULFILLED'].includes(order.status)) {
         return NextResponse.json({ ok: false, error: 'invalid_status_for_email' }, { status: 400 });
@@ -143,51 +130,35 @@ export async function POST(
         })
       );
 
-      if (order.order_type === 'SHIPPING') {
-        // 配送先住所を取得
-        const { data: address } = await supabaseAdmin
-          .from('shipping_addresses')
-          .select('postal_code, pref, city, address1, address2')
-          .eq('order_id', orderId)
-          .maybeSingle();
+      // 配送先住所を取得
+      const { data: address } = await supabaseAdmin
+        .from('shipping_addresses')
+        .select('postal_code, pref, city, address1, address2')
+        .eq('order_id', orderId)
+        .maybeSingle();
 
-        result = await sendOrderConfirmationEmail({
-          orderNo: order.order_no,
-          customerName: order.customer_name,
-          customerEmail: order.customer_email,
-          orderType: 'SHIPPING',
-          items,
-          subtotal: order.subtotal_yen,
-          shippingFee: order.shipping_fee_yen,
-          total: order.total_yen,
-          shippingAddress: address
-            ? {
-                postalCode: address.postal_code,
-                prefecture: address.pref,
-                city: address.city,
-                address1: address.address1,
-                address2: address.address2 ?? undefined,
-              }
-            : undefined,
-          deliveryDate: order.delivery_date ?? undefined,
-          deliveryTimeSlot: order.delivery_time_slot ?? undefined,
-          locale,
-        });
-      } else {
-        result = await sendOrderConfirmationEmail({
-          orderNo: order.order_no,
-          customerName: order.customer_name,
-          customerEmail: order.customer_email,
-          orderType: 'PICKUP',
-          items,
-          subtotal: order.subtotal_yen,
-          shippingFee: order.shipping_fee_yen,
-          total: order.total_yen,
-          pickupDate: order.pickup_date ?? undefined,
-          pickupTime: order.pickup_time ?? undefined,
-          locale,
-        });
-      }
+      result = await sendOrderConfirmationEmail({
+        orderNo: order.order_no,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        orderType: 'SHIPPING',
+        items,
+        subtotal: order.subtotal_yen,
+        shippingFee: order.shipping_fee_yen,
+        total: order.total_yen,
+        shippingAddress: address
+          ? {
+              postalCode: address.postal_code,
+              prefecture: address.pref,
+              city: address.city,
+              address1: address.address1,
+              address2: address.address2 ?? undefined,
+            }
+          : undefined,
+        deliveryDate: order.delivery_date ?? undefined,
+        deliveryTimeSlot: order.delivery_time_slot ?? undefined,
+        locale,
+      });
     } else {
       return NextResponse.json({ ok: false, error: 'invalid_status_for_email' }, { status: 400 });
     }
