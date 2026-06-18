@@ -164,6 +164,17 @@ export default function Footer() {
                   {tl('footerPrivacy')}
                 </Typography>
               </Link>
+              <Link href="/contact" style={{ textDecoration: 'none' }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  {tl('contactTitle')}
+                </Typography>
+              </Link>
             </Box>
           </Grid>
         </Grid>

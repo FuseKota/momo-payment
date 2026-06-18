@@ -131,6 +131,11 @@ export default function TaiwanNightMarketFooter() {
                     {tl('footerPrivacy')}
                   </Typography>
                 </Link>
+                <Link href="/contact" style={{ textDecoration: 'none' }}>
+                  <Typography variant="body2" sx={linkSx}>
+                    {tl('contactTitle')}
+                  </Typography>
+                </Link>
               </Box>
             </Grid>
           </Grid>

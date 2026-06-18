@@ -347,7 +347,10 @@
     "privacyContactText": "如有關於個人資訊處理的相關詢問，請透過以下方式與我們聯繫。",
     "privacyContactBusiness": "業者名稱：株式会社サクラ・シスターズ",
     "privacyContactEmail": "電子信箱：info@sakura-sisters.com",
-    "footerPrivacy": "隱私權政策"
+    "footerPrivacy": "隱私權政策",
+    "contactTitle": "聯絡我們",
+    "contactIntro": "如有任何疑問或關於訂單的諮詢，請透過以下電子郵件與我們聯繫。",
+    "contactDescription": "聯絡資訊"
   },
   "news": {
     "heading": "最新消息",

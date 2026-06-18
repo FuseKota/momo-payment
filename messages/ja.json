@@ -347,7 +347,10 @@
     "privacyContactText": "個人情報の取り扱いに関するお問い合わせは、以下の連絡先までご連絡ください。",
     "privacyContactBusiness": "事業者名：株式会社サクラ・シスターズ",
     "privacyContactEmail": "メールアドレス：info@sakura-sisters.com",
-    "footerPrivacy": "プライバシーポリシー"
+    "footerPrivacy": "プライバシーポリシー",
+    "contactTitle": "お問い合わせ",
+    "contactIntro": "ご不明な点やご注文に関するお問い合わせは、下記までメールにてご連絡ください。",
+    "contactDescription": "お問い合わせ先のご案内"
   },
   "news": {
     "heading": "新着情報",

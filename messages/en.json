@@ -347,7 +347,10 @@
     "privacyContactText": "For inquiries regarding the handling of personal information, please contact us at the following.",
     "privacyContactBusiness": "Business Name: Sakura Sisters Co., Ltd.",
     "privacyContactEmail": "Email: info@sakura-sisters.com",
-    "footerPrivacy": "Privacy Policy"
+    "footerPrivacy": "Privacy Policy",
+    "contactTitle": "Contact",
+    "contactIntro": "For questions or order inquiries, please contact us by email below.",
+    "contactDescription": "Contact information"
   },
   "news": {
     "heading": "Latest News",
