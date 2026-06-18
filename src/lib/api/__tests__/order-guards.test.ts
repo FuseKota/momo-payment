@@ -25,7 +25,7 @@ import { validateOrigin } from '@/lib/security/csrf';
 import { createClient } from '@/lib/supabase/server';
 
 const createMockRequest = () =>
-  new NextRequest('http://localhost:3000/api/orders/pickup', {
+  new NextRequest('http://localhost:3000/api/orders/shipping', {
     method: 'POST',
     headers: { origin: 'http://localhost:3000' },
   });

@@ -104,7 +104,6 @@ describe('csrf', () => {
     });
 
     it('通常のAPIエンドポイントはチェック対象', () => {
-      expect(requiresCsrfCheck('/api/orders/pickup')).toBe(true);
       expect(requiresCsrfCheck('/api/orders/shipping')).toBe(true);
       expect(requiresCsrfCheck('/api/admin/orders')).toBe(true);
     });

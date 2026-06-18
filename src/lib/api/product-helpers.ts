@@ -32,11 +32,8 @@ export type ProductFetchResult = ProductFetchSuccess | ProductFetchFailure;
  * 商品をDBから取得し、存在チェック + 利用可能チェック を行う
  */
 export async function fetchAndValidateProducts(
-  productIds: string[],
-  mode: 'pickup' | 'shipping'
+  productIds: string[]
 ): Promise<ProductFetchResult> {
-  const availabilityField = mode === 'pickup' ? 'can_pickup' : 'can_ship';
-
   const { data: products, error: productError } = await supabaseAdmin
     .from('products')
     .select(`id, name, name_zh_tw, name_en, kind, temp_zone, price_yen, can_pickup, can_ship, is_active`)
@@ -64,14 +61,13 @@ export async function fetchAndValidateProducts(
     };
   }
 
-  // 利用可能チェック
+  // 利用可能チェック（配送可能か）
   for (const p of products) {
-    if (!p.is_active || !p[availabilityField]) {
-      const errorKey = mode === 'pickup' ? 'product_not_available' : 'product_not_shippable';
+    if (!p.is_active || !p.can_ship) {
       return {
         ok: false,
         response: NextResponse.json(
-          { ok: false, error: errorKey, productId: p.id },
+          { ok: false, error: 'product_not_shippable', productId: p.id },
           { status: 400 }
         ),
       };

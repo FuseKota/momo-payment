@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import type { Product, ProductVariant, TempZone } from '@/types/database';
 
-export type CartMode = 'pickup' | 'shipping' | null;
+export type CartMode = 'shipping' | null;
 
 export interface CartItem {
   product: Product;
@@ -51,12 +51,8 @@ function loadCartFromStorage(): StoredCart {
       if (Array.isArray(parsed)) {
         // Old format - migrate to new format
         const items = parsed as CartItem[];
-        // Determine mode from existing items
-        let mode: CartMode = null;
-        if (items.length > 0) {
-          const firstItem = items[0];
-          mode = firstItem.product.can_pickup && !firstItem.product.can_ship ? 'pickup' : 'shipping';
-        }
+        // pickup 廃止により全商品が配送モード
+        const mode: CartMode = items.length > 0 ? 'shipping' : null;
         return { items, mode };
       }
       return parsed as StoredCart;
@@ -68,20 +64,6 @@ function loadCartFromStorage(): StoredCart {
 }
 
 const EMPTY_CART: StoredCart = { items: [], mode: null };
-
-function getProductMode(product: Product): CartMode {
-  if (product.can_pickup && !product.can_ship) {
-    return 'pickup';
-  }
-  if (product.can_ship && !product.can_pickup) {
-    return 'shipping';
-  }
-  // Products that can do both default to shipping
-  if (product.can_ship) {
-    return 'shipping';
-  }
-  return 'pickup';
-}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   // Always start with empty cart to avoid hydration mismatch
@@ -104,34 +86,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart, isHydrated]);
 
-  const canAddProduct = (product: Product): boolean => {
-    const productMode = getProductMode(product);
-    // If cart is empty or mode matches, can add
-    if (cartMode === null || cartMode === productMode) {
-      return true;
-    }
-    return false;
-  };
+  // pickup 廃止により全商品が配送モード。モード競合は発生しないため常に追加可能。
+  const canAddProduct = (_product: Product): boolean => true;
 
-  const getIncompatibleModeMessage = (product: Product): string | null => {
-    if (canAddProduct(product)) return null;
-
-    const productMode = getProductMode(product);
-    if (cartMode === 'pickup' && productMode === 'shipping') {
-      return 'cartContext.pickupInCartWarning';
-    }
-    if (cartMode === 'shipping' && productMode === 'pickup') {
-      return 'cartContext.shippingInCartWarning';
-    }
-    return null;
-  };
+  const getIncompatibleModeMessage = (_product: Product): string | null => null;
 
   const addItem = (product: Product, qty = 1, variant?: ProductVariant): boolean => {
-    if (!canAddProduct(product)) {
-      return false;
-    }
-
-    const productMode = getProductMode(product);
     const itemKey = getCartItemKey(product.id, variant?.id);
 
     setCart((prev) => {
@@ -146,13 +106,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
               ? { ...item, qty: item.qty + qty }
               : item
           ),
-          mode: prev.mode || productMode,
+          mode: prev.mode || 'shipping',
         };
       }
       return {
         ...prev,
         items: [...prev.items, { product, variant, qty }],
-        mode: prev.mode || productMode,
+        mode: prev.mode || 'shipping',
       };
     });
     return true;

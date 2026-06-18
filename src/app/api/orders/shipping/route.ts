@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // 3. 商品取得 + 検証
     const productIds = body.items.map((i) => i.productId);
-    const productResult = await fetchAndValidateProducts(productIds, 'shipping');
+    const productResult = await fetchAndValidateProducts(productIds);
     if (!productResult.ok) return productResult.response;
     const products = productResult.products;
 

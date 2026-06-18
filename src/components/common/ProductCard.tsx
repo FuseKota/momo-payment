@@ -30,7 +30,7 @@ interface ProductCardProps {
   addLabel: string;
   isOutOfStock?: boolean;
   outOfStockLabel?: string;
-  /** 商品詳細リンク（shop は有り、pickup は無し） */
+  /** 商品詳細リンク（無い場合はカード全体を非リンクで表示） */
   detailLink?: string;
   imageHeight?: number;
   /** above-the-fold の LCP 画像に優先読み込みを付与する */

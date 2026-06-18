@@ -112,26 +112,6 @@ export const addressSchema = z.object({
 });
 
 /**
- * キッチンカー（PICKUP）注文スキーマ
- */
-export const pickupOrderSchema = z.object({
-  customer: customerSchema,
-  items: z
-    .array(cartItemSchema)
-    .min(1, 'カートに商品がありません')
-    .max(50, '一度に注文できる商品は50種類までです'),
-  paymentMethod: z.enum(['STRIPE', 'PAY_AT_PICKUP'], {
-    message: '支払い方法を選択してください',
-  }),
-  pickupDate: z.string().optional(),
-  pickupTime: z.string().optional(),
-  notes: z.string().max(500).optional(),
-  agreementAccepted: z.literal(true, {
-    message: '利用規約に同意してください',
-  }),
-});
-
-/**
  * お届け時間帯スキーマ（佐川急便の指定枠）
  */
 export const deliveryTimeSlotSchema = z.enum(DELIVERY_TIME_SLOTS);
@@ -385,5 +365,4 @@ export const savedAddressSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export type PickupOrderInput = z.infer<typeof pickupOrderSchema>;
 export type ShippingOrderInput = z.infer<typeof shippingOrderSchema>;

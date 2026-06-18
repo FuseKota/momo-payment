@@ -34,7 +34,7 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
   const [tab, setTab] = useState<TabValue>('all');
   const products = initialProducts;
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbar();
-  const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, cartMode, items, updateQty } = useCart();
+  const { addItem, itemCount, canAddProduct, getIncompatibleModeMessage, items, updateQty } = useCart();
 
   const isOutOfStock = (p: Product) => p.stock_qty !== null && p.stock_qty <= 0;
 
@@ -110,12 +110,6 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {cartMode === 'pickup' && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            {t('pickupInCartWarning')}
-          </Alert>
-        )}
-
         {/* Tabs */}
         <Box sx={{ mb: 4, borderBottom: '2px solid #FFE0E6' }}>
           <Tabs

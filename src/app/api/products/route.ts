@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const kind = searchParams.get('kind');
   const slug = searchParams.get('slug');
-  const mode = searchParams.get('mode'); // 'pickup' | 'shipping'
+  const mode = searchParams.get('mode'); // 'shipping'
 
   const supabase = getSupabaseAdmin();
 
@@ -58,9 +58,7 @@ export async function GET(request: Request) {
     }
 
     // Filter by delivery mode
-    if (mode === 'pickup') {
-      query = query.eq('can_pickup', true);
-    } else if (mode === 'shipping') {
+    if (mode === 'shipping') {
       query = query.eq('can_ship', true);
     }
 

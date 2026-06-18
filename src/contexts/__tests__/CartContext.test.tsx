@@ -175,16 +175,16 @@ describe('CartContext', () => {
     expect(result.current.cartMode).toBeNull();
   });
 
-  it('canAddProduct returns false for incompatible mode', () => {
+  it('canAddProduct always returns true (pickup廃止により配送のみ)', () => {
     const { result } = renderHook(() => useCart(), { wrapper });
-    const shippingProduct = makeProduct({ can_ship: true, can_pickup: false });
-    const pickupProduct = makeProduct({ id: 'prod-2', can_ship: false, can_pickup: true });
+    const productA = makeProduct({ can_ship: true });
+    const productB = makeProduct({ id: 'prod-2', can_ship: true });
 
     act(() => {
-      result.current.addItem(shippingProduct, 1);
+      result.current.addItem(productA, 1);
     });
 
-    expect(result.current.canAddProduct(pickupProduct)).toBe(false);
+    expect(result.current.canAddProduct(productB)).toBe(true);
   });
 
   it('hasMixedTempZones detects mixed zones', () => {
@@ -209,11 +209,11 @@ describe('CartContext', () => {
     });
 
     act(() => {
-      result.current.switchMode('pickup');
+      result.current.switchMode('shipping');
     });
 
     expect(result.current.items).toHaveLength(0);
-    expect(result.current.cartMode).toBe('pickup');
+    expect(result.current.cartMode).toBe('shipping');
   });
 
   it('subtotal uses variant price when available', () => {

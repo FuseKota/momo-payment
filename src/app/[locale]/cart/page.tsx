@@ -17,7 +17,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import StorefrontIcon from '@mui/icons-material/Storefront';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { Layout, QuantityControl, OrderSummary } from '@/components/common';
 import type { OrderSummaryItem } from '@/components/common';
@@ -31,11 +30,10 @@ export default function CartPage() {
   const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
-  const { items, updateQty, removeItem, clearCart, subtotal, itemCount, cartMode } = useCart();
+  const { items, updateQty, removeItem, clearCart, subtotal, itemCount } = useCart();
 
-  const isPickupMode = cartMode === 'pickup';
   // 配送料はお届け先（都道府県）で変動するため、カート段階では確定しない
-  const shippingPending = !isPickupMode && items.length > 0;
+  const shippingPending = items.length > 0;
   const total = subtotal;
 
   if (items.length === 0) {
@@ -67,9 +65,6 @@ export default function CartPage() {
             <Button component={Link} href="/shop" variant="contained" size="large" startIcon={<LocalShippingIcon />}>
               {t('viewShippingProducts')}
             </Button>
-            <Button component={Link} href="/pickup" variant="outlined" size="large" startIcon={<StorefrontIcon />}>
-              {t('viewPickupProducts')}
-            </Button>
           </Box>
         </Container>
       </Layout>
@@ -92,11 +87,7 @@ export default function CartPage() {
             <Typography variant="h3" sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: { xs: '1.75rem', md: '3rem' } }}>
               {t('title')}
             </Typography>
-            {isPickupMode ? (
-              <Chip icon={<StorefrontIcon />} label={t('pickupMode')} color="secondary" variant="outlined" />
-            ) : (
-              <Chip icon={<LocalShippingIcon />} label={t('shippingMode')} color="primary" variant="outlined" />
-            )}
+            <Chip icon={<LocalShippingIcon />} label={t('shippingMode')} color="primary" variant="outlined" />
           </Box>
           <Button startIcon={<DeleteSweepIcon />} color="error" onClick={clearCart}>
             {t('clearCart')}
@@ -197,7 +188,7 @@ export default function CartPage() {
 
             <Button
               component={Link}
-              href={isPickupMode ? '/pickup' : '/shop'}
+              href="/shop"
               startIcon={<ArrowBackIcon />}
               sx={{ mt: 3 }}
             >
@@ -215,7 +206,7 @@ export default function CartPage() {
               labels={{
                 title: t('orderSummary'),
                 subtotal: tc('subtotal'),
-                shippingFee: !isPickupMode ? tc('shippingFee') : undefined,
+                shippingFee: tc('shippingFee'),
                 shippingFeePending: t('shippingFeeVaries'),
                 total: tc('total'),
                 quantity: tc('quantity'),
@@ -226,30 +217,12 @@ export default function CartPage() {
                 variant="contained"
                 size="large"
                 fullWidth
-                onClick={() => router.push(isPickupMode ? '/checkout/pickup' : '/checkout/shipping')}
-                startIcon={isPickupMode ? <StorefrontIcon /> : <LocalShippingIcon />}
+                onClick={() => router.push('/checkout/shipping')}
+                startIcon={<LocalShippingIcon />}
                 sx={{ mb: 2 }}
               >
-                {isPickupMode ? t('proceedToOrder') : t('proceedToCheckout')}
+                {t('proceedToCheckout')}
               </Button>
-
-              {isPickupMode && (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: '#FFF0F3',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 1,
-                  }}
-                >
-                  <StorefrontIcon sx={{ color: 'primary.main', fontSize: 18, mt: 0.3 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    {t('pickupNote')}
-                  </Typography>
-                </Box>
-              )}
             </OrderSummary>
           </Grid>
         </Grid>

@@ -9,7 +9,6 @@ import {
   nameSchema,
   qtySchema,
   uuidSchema,
-  pickupOrderSchema,
   shippingOrderSchema,
 } from '../schemas';
 
@@ -111,57 +110,6 @@ describe('validation schemas', () => {
     it('無効なUUIDを拒否する', () => {
       expect(uuidSchema.safeParse('not-a-uuid').success).toBe(false);
       expect(uuidSchema.safeParse('').success).toBe(false);
-    });
-  });
-
-  describe('pickupOrderSchema', () => {
-    const validPickupOrder = {
-      customer: {
-        name: '山田太郎',
-        phone: '090-1234-5678',
-        email: 'test@example.com',
-      },
-      items: [
-        {
-          productId: '550e8400-e29b-41d4-a716-446655440000',
-          qty: 2,
-        },
-      ],
-      paymentMethod: 'STRIPE' as const,
-      agreementAccepted: true as const,
-    };
-
-    it('有効な注文を受け入れる', () => {
-      expect(pickupOrderSchema.safeParse(validPickupOrder).success).toBe(true);
-    });
-
-    it('PAY_AT_PICKUPも受け入れる', () => {
-      const order = { ...validPickupOrder, paymentMethod: 'PAY_AT_PICKUP' as const };
-      expect(pickupOrderSchema.safeParse(order).success).toBe(true);
-    });
-
-    it('同意なしを拒否する', () => {
-      const order = { ...validPickupOrder, agreementAccepted: false };
-      expect(pickupOrderSchema.safeParse(order).success).toBe(false);
-    });
-
-    it('空のカートを拒否する', () => {
-      const order = { ...validPickupOrder, items: [] };
-      expect(pickupOrderSchema.safeParse(order).success).toBe(false);
-    });
-
-    it('50種類を超える商品を拒否する', () => {
-      const items = Array.from({ length: 51 }, (_, i) => ({
-        productId: `550e8400-e29b-41d4-a716-44665544${String(i).padStart(4, '0')}`,
-        qty: 1,
-      }));
-      const order = { ...validPickupOrder, items };
-      expect(pickupOrderSchema.safeParse(order).success).toBe(false);
-    });
-
-    it('無効な支払い方法を拒否する', () => {
-      const order = { ...validPickupOrder, paymentMethod: 'INVALID' };
-      expect(pickupOrderSchema.safeParse(order).success).toBe(false);
     });
   });
 

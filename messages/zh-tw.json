@@ -5,11 +5,11 @@
     "backHome": "返回首頁"
   },
   "metadata": {
-    "title": "桃娘 - 福島正宗台灣料理・餐車服務",
-    "description": "福島桃娘線上訂購網站。正宗台灣料理冷凍食品及桃娘周邊商品宅配到府。提供餐車取餐服務。",
+    "title": "桃娘 - 福島正宗台灣料理・冷凍宅配",
+    "description": "福島桃娘線上訂購網站。正宗台灣料理冷凍食品及桃娘周邊商品全國宅配到府。",
     "home": {
-      "title": "福島正宗台灣料理・冷凍宅配｜餐車服務",
-      "description": "福島桃娘官方線上商店。滷肉飯等正宗台灣料理冷凍食品及原創周邊商品全國宅配到府。並提供餐車與日本各地台灣夜市活動最新資訊。"
+      "title": "福島正宗台灣料理・冷凍宅配",
+      "description": "福島桃娘官方線上商店。滷肉飯等正宗台灣料理冷凍食品及原創周邊商品全國宅配到府。並提供日本各地台灣夜市活動最新資訊。"
     },
     "shop": {
       "title": "台灣料理網購・冷凍食品宅配",
@@ -28,7 +28,6 @@
     "siteName": "福島桃娘商品網站",
     "brandShort": "桃娘",
     "home": "首頁",
-    "pickup": "餐車取餐",
     "shipping": "宅配訂購",
     "admin": "管理後台",
     "mypage": "我的頁面",
@@ -70,36 +69,16 @@
   },
   "home": {
     "heroTitle": "歡迎來到\n福島桃娘商品網站",
-    "heroSubtitle": "正宗台灣料理與福島桃娘原創周邊\n提供餐車取餐與宅配服務",
-    "pickupButton": "餐車取餐",
+    "heroSubtitle": "正宗台灣料理與福島桃娘原創周邊\n提供全國宅配服務",
     "shippingButton": "宅配訂購",
     "orderMethods": "訂購方式",
-    "pickupTitle": "餐車取餐",
-    "pickupDescription": "可直接在餐車領取。\n可選擇線上預付或現場付款。",
-    "preOrder": "預先訂購",
-    "payAtPickupOk": "可現場付款",
     "shippingTitle": "宅配訂購",
     "shippingDescription": "冷凍滷肉飯及桃娘周邊商品\n直送到您家。",
     "nationwideShipping": "全國配送"
   },
-  "pickup": {
-    "title": "餐車取餐",
-    "subtitle": "預先訂購，快速領取。",
-    "viewCart": "查看購物車（{count}件）",
-    "shippingInCartWarning": "購物車中有宅配商品。如需加入餐車商品，請先清空購物車。",
-    "howItWorks": "使用流程",
-    "step1": "將商品加入購物車",
-    "step2": "輸入顧客資訊並付款",
-    "step3": "在餐車領取",
-    "foodMenu": "美食菜單",
-    "goodsTitle": "福島桃娘周邊",
-    "addedToCart": "已將{name}加入購物車",
-    "proceedToOrder": "前往訂購（{count}件）"
-  },
   "shop": {
     "title": "宅配訂購",
     "subtitle": "冷凍滷肉飯及周邊商品宅配到府",
-    "pickupInCartWarning": "購物車中有餐車取餐商品。如需加入宅配商品，請先清空購物車。",
     "all": "全部",
     "frozen": "美食",
     "goods": "周邊",
@@ -138,55 +117,13 @@
     "empty": "購物車是空的",
     "emptyMessage": "請將商品加入購物車",
     "viewShippingProducts": "瀏覽宅配商品",
-    "viewPickupProducts": "瀏覽餐車取餐商品",
-    "pickupMode": "餐車取餐",
     "shippingMode": "宅配",
     "clearCart": "清空購物車",
     "continueShopping": "繼續購物",
     "orderSummary": "訂單摘要",
     "proceedToOrder": "前往訂購",
     "proceedToCheckout": "前往結帳",
-    "pickupNote": "請至餐車領取",
     "shippingFeeVaries": "依配送地區而定"
-  },
-  "checkoutPickup": {
-    "backToMenu": "返回餐車菜單",
-    "title": "餐車預約",
-    "stepCustomerInfo": "顧客資訊",
-    "stepPayment": "付款",
-    "pickupInfo": "領取資訊",
-    "name": "姓名",
-    "email": "電子信箱",
-    "phone": "電話號碼",
-    "phonePlaceholder": "090-1234-5678",
-    "notes": "備註（選填）",
-    "notesPlaceholder": "如有需求請在此填寫",
-    "proceedToPayment": "前往付款方式",
-    "paymentMethod": "付款方式",
-    "customerInfo": "顧客資訊",
-    "honorific": "先生/女士",
-    "notesLabel": "備註",
-    "selectPaymentMethod": "請選擇付款方式",
-    "stripePayment": "線上付款（信用卡）",
-    "stripeDescription": "立即以線上方式付款",
-    "cashPayment": "現場付款（現金）",
-    "cashDescription": "領取時在現場付款",
-    "stripeNotice": "點擊「前往付款頁面」按鈕後，將跳轉至付款頁面。",
-    "cashNotice": "預約確認後，請在現場付款。",
-    "goToPaymentPage": "前往付款頁面",
-    "confirmReservation": "確認預約",
-    "orderSummary": "訂單摘要",
-    "cartEmpty": "購物車是空的",
-    "backToPickupMenu": "返回餐車菜單",
-    "reservationFailed": "預約建立失敗",
-    "orderFailed": "訂單處理失敗",
-    "validation": {
-      "nameRequired": "請輸入姓名",
-      "emailRequired": "請輸入電子信箱",
-      "emailInvalid": "電子信箱格式不正確",
-      "phoneRequired": "請輸入電話號碼",
-      "phoneInvalid": "電話號碼格式不正確"
-    }
   },
   "checkoutShipping": {
     "backToCart": "返回購物車",
@@ -441,10 +378,7 @@
     "CANCELED": "已取消",
     "REFUNDED": "已退款"
   },
-  "cartContext": {
-    "pickupInCartWarning": "購物車中有餐車取餐商品。如需加入宅配商品，請先清空購物車。",
-    "shippingInCartWarning": "購物車中有宅配商品。如需加入餐車取餐商品，請先清空購物車。"
-  },
+  "cartContext": {},
   "email": {
     "brandName": "桃娘",
     "orderConfirmSubject": "【桃娘】訂單確認 - {orderNo}",

@@ -5,11 +5,11 @@
     "backHome": "トップページへ戻る"
   },
   "metadata": {
-    "title": "もも娘 - 福島の本格台湾料理・キッチンカー販売",
-    "description": "福島もも娘のオンライン注文サイト。本格台湾料理の冷凍食品・グッズのお取り寄せ。キッチンカー販売も対応。",
+    "title": "もも娘 - 福島の本格台湾料理・冷凍お取り寄せ",
+    "description": "福島もも娘のオンライン注文サイト。本格台湾料理の冷凍食品・グッズのお取り寄せ。全国配送に対応。",
     "home": {
-      "title": "福島の本格台湾料理・冷凍お取り寄せ｜キッチンカー販売",
-      "description": "福島もも娘の公式オンラインショップ。魯肉飯など本格台湾料理の冷凍食品やオリジナルグッズを全国配送でお取り寄せ。キッチンカーや日本各地の台湾夜市イベント情報も掲載しています。"
+      "title": "福島の本格台湾料理・冷凍お取り寄せ",
+      "description": "福島もも娘の公式オンラインショップ。魯肉飯など本格台湾料理の冷凍食品やオリジナルグッズを全国配送でお取り寄せ。日本各地の台湾夜市イベント情報も掲載しています。"
     },
     "shop": {
       "title": "台湾料理の通販・冷凍お取り寄せ",
@@ -28,7 +28,6 @@
     "siteName": "福島もも娘物販サイト",
     "brandShort": "もも娘",
     "home": "ホーム",
-    "pickup": "キッチンカー販売",
     "shipping": "配送注文",
     "admin": "管理画面",
     "mypage": "マイページ",
@@ -70,36 +69,16 @@
   },
   "home": {
     "heroTitle": "福島もも娘物販サイトへ\nようこそ",
-    "heroSubtitle": "本格台湾料理と福島もも娘オリジナルグッズ\nキッチンカー販売・配送でお届けします",
-    "pickupButton": "キッチンカー販売",
+    "heroSubtitle": "本格台湾料理と福島もも娘オリジナルグッズ\n全国配送でお届けします",
     "shippingButton": "配送注文",
     "orderMethods": "ご注文方法",
-    "pickupTitle": "キッチンカー販売",
-    "pickupDescription": "キッチンカーで直接お受け取りいただけます。\n事前決済または現地払いをお選びいただけます。",
-    "preOrder": "事前注文",
-    "payAtPickupOk": "現地払いOK",
     "shippingTitle": "配送注文",
     "shippingDescription": "冷凍魯肉飯やもも娘グッズを\nご自宅までお届けします。",
     "nationwideShipping": "全国配送"
   },
-  "pickup": {
-    "title": "キッチンカー販売",
-    "subtitle": "事前予約でスムーズにお受け取り。",
-    "viewCart": "カートを見る ({count}点)",
-    "shippingInCartWarning": "配送商品がカートにあります。キッチンカー販売商品を追加するにはカートをクリアしてください。",
-    "howItWorks": "ご利用の流れ",
-    "step1": "商品をカートに追加",
-    "step2": "お客様情報を入力してお支払い",
-    "step3": "キッチンカーで受取",
-    "foodMenu": "フードメニュー",
-    "goodsTitle": "福島もも娘グッズ",
-    "addedToCart": "{name}をカートに追加しました",
-    "proceedToOrder": "注文に進む ({count}点)"
-  },
   "shop": {
     "title": "配送注文",
     "subtitle": "冷凍魯肉飯やグッズをご自宅にお届けします",
-    "pickupInCartWarning": "キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。",
     "all": "すべて",
     "frozen": "フード",
     "goods": "グッズ",
@@ -138,55 +117,13 @@
     "empty": "カートは空です",
     "emptyMessage": "商品をカートに追加してください",
     "viewShippingProducts": "配送商品を見る",
-    "viewPickupProducts": "キッチンカー販売商品を見る",
-    "pickupMode": "キッチンカー",
     "shippingMode": "配送",
     "clearCart": "カートを空にする",
     "continueShopping": "買い物を続ける",
     "orderSummary": "注文内容",
     "proceedToOrder": "注文に進む",
     "proceedToCheckout": "レジに進む",
-    "pickupNote": "キッチンカーでお受け取りください",
     "shippingFeeVaries": "お届け先により変動します"
-  },
-  "checkoutPickup": {
-    "backToMenu": "キッチンカーメニューに戻る",
-    "title": "キッチンカー予約",
-    "stepCustomerInfo": "お客様情報",
-    "stepPayment": "お支払い",
-    "pickupInfo": "受取情報",
-    "name": "お名前",
-    "email": "メールアドレス",
-    "phone": "電話番号",
-    "phonePlaceholder": "090-1234-5678",
-    "notes": "備考（任意）",
-    "notesPlaceholder": "ご要望などあればご記入ください",
-    "proceedToPayment": "お支払い方法へ進む",
-    "paymentMethod": "お支払い方法",
-    "customerInfo": "お客様情報",
-    "honorific": "様",
-    "notesLabel": "備考",
-    "selectPaymentMethod": "お支払い方法を選択してください",
-    "stripePayment": "オンライン決済（クレジットカード）",
-    "stripeDescription": "今すぐオンライン決済で支払います",
-    "cashPayment": "現地払い（現金）",
-    "cashDescription": "受取時に現地でお支払いします",
-    "stripeNotice": "「決済ページへ進む」ボタンをクリックすると、決済ページに移動します。",
-    "cashNotice": "予約確定後、現地でお支払いください。",
-    "goToPaymentPage": "決済ページへ進む",
-    "confirmReservation": "予約を確定する",
-    "orderSummary": "注文内容",
-    "cartEmpty": "カートが空です",
-    "backToPickupMenu": "キッチンカーメニューに戻る",
-    "reservationFailed": "予約の作成に失敗しました",
-    "orderFailed": "注文処理に失敗しました",
-    "validation": {
-      "nameRequired": "お名前を入力してください",
-      "emailRequired": "メールアドレスを入力してください",
-      "emailInvalid": "メールアドレスの形式が正しくありません",
-      "phoneRequired": "電話番号を入力してください",
-      "phoneInvalid": "電話番号の形式が正しくありません"
-    }
   },
   "checkoutShipping": {
     "backToCart": "カートに戻る",
@@ -441,10 +378,7 @@
     "CANCELED": "キャンセル",
     "REFUNDED": "返金済"
   },
-  "cartContext": {
-    "pickupInCartWarning": "キッチンカー販売商品がカートにあります。配送商品を追加するにはカートをクリアしてください。",
-    "shippingInCartWarning": "配送商品がカートにあります。キッチンカー販売商品を追加するにはカートをクリアしてください。"
-  },
+  "cartContext": {},
   "email": {
     "brandName": "もも娘",
     "orderConfirmSubject": "【もも娘】ご注文確認 - {orderNo}",
