@@ -38,6 +38,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.excerpt !== undefined) updates.excerpt = body.excerpt;
   if (body.category !== undefined) updates.category = body.category;
   if (body.slug !== undefined) updates.slug = body.slug;
+  if (body.image_url !== undefined) updates.image_url = body.image_url;
   if (body.title_zh_tw !== undefined) updates.title_zh_tw = body.title_zh_tw;
   if (body.excerpt_zh_tw !== undefined) updates.excerpt_zh_tw = body.excerpt_zh_tw;
   if (body.content_zh_tw !== undefined) updates.content_zh_tw = body.content_zh_tw;

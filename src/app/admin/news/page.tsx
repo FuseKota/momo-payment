@@ -40,6 +40,7 @@ interface NewsFormData {
   content: string;
   category: string;
   slug: string;
+  image_url: string;
   title_zh_tw: string;
   excerpt_zh_tw: string;
   content_zh_tw: string;
@@ -57,6 +58,7 @@ const defaultFormData: NewsFormData = {
   content: '',
   category: '福島もも娘',
   slug: '',
+  image_url: '',
   title_zh_tw: '',
   excerpt_zh_tw: '',
   content_zh_tw: '',
@@ -81,6 +83,7 @@ export default function AdminNewsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchNews = useCallback(async () => {
     try {
@@ -126,6 +129,7 @@ export default function AdminNewsPage() {
         content: news.content ?? '',
         category: news.category,
         slug: news.slug,
+        image_url: news.image_url ?? '',
         title_zh_tw: news.title_zh_tw ?? '',
         excerpt_zh_tw: news.excerpt_zh_tw ?? '',
         content_zh_tw: news.content_zh_tw ?? '',
@@ -145,6 +149,30 @@ export default function AdminNewsPage() {
     setDialogOpen(false);
     setEditingNews(null);
     setFormData(defaultFormData);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!formData.slug || !/^[a-z0-9-]+$/.test(formData.slug)) {
+      setSnackbar({ open: true, message: '先に正しいスラッグ（小文字英数字とハイフン）を入力してください' });
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('productSlug', `news-${formData.slug}`);
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setFormData((p) => ({ ...p, image_url: data.url }));
+      } else {
+        setSnackbar({ open: true, message: data.error || '画像のアップロードに失敗しました' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: '画像のアップロードに失敗しました' });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -318,6 +346,45 @@ export default function AdminNewsPage() {
                 onChange={(e) => setFormData((p) => ({ ...p, excerpt: e.target.value }))}
               />
             </Grid>
+            <Grid size={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                メイン画像（一覧カード・記事上部に表示）
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                {formData.image_url && (
+                  <Box
+                    component="img"
+                    src={formData.image_url}
+                    alt="プレビュー"
+                    sx={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 1, border: '1px solid #eee' }}
+                  />
+                )}
+                <Button
+                  variant="outlined"
+                  component="label"
+                  disabled={isUploading}
+                  startIcon={isUploading ? <CircularProgress size={16} /> : undefined}
+                >
+                  {formData.image_url ? '画像を変更' : '画像をアップロード'}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImageUpload(f);
+                      e.target.value = '';
+                    }}
+                  />
+                </Button>
+                {formData.image_url && (
+                  <Button color="error" onClick={() => setFormData((p) => ({ ...p, image_url: '' }))}>
+                    画像を削除
+                  </Button>
+                )}
+              </Box>
+            </Grid>
+
             <Grid size={12}>
               <TextField
                 label="本文"

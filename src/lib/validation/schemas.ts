@@ -218,6 +218,7 @@ export const adminNewsCreateSchema = z.object({
   content: z.string().max(50000).nullable().optional(),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.string().max(100).optional(),
+  image_url: z.string().url().nullable().optional(),
   title_zh_tw: z.string().max(200).nullable().optional(),
   excerpt_zh_tw: z.string().max(500).nullable().optional(),
   content_zh_tw: z.string().max(50000).nullable().optional(),
@@ -246,6 +247,24 @@ export const adminIitateCalendarMonthNoteSchema = z.object({
   year_month: z.string().regex(/^\d{4}-\d{2}$/, '年月の形式が正しくありません (YYYY-MM)'),
   notes: z.array(z.string().max(500)).max(10),
 });
+
+/**
+ * 管理者：飯舘村カレンダーの予定作成（Google カレンダーへ書き込む）
+ * type は Google 予定タイトルのキーワードに対応（昼の部/夜の部/もも娘ステージ/休園）。
+ * closed（休園）は終日。それ以外で start/end 時刻があれば時刻付き、無ければ終日扱い。
+ */
+export const adminCalendarEventSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日付の形式が正しくありません (YYYY-MM-DD)'),
+    type: z.enum(['day', 'night', 'stage', 'closed']),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    note: z.string().max(500).optional(),
+  })
+  .refine((v) => v.type === 'closed' || !v.startTime || !v.endTime || v.startTime < v.endTime, {
+    message: '終了時刻は開始時刻より後にしてください',
+    path: ['endTime'],
+  });
 
 /**
  * 管理者：注文ステータス更新スキーマ
@@ -334,6 +353,8 @@ export const adminAuditLogQuerySchema = z.object({
       'order.ship',
       'order.refund',
       'order.email_resend',
+      'calendar.event_create',
+      'calendar.event_delete',
     ])
     .optional(),
   targetType: z.enum(['product', 'news', 'order', 'calendar']).optional(),

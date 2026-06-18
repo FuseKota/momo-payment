@@ -149,7 +149,7 @@ export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwan
                     >
                       <div
                         className={styles.cardImg}
-                        style={{ backgroundImage: `url('${NIGHT_MARKET_IMAGES[article.slug] ?? FALLBACK_IMAGE}')` }}
+                        style={{ backgroundImage: `url('${article.image_url ?? NIGHT_MARKET_IMAGES[article.slug] ?? FALLBACK_IMAGE}')` }}
                       />
                       <div className={styles.cardContent}>
                         <h3 className={styles.cardTitle}>{getLocalizedNewsTitle(article, locale)}</h3>

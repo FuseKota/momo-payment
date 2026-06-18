@@ -230,6 +230,7 @@ export interface News {
   excerpt: string | null;
   category: string;
   slug: string;
+  image_url: string | null;
   title_zh_tw: string | null;
   excerpt_zh_tw: string | null;
   content_zh_tw: string | null;
@@ -307,7 +308,9 @@ export type AuditAction =
   | 'order.mark_paid'
   | 'order.ship'
   | 'order.refund'
-  | 'order.email_resend';
+  | 'order.email_resend'
+  | 'calendar.event_create'
+  | 'calendar.event_delete';
 
 export type AuditTargetType = 'product' | 'news' | 'order' | 'calendar';
 

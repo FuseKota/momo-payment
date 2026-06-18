@@ -113,6 +113,12 @@ export default function NewsDetailClient({ news }: Props) {
           <Container maxWidth="md">
             <Divider sx={{ mb: 4, borderColor: dividerColor }} />
 
+            {news.image_url && (
+              <Box sx={{ mb: 4 }}>
+                <NewsContentImage src={news.image_url} alt={title} />
+              </Box>
+            )}
+
             {content ? (
               <div className={styles.markdownContent}>
                 <ReactMarkdown
