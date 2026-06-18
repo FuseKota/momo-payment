@@ -46,7 +46,9 @@ interface HeaderProps {
 export default function Header({ cartItemCount = 0 }: HeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // lg(1200px)未満はドロワー表示。ナビ4項目+SNS+認証+言語+カートはmd(900px)では
+  // 横幅が足りず横スクロールが発生するため、SNSリンクのlg閾値に揃える。
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { user, isAdmin, signOut } = useAuth();
   const t = useTranslations('common');
 
@@ -90,8 +92,8 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </IconButton>
           )}
 
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Box sx={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+            <Box sx={{ position: 'relative', width: { xs: 44, md: 88 }, height: { xs: 44, md: 88 }, flexShrink: 0 }}>
               <Image
                 src="/images/logo.svg"
                 alt="Sakura Sisters"
@@ -104,7 +106,10 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
               component="span"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: '1.3rem', md: '1.5rem' },
+                // mdは項目過密なヘッダー内で1行に収まるサイズ（1.5remだとnav等に圧迫され折返す）。
+                // xsは通常幅(>=360px)で1行、極小幅では折り返して横スクロールを防ぐ（nowrapしない）。
+                fontSize: { xs: '0.85rem', md: '1.25rem' },
+                lineHeight: 1.2,
                 background: 'linear-gradient(135deg, #FF6680 0%, #E84D6A 100%)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
