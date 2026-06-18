@@ -40,6 +40,8 @@ const ACTION_LABELS: Record<string, string> = {
   'order.ship': '発送登録',
   'order.refund': '返金',
   'order.email_resend': 'メール再送',
+  'calendar.event_create': 'カレンダー予定作成',
+  'calendar.event_delete': 'カレンダー予定削除',
 };
 
 const TARGET_TYPE_LABELS: Record<string, string> = {
