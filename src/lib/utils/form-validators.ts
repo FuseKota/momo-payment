@@ -1,6 +1,6 @@
-export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const PHONE_REGEX = /^0[0-9\-]{9,13}$/;
-export const POSTAL_CODE_REGEX = /^\d{3}-?\d{4}$/;
+// 正規表現は client/server で共用する単一ソースから取得（後方互換のため再エクスポートも維持）
+import { EMAIL_REGEX, PHONE_REGEX, POSTAL_CODE_REGEX } from '@/lib/validation/patterns';
+export { EMAIL_REGEX, PHONE_REGEX, POSTAL_CODE_REGEX };
 
 interface CustomerFields {
   name: string;

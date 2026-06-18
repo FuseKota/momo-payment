@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DELIVERY_TIME_SLOTS } from '@/lib/shipping/time-slots';
 import { resolveZone } from '@/lib/shipping/calc';
+import { PHONE_REGEX, POSTAL_CODE_REGEX } from '@/lib/validation/patterns';
 
 /**
  * 食品表示ラベルスキーマ（FoodLabel インターフェースに対応）
@@ -28,7 +29,7 @@ const foodLabelSchema = z.object({
 export const phoneSchema = z
   .string()
   .min(1, '電話番号を入力してください')
-  .regex(/^0[0-9\-]{9,13}$/, '電話番号の形式が正しくありません');
+  .regex(PHONE_REGEX, '電話番号の形式が正しくありません');
 
 /**
  * メールアドレスバリデーション
@@ -45,7 +46,7 @@ export const emailSchema = z
 export const postalCodeSchema = z
   .string()
   .min(1, '郵便番号を入力してください')
-  .regex(/^\d{3}-?\d{4}$/, '郵便番号の形式が正しくありません');
+  .regex(POSTAL_CODE_REGEX, '郵便番号の形式が正しくありません');
 
 /**
  * 制御文字・ゼロ幅文字を除去するヘルパー
