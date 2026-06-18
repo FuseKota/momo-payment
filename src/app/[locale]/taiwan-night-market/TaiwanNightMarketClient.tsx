@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import Lantern from './components/Lantern';
 import TaiwanNightMarketHeader from './components/TaiwanNightMarketHeader';
@@ -10,6 +10,7 @@ import IitateCalendar from './components/IitateCalendar';
 import { NewsSection } from '@/components/common';
 import styles from './taiwan-night-market.module.css';
 import type { News } from '@/types/database';
+import { getLocalizedNewsTitle, getLocalizedNewsExcerpt } from '@/lib/utils/localize-news';
 
 // 画像は本番 Supabase Storage に配置（wikimedia の thumb はホットリンク制限で400になるため）。
 // アップロードは scripts/upload-night-market-images.ts。URL は DB 移行に追従するよう env 基準。
@@ -53,6 +54,7 @@ interface Props {
 
 export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwanArticles }: Props) {
   const t = useTranslations('taiwanNightMarket');
+  const locale = useLocale();
 
   useEffect(() => {
     // スクロールアニメーション
@@ -150,8 +152,8 @@ export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwan
                         style={{ backgroundImage: `url('${NIGHT_MARKET_IMAGES[article.slug] ?? FALLBACK_IMAGE}')` }}
                       />
                       <div className={styles.cardContent}>
-                        <h3 className={styles.cardTitle}>{article.title}</h3>
-                        <p className={styles.cardDesc}>{article.excerpt}</p>
+                        <h3 className={styles.cardTitle}>{getLocalizedNewsTitle(article, locale)}</h3>
+                        <p className={styles.cardDesc}>{getLocalizedNewsExcerpt(article, locale)}</p>
                       </div>
                     </div>
                   </Link>

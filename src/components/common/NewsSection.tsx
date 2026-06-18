@@ -1,8 +1,14 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Divider, Chip } from '@mui/material';
 import type { News } from '@/types/database';
+import {
+  getLocalizedNewsTitle,
+  getLocalizedNewsExcerpt,
+  getLocalizedNewsCategory,
+} from '@/lib/utils/localize-news';
 
 interface NewsSectionProps {
   items: News[];
@@ -35,6 +41,7 @@ function truncate(text: string | null, max = 60): string {
 const gold = '#fbc02d';
 
 export default function NewsSection({ items, variant = 'light', title, showViewAll }: NewsSectionProps) {
+  const locale = useLocale();
   if (items.length === 0 && title === undefined) return null;
 
   const isDark = variant === 'dark';
@@ -132,7 +139,7 @@ export default function NewsSection({ items, variant = 'light', title, showViewA
                     }}
                   >
                     <Chip
-                      label={item.category}
+                      label={getLocalizedNewsCategory(item.category, locale)}
                       size="small"
                       variant="outlined"
                       sx={{
@@ -166,11 +173,11 @@ export default function NewsSection({ items, variant = 'light', title, showViewA
                         lineHeight: 1.5,
                       }}
                     >
-                      {item.title}
+                      {getLocalizedNewsTitle(item, locale)}
                     </Typography>
-                    {item.excerpt && (
+                    {getLocalizedNewsExcerpt(item, locale) && (
                       <Typography variant="body2" sx={{ color: excerptColor }}>
-                        {truncate(item.excerpt)}
+                        {truncate(getLocalizedNewsExcerpt(item, locale))}
                       </Typography>
                     )}
                   </Box>
