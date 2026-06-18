@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFetch } from '@/hooks/useFetch';
 import {
   Box,
   Typography,
@@ -23,7 +23,6 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
-import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 interface RecentOrder {
   id: string;
@@ -70,27 +69,7 @@ function StatCard({
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchDashboard = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/admin/dashboard');
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } catch (error) {
-      secureLog('error', 'Failed to fetch dashboard', safeErrorLog(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+  const { data, isLoading, refetch } = useFetch<DashboardData>('/api/admin/dashboard');
 
   return (
     <Box>
@@ -101,7 +80,7 @@ export default function AdminDashboardPage() {
         <Button
           startIcon={<RefreshIcon />}
           variant="outlined"
-          onClick={fetchDashboard}
+          onClick={refetch}
           disabled={isLoading}
         >
           更新

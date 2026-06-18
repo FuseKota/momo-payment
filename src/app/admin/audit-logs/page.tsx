@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
+import { useFetch } from '@/hooks/useFetch';
 import {
   Box,
   Typography,
@@ -52,45 +53,29 @@ const ACTION_OPTIONS = Object.keys(ACTION_LABELS);
 const TARGET_TYPE_OPTIONS = Object.keys(TARGET_TYPE_LABELS);
 
 export default function AdminAuditLogsPage() {
-  const [items, setItems] = useState<AuditLog[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(50);
   const [action, setAction] = useState('');
   const [targetType, setTargetType] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
   });
 
-  const fetchLogs = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (action) params.set('action', action);
-      if (targetType) params.set('targetType', targetType);
-      params.set('page', String(page));
-      params.set('perPage', String(perPage));
-
-      const res = await fetch(`/api/admin/audit-logs?${params}`);
-      if (res.ok) {
-        const json = await res.json();
-        setItems(json.items ?? []);
-        setTotal(json.total ?? 0);
-      } else {
-        setSnackbar({ open: true, message: 'ログの取得に失敗しました' });
-      }
-    } catch {
-      setSnackbar({ open: true, message: 'ログの取得に失敗しました' });
-    } finally {
-      setIsLoading(false);
-    }
+  const url = useMemo(() => {
+    const params = new URLSearchParams();
+    if (action) params.set('action', action);
+    if (targetType) params.set('targetType', targetType);
+    params.set('page', String(page));
+    params.set('perPage', String(perPage));
+    return `/api/admin/audit-logs?${params}`;
   }, [action, targetType, page, perPage]);
 
-  useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+  const { data, isLoading } = useFetch<{ items: AuditLog[]; total: number }>(url, {
+    onError: () => setSnackbar({ open: true, message: 'ログの取得に失敗しました' }),
+  });
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   return (
     <Box>
