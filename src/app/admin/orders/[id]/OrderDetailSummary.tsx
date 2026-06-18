@@ -93,7 +93,7 @@ export default function OrderDetailSummary({ order }: { order: Order }) {
             <Typography variant="body2" color="text.secondary">
               メールアドレス
             </Typography>
-            <Typography>{order.customer_email}</Typography>
+            <Typography sx={{ wordBreak: 'break-all' }}>{order.customer_email}</Typography>
           </Grid>
           <Grid size={6}>
             <Typography variant="body2" color="text.secondary">
