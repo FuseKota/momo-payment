@@ -4,14 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
   IconButton,
   Button,
   Switch,
@@ -33,17 +25,14 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import EditIcon from '@mui/icons-material/Edit';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SortIcon from '@mui/icons-material/Sort';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SaveIcon from '@mui/icons-material/Save';
-import Tooltip from '@mui/material/Tooltip';
-import { formatPrice } from '@/lib/utils/format';
 import type { Product, FoodLabel } from '@/types/database';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { peachPink } from '@/lib/mui/theme';
+import ProductTable from './ProductTable';
 
 interface ProductFormData {
   name: string;
@@ -57,7 +46,6 @@ interface ProductFormData {
   description_zh_tw: string;
   description_en: string;
   is_active: boolean;
-  can_pickup: boolean;
   can_ship: boolean;
   image_url: string | null;
   stock_qty: number | null;
@@ -77,7 +65,6 @@ const defaultFormData: ProductFormData = {
   description_zh_tw: '',
   description_en: '',
   is_active: true,
-  can_pickup: true,
   can_ship: true,
   image_url: null,
   stock_qty: null,
@@ -117,7 +104,7 @@ export default function AdminProductsPage() {
         setProducts(data);
       }
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      secureLog('error', 'Failed to fetch products', safeErrorLog(error));
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +148,6 @@ export default function AdminProductsPage() {
         description_zh_tw: product.description_zh_tw || '',
         description_en: product.description_en || '',
         is_active: product.is_active,
-        can_pickup: product.can_pickup,
         can_ship: product.can_ship,
         image_url: product.image_url,
         stock_qty: product.stock_qty,
@@ -529,151 +515,15 @@ export default function AdminProductsPage() {
         </Box>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {isReorderMode && <TableCell sx={{ width: 80 }}>順番</TableCell>}
-              <TableCell>商品名</TableCell>
-              <TableCell>種別</TableCell>
-              <TableCell align="right">価格</TableCell>
-              <TableCell align="center">公開</TableCell>
-              {!isReorderMode && <TableCell align="center">操作</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(isReorderMode ? orderedProducts : products).map((product, index) => (
-              <TableRow key={product.id} hover>
-                {isReorderMode && (
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Tooltip title="上へ">
-                        <span>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleMoveProduct(index, 'up')}
-                            disabled={index === 0}
-                          >
-                            <ArrowUpwardIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
-                        {index + 1}
-                      </Typography>
-                      <Tooltip title="下へ">
-                        <span>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleMoveProduct(index, 'down')}
-                            disabled={index === orderedProducts.length - 1}
-                          >
-                            <ArrowDownwardIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                )}
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    {product.image_url ? (
-                      <Box
-                        component="img"
-                        src={product.image_url}
-                        alt={product.name}
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 1,
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 1,
-                          backgroundColor: '#FFF0F3',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '1.5rem' }}>
-                          {product.kind === 'FROZEN_FOOD' ? '🍚' : '🎁'}
-                        </Typography>
-                      </Box>
-                    )}
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {product.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {product.slug}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  {product.temp_zone === 'FROZEN' ? (
-                    <Chip
-                      icon={<AcUnitIcon />}
-                      label="冷凍食品"
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ) : (
-                    <Chip label="グッズ" size="small" variant="outlined" />
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <Typography sx={{ fontWeight: 600 }}>
-                    ¥{formatPrice(product.price_yen)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Switch
-                    checked={product.is_active}
-                    onChange={() => handleToggleActive(product)}
-                    color="primary"
-                    disabled={isReorderMode}
-                  />
-                </TableCell>
-                {!isReorderMode && (
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => handleOpenDialog(product)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteConfirmId(product.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-            {products.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <Typography color="text.secondary">
-                    商品がありません
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <ProductTable
+        products={products}
+        orderedProducts={orderedProducts}
+        isReorderMode={isReorderMode}
+        onMove={handleMoveProduct}
+        onToggleActive={handleToggleActive}
+        onEdit={handleOpenDialog}
+        onDelete={setDeleteConfirmId}
+      />
 
       {/* Delete Confirm Dialog */}
       <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)}>
@@ -756,7 +606,7 @@ export default function AdminProductsPage() {
                   borderRadius: 2,
                   border: '2px dashed',
                   borderColor: isDragging ? 'primary.main' : 'transparent',
-                  backgroundColor: isDragging ? '#FFF0F3' : 'transparent',
+                  backgroundColor: isDragging ? peachPink[50] : 'transparent',
                   transition: 'border-color 0.2s, background-color 0.2s',
                 }}
               >
@@ -796,7 +646,7 @@ export default function AdminProductsPage() {
                       width: 120,
                       height: 120,
                       borderRadius: 2,
-                      backgroundColor: '#FFF0F3',
+                      backgroundColor: peachPink[50],
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -891,16 +741,6 @@ export default function AdminProductsPage() {
                 販売設定
               </Typography>
               <Box sx={{ display: 'flex', gap: 3 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.can_pickup}
-                      onChange={(e) => handleFormChange('can_pickup', e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label="店頭受け取り"
-                />
                 <FormControlLabel
                   control={
                     <Switch

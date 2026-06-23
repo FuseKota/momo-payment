@@ -74,8 +74,6 @@ export async function GET(
         shipping_fee_yen,
         total_yen,
         customer_name,
-        pickup_date,
-        pickup_time,
         delivery_date,
         delivery_time_slot,
         created_at,

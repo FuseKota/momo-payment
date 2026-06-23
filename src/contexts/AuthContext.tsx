@@ -163,7 +163,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    if (error) return { error };
+    if (error) {
+      // メール確認が無効な環境では、重複登録は 422 user_already_exists エラーで返る。
+      // （メール確認が有効な場合はエラーにならず identities 空のユーザーが返るため後段で検知）
+      const code = (error as { code?: string }).code;
+      if (code === 'user_already_exists' || /already\s+registered|already\s+exists/i.test(error.message)) {
+        return { error: new Error('signup_duplicate') };
+      }
+      return { error };
+    }
 
     // 重複サインアップ検知: identities が空なら既存ユーザー
     if (data.user && (!data.user.identities || data.user.identities.length === 0)) {

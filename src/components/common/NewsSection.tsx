@@ -117,7 +117,10 @@ export default function NewsSection({ items, variant = 'light', title, showViewA
           {items.map((item, index) => (
             <Box key={item.id}>
               <Divider sx={{ borderColor: dividerColor }} />
-              <Link href={`/news/${item.slug}`} style={{ textDecoration: 'none' }}>
+              {/* /news/[slug] は news.module.css を持つ。本セクションはホーム/台湾夜市など
+                  news CSS を使わないページに表示されるため、プリフェッチを無効化して
+                  未使用CSSの先読み（preloaded but not used 警告）を防ぐ。 */}
+              <Link href={`/news/${item.slug}`} prefetch={false} style={{ textDecoration: 'none' }}>
                 <Box
                   sx={{
                     py: 3,
@@ -191,7 +194,7 @@ export default function NewsSection({ items, variant = 'light', title, showViewA
         {/* View all link */}
         {showViewAll !== false && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Link href="/news" style={{ textDecoration: 'none' }}>
+            <Link href="/news" prefetch={false} style={{ textDecoration: 'none' }}>
               <Typography
                 variant="body2"
                 sx={{

@@ -8,16 +8,16 @@
     "title": "桃娘 - 福島正宗台灣料理・冷凍宅配",
     "description": "福島桃娘線上訂購網站。正宗台灣料理冷凍食品及桃娘周邊商品全國宅配到府。",
     "home": {
-      "title": "福島正宗台灣料理・冷凍宅配",
-      "description": "福島桃娘官方線上商店。滷肉飯等正宗台灣料理冷凍食品及原創周邊商品全國宅配到府。並提供日本各地台灣夜市活動最新資訊。"
+      "title": "福島・飯舘村正宗台灣料理・冷凍宅配",
+      "description": "福島縣飯舘村桃娘官方線上商店。滷肉飯等正宗台灣料理冷凍食品及原創周邊商品全國宅配到府。並提供日本各地台灣夜市活動最新資訊。"
     },
     "shop": {
       "title": "台灣料理網購・冷凍食品宅配",
       "description": "滷肉飯等正宗台灣料理冷凍食品及原創周邊商品線上全國宅配。使用福島在地食材的桃娘宅配美食，在家也能品嚐道地台灣風味。"
     },
     "taiwanNightMarket": {
-      "title": "台灣夜市 福島｜台灣夜市美食宅配",
-      "description": "士林、饒河街、寧夏等台灣夜市名物攤位料理宅配到府。大雞排、滷肉飯、小籠包等道地台灣美食全國配送的桃娘線上商店。"
+      "title": "台灣夜市 福島・飯舘村｜台灣夜市美食宅配",
+      "description": "以福島縣飯舘村為據點的桃娘。士林、饒河街、寧夏等台灣夜市名物攤位料理宅配到府。大雞排、滷肉飯、小籠包等道地台灣美食全國配送。"
     },
     "news": {
       "title": "最新消息・公告",
@@ -69,7 +69,7 @@
   },
   "home": {
     "heroTitle": "歡迎來到\n福島桃娘商品網站",
-    "heroSubtitle": "正宗台灣料理與福島桃娘原創周邊\n提供全國宅配服務",
+    "heroSubtitle": "福島縣飯舘村桃娘的正宗台灣料理與原創周邊\n提供全國宅配服務",
     "shippingButton": "宅配訂購",
     "orderMethods": "訂購方式",
     "shippingTitle": "宅配訂購",
@@ -253,7 +253,6 @@
     "noOrders": "沒有訂單記錄",
     "viewProducts": "瀏覽商品",
     "orderNo": "訂單編號：{orderNo}",
-    "orderTypePickup": "餐車取餐",
     "orderTypeShipping": "宅配",
     "totalLabel": "合計：¥{total}",
     "backToMypage": "返回我的頁面",
@@ -261,11 +260,9 @@
     "orderDate": "訂單日期",
     "orderType": "訂單類型",
     "paymentMethod": "付款方式",
-    "payAtPickup": "現場付款",
     "creditCard": "信用卡",
     "deliveryDate": "希望配送日期與時段",
     "deliveryDateUnspecified": "不指定",
-    "pickupDate": "領取日期",
     "products": "商品",
     "productName": "商品名稱",
     "unitPrice": "單價",
@@ -350,7 +347,10 @@
     "privacyContactText": "如有關於個人資訊處理的相關詢問，請透過以下方式與我們聯繫。",
     "privacyContactBusiness": "業者名稱：株式会社サクラ・シスターズ",
     "privacyContactEmail": "電子信箱：info@sakura-sisters.com",
-    "footerPrivacy": "隱私權政策"
+    "footerPrivacy": "隱私權政策",
+    "contactTitle": "聯絡我們",
+    "contactIntro": "如有任何疑問或關於訂單的諮詢，請透過以下電子郵件與我們聯繫。",
+    "contactDescription": "聯絡資訊"
   },
   "news": {
     "heading": "最新消息",
@@ -385,7 +385,6 @@
     "orderNo": "訂單編號：",
     "orderType": "訂單類型：",
     "orderTypeShipping": "宅配",
-    "orderTypePickup": "餐車取餐",
     "orderedItems": "訂購商品",
     "productName": "商品名稱",
     "qty": "數量",
@@ -394,7 +393,6 @@
     "shippingFee": "運費：",
     "total": "合計：",
     "shippingDestination": "配送地址",
-    "pickupSchedule": "領取時間",
     "deliverySchedule": "希望配送日期與時段",
     "dateTime": "日期時間：",
     "contactNotice": "如有任何疑問，歡迎隨時聯繫我們。",
@@ -409,9 +407,6 @@
     "paymentCompleteMessage": "付款已完成。謝謝您。",
     "paymentAmount": "付款金額：",
     "paymentShipNotice": "商品準備出貨後，我們將發送出貨通知。",
-    "pickupPaidSubject": "【桃娘】付款確認通知 - {orderNo}",
-    "pickupPaidGreeting": "付款確認通知",
-    "pickupPaidMessage": "已確認您在現場的付款。\n非常感謝您的惠顧。",
     "cancelSubject": "【桃娘】訂單取消通知 - {orderNo}",
     "cancelGreeting": "訂單取消通知",
     "cancelMessage": "由於已超過付款期限，您的訂單已被取消。\n如需重新訂購，敬請再次完成下單手續。",
@@ -427,7 +422,6 @@
     "adminCustomerEmail": "電子信箱：",
     "adminPaymentMethod": "付款方式：",
     "adminPaymentStripe": "線上付款",
-    "adminPaymentOnSite": "現場付款",
     "adminViewInDashboard": "於管理後台查看詳情"
   },
   "postalCodeLookup": {
@@ -455,7 +449,7 @@
     "ctaPickup": "預約餐車取餐",
     "guideTitle": "台灣夜市指南",
     "guideSubtitle": "感受充滿活力的美食世界",
-    "momoEventsTitle": "福島桃娘 活動資訊",
+    "momoEventsTitle": "福島・飯舘村 桃娘 活動資訊",
     "domesticEventsTitle": "日本國內 台灣夜市資訊",
     "taiwanNightMarketInfoTitle": "正宗台灣夜市資訊",
     "readMore": "了解更多",

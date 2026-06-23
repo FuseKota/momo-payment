@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DELIVERY_TIME_SLOTS } from '@/lib/shipping/time-slots';
 import { resolveZone } from '@/lib/shipping/calc';
+import { PHONE_REGEX, POSTAL_CODE_REGEX } from '@/lib/validation/patterns';
 
 /**
  * 食品表示ラベルスキーマ（FoodLabel インターフェースに対応）
@@ -28,7 +29,7 @@ const foodLabelSchema = z.object({
 export const phoneSchema = z
   .string()
   .min(1, '電話番号を入力してください')
-  .regex(/^0[0-9\-]{9,13}$/, '電話番号の形式が正しくありません');
+  .regex(PHONE_REGEX, '電話番号の形式が正しくありません');
 
 /**
  * メールアドレスバリデーション
@@ -45,7 +46,7 @@ export const emailSchema = z
 export const postalCodeSchema = z
   .string()
   .min(1, '郵便番号を入力してください')
-  .regex(/^\d{3}-?\d{4}$/, '郵便番号の形式が正しくありません');
+  .regex(POSTAL_CODE_REGEX, '郵便番号の形式が正しくありません');
 
 /**
  * 制御文字・ゼロ幅文字を除去するヘルパー
@@ -175,7 +176,6 @@ export const adminProductCreateSchema = z.object({
   kind: z.enum(['FROZEN_FOOD', 'GOODS']),
   temp_zone: z.enum(['FROZEN', 'AMBIENT']).nullable().optional(),
   price_yen: z.number().int().min(0).max(1000000),
-  can_pickup: z.boolean().optional(),
   can_ship: z.boolean().optional(),
   is_active: z.boolean().optional(),
   image_url: z.string().url().nullable().optional(),
@@ -218,6 +218,7 @@ export const adminNewsCreateSchema = z.object({
   content: z.string().max(50000).nullable().optional(),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.string().max(100).optional(),
+  image_url: z.string().url().nullable().optional(),
   title_zh_tw: z.string().max(200).nullable().optional(),
   excerpt_zh_tw: z.string().max(500).nullable().optional(),
   content_zh_tw: z.string().max(50000).nullable().optional(),
@@ -248,6 +249,24 @@ export const adminIitateCalendarMonthNoteSchema = z.object({
 });
 
 /**
+ * 管理者：飯舘村カレンダーの予定作成（Google カレンダーへ書き込む）
+ * type は Google 予定タイトルのキーワードに対応（昼の部/夜の部/もも娘ステージ/休園）。
+ * closed（休園）は終日。それ以外で start/end 時刻があれば時刻付き、無ければ終日扱い。
+ */
+export const adminCalendarEventSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日付の形式が正しくありません (YYYY-MM-DD)'),
+    type: z.enum(['day', 'night', 'stage', 'closed']),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    note: z.string().max(500).optional(),
+  })
+  .refine((v) => v.type === 'closed' || !v.startTime || !v.endTime || v.startTime < v.endTime, {
+    message: '終了時刻は開始時刻より後にしてください',
+    path: ['endTime'],
+  });
+
+/**
  * 管理者：注文ステータス更新スキーマ
  */
 export const adminOrderUpdateSchema = z.object({
@@ -264,20 +283,11 @@ export const adminShipSchema = z.object({
 });
 
 /**
- * 管理者：入金確認スキーマ
- */
-export const adminMarkPaidSchema = z.object({
-  note: z.string().max(500).optional(),
-});
-
-/**
  * 管理者：全額返金スキーマ
  * 全額返金のみ対応（部分返金なし）。reason は任意の管理メモ。
- * manualMark は店頭現金払い(PAY_AT_PICKUP)を Stripe を介さず返金済みにする場合 true。
  */
 export const adminRefundSchema = z.object({
   reason: z.string().max(500).optional(),
-  manualMark: z.boolean().optional(),
 });
 
 /**
@@ -294,9 +304,9 @@ export const adminResendEmailSchema = z.object({
  * searchParams は全て string なので coerce/transform で正規化する。
  */
 export const adminOrdersFilterSchema = z.object({
-  type: z.enum(['PICKUP', 'SHIPPING']).optional(),
+  type: z.enum(['SHIPPING']).optional(),
   status: z
-    .enum(['RESERVED', 'PENDING_PAYMENT', 'PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED', 'REFUNDED'])
+    .enum(['PENDING_PAYMENT', 'PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED', 'REFUNDED'])
     .optional(),
   q: z
     .string()
@@ -343,6 +353,8 @@ export const adminAuditLogQuerySchema = z.object({
       'order.ship',
       'order.refund',
       'order.email_resend',
+      'calendar.event_create',
+      'calendar.event_delete',
     ])
     .optional(),
   targetType: z.enum(['product', 'news', 'order', 'calendar']).optional(),

@@ -245,13 +245,13 @@ erDiagram
     orders {
         uuid id PK
         text order_no
-        enum order_type "PICKUP / SHIPPING"
+        enum order_type "SHIPPING"
         enum status
         text locale "ja / zh-tw"
     }
     payments {
         uuid id PK
-        enum payment_method "STRIPE / PAY_AT_PICKUP"
+        enum payment_method "STRIPE"
         enum status
     }
     customer_profiles ||--o{ customer_addresses : has
@@ -291,20 +291,19 @@ erDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> RESERVED: 店頭払い予約
-    RESERVED --> PAID: 店頭入金確認
     [*] --> PENDING_PAYMENT: Stripe決済開始
     PENDING_PAYMENT --> PAID: Webhook(決済完了)
-    PAID --> FULFILLED: 店頭受取完了
+    PENDING_PAYMENT --> CANCELED: Webhook(セッション失効)
     PAID --> PACKING: 配送・梱包開始
     PACKING --> SHIPPED: 発送登録(追跡番号)
     SHIPPED --> FULFILLED: 配送完了
+    PAID --> REFUNDED: 返金
     FULFILLED --> [*]
 ```
 
-- **店頭払い**: `RESERVED → PAID → FULFILLED`
-- **Stripe（店頭受取）**: `PENDING_PAYMENT → PAID → FULFILLED`
-- **Stripe（配送）**: `PENDING_PAYMENT → PAID → PACKING → SHIPPED → FULFILLED`
+- **配送（Stripe）**: `PENDING_PAYMENT → PAID → PACKING → SHIPPED → FULFILLED`
+- **キャンセル（決済前）**: `PENDING_PAYMENT → CANCELED`
+- **返金**: `PAID 以降 → REFUNDED`
 
 ---
 

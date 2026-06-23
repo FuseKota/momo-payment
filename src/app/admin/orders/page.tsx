@@ -16,8 +16,6 @@ import {
   Chip,
   TextField,
   InputAdornment,
-  Tabs,
-  Tab,
   Button,
   CircularProgress,
   MenuItem,
@@ -28,6 +26,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 interface OrderItem {
   id: string;
@@ -47,7 +46,6 @@ interface Shipment {
 interface Order {
   id: string;
   order_no: string;
-  order_type: 'SHIPPING' | 'PICKUP';
   customer_name: string;
   customer_email: string;
   total_yen: number;
@@ -58,11 +56,8 @@ interface Order {
   shipments: Shipment[];
 }
 
-type TabValue = 'all' | 'shipping';
-
 export default function AdminOrdersPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<TabValue>('all');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [from, setFrom] = useState('');
@@ -84,11 +79,7 @@ export default function AdminOrdersPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // タブ・ステータス・期間の変更ハンドラ（変更時は先頭ページへ戻す）
-  const handleTabChange = (value: TabValue) => {
-    setTab(value);
-    setPage(0);
-  };
+  // ステータス・期間の変更ハンドラ（変更時は先頭ページへ戻す）
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
     setPage(0);
@@ -104,9 +95,6 @@ export default function AdminOrdersPage() {
 
   const buildFilterParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (tab !== 'all') {
-      params.set('type', 'SHIPPING');
-    }
     if (statusFilter) {
       params.set('status', statusFilter);
     }
@@ -121,7 +109,7 @@ export default function AdminOrdersPage() {
       params.set('to', to);
     }
     return params;
-  }, [tab, statusFilter, debouncedSearch, from, to]);
+  }, [statusFilter, debouncedSearch, from, to]);
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
@@ -136,7 +124,7 @@ export default function AdminOrdersPage() {
         setTotal(data.total ?? 0);
       }
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      secureLog('error', 'Failed to fetch orders', safeErrorLog(error));
     } finally {
       setIsLoading(false);
     }
@@ -177,13 +165,6 @@ export default function AdminOrdersPage() {
       </Box>
 
       <Paper sx={{ mb: 3 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tab} onChange={(_, value) => handleTabChange(value)}>
-            <Tab label="すべて" value="all" />
-            <Tab label="配送" value="shipping" />
-          </Tabs>
-        </Box>
-
         <Box sx={{ p: 2 }}>
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             <TextField
@@ -247,7 +228,6 @@ export default function AdminOrdersPage() {
             <TableHead>
               <TableRow>
                 <TableCell>注文番号</TableCell>
-                <TableCell>種別</TableCell>
                 <TableCell>顧客</TableCell>
                 <TableCell>購入商品</TableCell>
                 <TableCell align="right">金額</TableCell>
@@ -268,14 +248,6 @@ export default function AdminOrdersPage() {
                     <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                       {order.order_no}
                     </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={order.order_type === 'SHIPPING' ? '配送' : 'キッチンカー'}
-                      size="small"
-                      variant="outlined"
-                      color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
-                    />
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{order.customer_name}</Typography>
@@ -304,14 +276,10 @@ export default function AdminOrdersPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    {order.order_type === 'SHIPPING' ? (
-                      order.shipments?.length > 0 && order.shipments[0].shipped_at ? (
-                        <Chip label="発送済" size="small" color="success" />
-                      ) : (
-                        <Chip label="未発送" size="small" variant="outlined" />
-                      )
+                    {order.shipments?.length > 0 && order.shipments[0].shipped_at ? (
+                      <Chip label="発送済" size="small" color="success" />
                     ) : (
-                      <Typography variant="body2" color="text.secondary">-</Typography>
+                      <Chip label="未発送" size="small" variant="outlined" />
                     )}
                   </TableCell>
                   <TableCell>
@@ -321,7 +289,7 @@ export default function AdminOrdersPage() {
               ))}
               {orders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                     <Typography color="text.secondary">
                       該当する注文がありません
                     </Typography>

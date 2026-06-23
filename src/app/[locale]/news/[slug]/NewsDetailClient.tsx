@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Box, Container, Typography, Chip, Divider, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -22,6 +23,36 @@ const gold = '#fbc02d';
 const dividerColor = 'rgba(251, 192, 45, 0.2)';
 // 本文画像は自前Storageに配置（wikimediaのthumbはホットリンク制限で400になるため）
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/product-images/night-market`;
+
+/**
+ * 本文中の画像。画像が存在しない場合（Storage未登録・リンク切れ等）は
+ * 壊れたアイコンを出さずに非表示にする。
+ * SSR時点で既に読込失敗した画像は onError が発火しないため、マウント時に
+ * naturalWidth で判定する。
+ */
+function NewsContentImage({ src, alt }: { src?: string; alt: string }) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    if (ref.current?.complete && ref.current.naturalWidth === 0) {
+      setHidden(true);
+    }
+  }, []);
+
+  if (hidden || !src) return null;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      ref={ref}
+      src={src}
+      alt={alt}
+      onError={() => setHidden(true)}
+      style={{ maxWidth: '100%', height: 'auto', borderRadius: 8 }}
+    />
+  );
+}
 
 interface Props {
   news: News;
@@ -82,6 +113,12 @@ export default function NewsDetailClient({ news }: Props) {
           <Container maxWidth="md">
             <Divider sx={{ mb: 4, borderColor: dividerColor }} />
 
+            {news.image_url && (
+              <Box sx={{ mb: 4 }}>
+                <NewsContentImage src={news.image_url} alt={title} />
+              </Box>
+            )}
+
             {content ? (
               <div className={styles.markdownContent}>
                 <ReactMarkdown
@@ -94,8 +131,7 @@ export default function NewsDetailClient({ news }: Props) {
                         typeof src === 'string' && src.includes('wikimedia.org')
                           ? `${STORAGE_BASE}/${news.slug}.jpg`
                           : (src as string | undefined);
-                      // eslint-disable-next-line @next/next/no-img-element
-                      return <img src={finalSrc} alt={alt ?? ''} style={{ maxWidth: '100%', height: 'auto', borderRadius: 8 }} />;
+                      return <NewsContentImage src={finalSrc} alt={alt ?? ''} />;
                     },
                   }}
                 >{content}</ReactMarkdown>

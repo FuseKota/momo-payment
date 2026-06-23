@@ -16,12 +16,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/*
+ * 本アプリは MUI ライトテーマ固定（ダークパレット未定義）。
+ * OS/ブラウザが prefers-color-scheme: dark の場合でも UI は白背景のため、
+ * body の文字色をダーク用に薄くすると白背景＋薄灰文字で可読性が落ちる。
+ * よってカラースキームはライト固定とする。
+ */
 
 body {
   background: var(--background);

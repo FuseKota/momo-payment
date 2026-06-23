@@ -9,7 +9,6 @@ const mockProduct = (overrides: Partial<FetchedProduct> = {}): FetchedProduct =>
   kind: 'FROZEN_FOOD',
   temp_zone: 'FROZEN',
   price_yen: 1000,
-  can_pickup: true,
   can_ship: true,
   is_active: true,
   ...overrides,

@@ -24,6 +24,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout, PostalCodeField } from '@/components/common';
 import { PHONE_REGEX, validateAddressFields } from '@/lib/utils/form-validators';
+import { peachPink } from '@/lib/mui/theme';
 
 export default function LoginPage() {
   return (
@@ -153,7 +154,14 @@ function LoginPageContent() {
 
     if (error) {
       if (error.message === 'signup_duplicate') {
+        // 既存アカウント: ログインタブへ切り替え、メールは保持してパスワードのみ再入力させる
+        setTab(0);
+        setSignupStep(0);
+        setPassword('');
+        setFieldErrors({});
         setError(t('signupDuplicate'));
+        setIsLoading(false);
+        return;
       } else if (
         (error as { code?: string }).code === 'weak_password' ||
         /weak|pwned|leaked|compromis/i.test(error.message)
@@ -201,7 +209,7 @@ function LoginPageContent() {
                 width: 60,
                 height: 60,
                 borderRadius: '50%',
-                backgroundColor: '#FFF0F3',
+                backgroundColor: peachPink[50],
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

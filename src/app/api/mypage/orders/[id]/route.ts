@@ -34,8 +34,6 @@ export async function GET(_request: Request, { params }: RouteParams) {
         customer_name,
         customer_phone,
         customer_email,
-        pickup_date,
-        pickup_time,
         delivery_date,
         delivery_time_slot,
         agreement_accepted,

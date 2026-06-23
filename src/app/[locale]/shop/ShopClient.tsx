@@ -16,6 +16,7 @@ import { Layout, ProductCard } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { getLocalizedName } from '@/lib/utils/localize-product';
+import { peachPink } from '@/lib/mui/theme';
 import type { Product } from '@/types/database';
 
 type TabValue = 'all' | 'frozen' | 'goods';
@@ -161,7 +162,7 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
             mt: 6,
             p: 3,
             borderRadius: 3,
-            backgroundColor: '#FFF0F3',
+            backgroundColor: peachPink[50],
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>

@@ -80,18 +80,7 @@ export async function POST(
     // 決済種別ごとの分岐
     let refundId: string | null = null;
 
-    if (order.payment_method === 'SQUARE') {
-      // レガシー Square は返金未対応
-      return NextResponse.json({ ok: false, error: 'unsupported_payment_method' }, { status: 400 });
-    }
-
-    if (order.payment_method === 'PAY_AT_PICKUP') {
-      // 店頭現金払い: Stripe を呼ばず手動で返金済みマーク（明示的な確認が必要）
-      if (body.manualMark !== true) {
-        return NextResponse.json({ ok: false, error: 'manual_mark_required' }, { status: 400 });
-      }
-      refundId = null;
-    } else if (order.payment_method === 'STRIPE') {
+    if (order.payment_method === 'STRIPE') {
       // オンライン決済: Stripe で全額返金
       if (!payment?.stripe_payment_intent_id) {
         return NextResponse.json({ ok: false, error: 'no_payment_intent' }, { status: 400 });

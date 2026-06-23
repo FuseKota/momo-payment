@@ -14,14 +14,14 @@
 
 | 型 | 値 | 用途 |
 |----|----|------|
-| `order_type` | `PICKUP` / `SHIPPING` | 注文種別 |
-| `payment_method` | `SQUARE` / `PAY_AT_PICKUP` / `STRIPE` | 支払い方法（`SQUARE` は旧仕様・未使用） |
+| `order_type` | `SHIPPING` | 注文種別（配送EC専用） |
+| `payment_method` | `STRIPE` | 支払い方法（Stripe オンライン決済のみ） |
 | `temp_zone` | `AMBIENT` / `FROZEN` | 温度帯 |
 | `product_kind` | `FROZEN_FOOD` / `GOODS` | 商品区分 |
-| `order_status` | `RESERVED` / `PENDING_PAYMENT` / `PAID` / `PACKING` / `SHIPPED` / `FULFILLED` / `CANCELED` / `REFUNDED` | 注文ステータス |
+| `order_status` | `PENDING_PAYMENT` / `PAID` / `PACKING` / `SHIPPED` / `FULFILLED` / `CANCELED` / `REFUNDED` | 注文ステータス |
 | `payment_status` | `INIT` / `LINK_CREATED` / `SUCCEEDED` / `FAILED` / `CANCELED` / `REFUNDED` | 決済ステータス |
 
-> `STRIPE` は `payment_method` に後から追加（`00006`）。`SQUARE` は当初の設計値で、現行フローでは使用しません。
+> 配送EC（`SHIPPING`）専用・Stripe オンライン決済のみの構成です。店頭受け取り（`PICKUP`）・店頭払い（`PAY_AT_PICKUP`）・Square（`SQUARE`）および `RESERVED` ステータスは撤去済み。
 
 ---
 
@@ -138,7 +138,6 @@ erDiagram
 | `name` | text | NOT NULL | 商品名（日本語） |
 | `description` | text | | 説明 |
 | `price_yen` | int | NOT NULL, CHECK ≥ 0 | 価格 |
-| `can_pickup` | boolean | NOT NULL, default true | 店頭受取可否 |
 | `can_ship` | boolean | NOT NULL, default false | 配送可否 |
 | `temp_zone` | temp_zone | NOT NULL, default `AMBIENT` | 温度帯 |
 | `stock_qty` | int | CHECK null or ≥ 0 | 在庫（null=管理しない） |
@@ -176,7 +175,7 @@ erDiagram
 |--------|-----|------|------|
 | `id` | uuid | PK | |
 | `order_no` | text | NOT NULL, UNIQUE, default `generate_order_no()` | 注文番号（`YYYYMMDD-XXXXXXXX`） |
-| `order_type` | order_type | NOT NULL | PICKUP / SHIPPING |
+| `order_type` | order_type | NOT NULL | SHIPPING |
 | `status` | order_status | NOT NULL | ステータス |
 | `payment_method` | payment_method | NOT NULL | 支払い方法 |
 | `temp_zone` | temp_zone | （SHIPPING は必須） | 温度帯 |
@@ -186,8 +185,6 @@ erDiagram
 | `customer_name` | text | NOT NULL | 顧客氏名 |
 | `customer_phone` | text | NOT NULL | 顧客電話 |
 | `customer_email` | text | | 顧客メール |
-| `pickup_date` | date | | 受取日（任意） |
-| `pickup_time` | text | | 受取時間（任意） |
 | `delivery_date` | date | | 配送日（`00017`） |
 | `delivery_time_slot` | text | CHECK（後述） | 配送時間帯（`00017`） |
 | `paid_at` | timestamptz | | 入金日時（`00003`） |
@@ -202,7 +199,7 @@ erDiagram
 | 制約名 | 内容 |
 |--------|------|
 | `orders_total_consistency` | `total_yen = subtotal_yen + shipping_fee_yen` |
-| `orders_shipping_rules` | `SHIPPING` は `payment_method IN ('SQUARE','STRIPE')` かつ `temp_zone` 必須（`00007` で STRIPE 追加） |
+| `orders_shipping_rules` | `SHIPPING` は `payment_method = 'STRIPE'` かつ `temp_zone` 必須 |
 | `orders_delivery_time_slot_check` | `delivery_time_slot` は null または `UNSPECIFIED/AM/T12_14/T14_16/T16_18/T18_21` |
 
 - インデックス: `created_at desc` / `status` / `order_type` / `order_no` / `user_id`

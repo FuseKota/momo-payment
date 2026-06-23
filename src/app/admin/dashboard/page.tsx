@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFetch } from '@/hooks/useFetch';
 import {
   Box,
   Typography,
@@ -27,7 +27,6 @@ import { statusLabels } from '@/lib/utils/constants';
 interface RecentOrder {
   id: string;
   order_no: string;
-  order_type: 'PICKUP' | 'SHIPPING';
   status: string;
   total_yen: number;
   customer_name: string;
@@ -38,8 +37,7 @@ interface DashboardData {
   today: { sales: number; count: number };
   month: { sales: number; count: number };
   byStatus: Record<string, number>;
-  byType: { PICKUP: number; SHIPPING: number };
-  pending: { toShip: number; awaitingPayment: number };
+  pending: { toShip: number };
   recentOrders: RecentOrder[];
 }
 
@@ -71,27 +69,7 @@ function StatCard({
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchDashboard = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/admin/dashboard');
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } catch (error) {
-      console.error('Failed to fetch dashboard:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+  const { data, isLoading, refetch } = useFetch<DashboardData>('/api/admin/dashboard');
 
   return (
     <Box>
@@ -102,7 +80,7 @@ export default function AdminDashboardPage() {
         <Button
           startIcon={<RefreshIcon />}
           variant="outlined"
-          onClick={fetchDashboard}
+          onClick={refetch}
           disabled={isLoading}
         >
           更新
@@ -132,25 +110,11 @@ export default function AdminDashboardPage() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard label="要発送" value={`${data.pending.toShip} 件`} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <StatCard label="入金待ち（店頭払い）" value={`${data.pending.awaitingPayment} 件`} />
-            </Grid>
           </Grid>
 
-          {/* 種別 / ステータス別 */}
+          {/* ステータス別 */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 2, height: '100%' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                  購入方法別
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  <Chip label={`キッチンカー: ${data.byType.PICKUP}`} color="secondary" variant="outlined" />
-                  <Chip label={`配送: ${data.byType.SHIPPING}`} color="primary" variant="outlined" />
-                </Stack>
-              </Paper>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <Paper sx={{ p: 2, height: '100%' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                   ステータス別
@@ -183,7 +147,6 @@ export default function AdminDashboardPage() {
               <TableHead>
                 <TableRow>
                   <TableCell>注文番号</TableCell>
-                  <TableCell>種別</TableCell>
                   <TableCell>顧客</TableCell>
                   <TableCell align="right">金額</TableCell>
                   <TableCell>ステータス</TableCell>
@@ -202,14 +165,6 @@ export default function AdminDashboardPage() {
                       <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                         {order.order_no}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={order.order_type === 'SHIPPING' ? '配送' : 'キッチンカー'}
-                        size="small"
-                        variant="outlined"
-                        color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
-                      />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">{order.customer_name}</Typography>

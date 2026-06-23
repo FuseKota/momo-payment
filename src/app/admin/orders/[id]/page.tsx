@@ -8,15 +8,8 @@ import {
   Paper,
   Button,
   Chip,
-  Divider,
   Grid,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Alert,
   CircularProgress,
   Snackbar,
@@ -25,8 +18,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  FormControlLabel,
-  Checkbox,
   Select,
   MenuItem,
   FormControl,
@@ -41,56 +32,11 @@ import EmailIcon from '@mui/icons-material/Email';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
+import type { Order } from './types';
+import OrderDetailSummary from './OrderDetailSummary';
 
 interface Props {
   params: Promise<{ id: string }>;
-}
-
-interface OrderItem {
-  id: string;
-  product_id: string;
-  product_name: string;
-  qty: number;
-  unit_price_yen: number;
-  line_total_yen: number;
-}
-
-interface Order {
-  id: string;
-  order_no: string;
-  order_type: 'SHIPPING' | 'PICKUP';
-  status: string;
-  payment_status: string;
-  payment_method: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string | null;
-  shipping_postal_code: string | null;
-  shipping_prefecture: string | null;
-  shipping_city: string | null;
-  shipping_address1: string | null;
-  shipping_address2: string | null;
-  subtotal_yen: number;
-  shipping_fee_yen: number;
-  total_yen: number;
-  tracking_number: string | null;
-  delivery_date: string | null;
-  delivery_time_slot: string | null;
-  created_at: string;
-  paid_at: string | null;
-  refunded_at: string | null;
-  shipped_at: string | null;
-  fulfilled_at: string | null;
-  order_items: OrderItem[];
-  payments?: Array<{
-    id: string;
-    provider: string;
-    status: string;
-    amount_yen: number;
-    stripe_payment_intent_id: string | null;
-    refunded_at: string | null;
-    stripe_refund_id: string | null;
-  }>;
 }
 
 /** メール再送の種別（顧客向け） */
@@ -100,16 +46,6 @@ const RESEND_EMAIL_LABELS: Record<ResendEmailType, string> = {
   ORDER_CONFIRMATION: '注文確認メール',
   PAYMENT_CONFIRMATION: '支払い確認メール',
   SHIPPING_NOTIFICATION: '発送通知メール',
-};
-
-/** 佐川急便の時間帯コード → 日本語ラベル（管理画面表示用） */
-const TIME_SLOT_LABELS: Record<string, string> = {
-  UNSPECIFIED: '指定なし',
-  AM: '午前中（8:00-12:00）',
-  T12_14: '12:00-14:00',
-  T14_16: '14:00-16:00',
-  T16_18: '16:00-18:00',
-  T18_21: '18:00-21:00',
 };
 
 export default function AdminOrderDetailPage({ params }: Props) {
@@ -126,7 +62,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
   // 返金ダイアログ
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [refundReason, setRefundReason] = useState('');
-  const [refundCashConfirmed, setRefundCashConfirmed] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   // メール再送
   const [resendType, setResendType] = useState<ResendEmailType>('ORDER_CONFIRMATION');
@@ -187,7 +122,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reason: refundReason || undefined,
-          manualMark: refundCashConfirmed || undefined,
         }),
       });
       const data = await response.json().catch(() => null);
@@ -197,7 +131,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
         setSnackbar({ open: true, message: '返金処理が完了しました', severity: 'success' });
         setRefundDialogOpen(false);
         setRefundReason('');
-        setRefundCashConfirmed(false);
       } else {
         let message = '返金処理に失敗しました';
         if (data?.error === 'already_refunded') {
@@ -206,8 +139,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
           message = 'Stripeでの返金処理に失敗しました。時間をおいて再度お試しください';
         } else if (data?.error === 'no_payment_intent') {
           message = '決済情報が見つからないため返金できません';
-        } else if (data?.error === 'manual_mark_required') {
-          message = '現金返金の確認にチェックを入れてください';
         } else if (data?.error === 'unsupported_payment_method') {
           message = 'この決済方法は返金に対応していません';
         }
@@ -276,7 +207,6 @@ export default function AdminOrderDetailPage({ params }: Props) {
   }
 
   // 返金関連の派生値
-  const isStripe = order.payment_method !== 'PAY_AT_PICKUP';
   const isRefunded = order.status === 'REFUNDED' || !!order.refunded_at;
   const canRefund = !isRefunded && ['PAID', 'PACKING', 'SHIPPED', 'FULFILLED'].includes(order.status);
 
@@ -317,159 +247,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
       </Box>
 
       <Grid container spacing={3}>
-        {/* Order Info */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              注文情報
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={6}>
-                <Typography variant="body2" color="text.secondary">
-                  注文番号
-                </Typography>
-                <Typography sx={{ fontFamily: 'monospace' }}>
-                  {order.order_no}
-                </Typography>
-              </Grid>
-              <Grid size={6}>
-                <Typography variant="body2" color="text.secondary">
-                  種別
-                </Typography>
-                <Chip
-                  label={order.order_type === 'SHIPPING' ? '配送' : 'キッチンカー'}
-                  size="small"
-                  variant="outlined"
-                  color={order.order_type === 'SHIPPING' ? 'primary' : 'secondary'}
-                />
-              </Grid>
-              <Grid size={6}>
-                <Typography variant="body2" color="text.secondary">
-                  注文日時
-                </Typography>
-                <Typography>{formatDate(order.created_at)}</Typography>
-              </Grid>
-              <Grid size={6}>
-                <Typography variant="body2" color="text.secondary">
-                  決済方法
-                </Typography>
-                <Typography>
-                  {order.payment_method === 'PAY_AT_PICKUP' ? '現地払い' : 'オンライン決済'}
-                </Typography>
-              </Grid>
-              {order.order_type === 'SHIPPING' &&
-                (order.delivery_date ||
-                  (order.delivery_time_slot && order.delivery_time_slot !== 'UNSPECIFIED')) && (
-                  <Grid size={12}>
-                    <Typography variant="body2" color="text.secondary">
-                      お届け希望日時
-                    </Typography>
-                    <Typography>
-                      {order.delivery_date || '指定なし'}
-                      {order.delivery_time_slot &&
-                        order.delivery_time_slot !== 'UNSPECIFIED' &&
-                        ` / ${TIME_SLOT_LABELS[order.delivery_time_slot] ?? order.delivery_time_slot}`}
-                    </Typography>
-                  </Grid>
-                )}
-            </Grid>
-          </Paper>
-
-          {/* Customer Info */}
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              顧客情報
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={12}>
-                <Typography variant="body2" color="text.secondary">
-                  お名前
-                </Typography>
-                <Typography>{order.customer_name}</Typography>
-              </Grid>
-              <Grid size={6}>
-                <Typography variant="body2" color="text.secondary">
-                  メールアドレス
-                </Typography>
-                <Typography>{order.customer_email}</Typography>
-              </Grid>
-              <Grid size={6}>
-                <Typography variant="body2" color="text.secondary">
-                  電話番号
-                </Typography>
-                <Typography>{order.customer_phone || '-'}</Typography>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          {/* Shipping Address (for SHIPPING orders) */}
-          {order.order_type === 'SHIPPING' && order.shipping_postal_code && (
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                配送先
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                〒{order.shipping_postal_code}
-              </Typography>
-              <Typography>
-                {order.shipping_prefecture}
-                {order.shipping_city}
-                {order.shipping_address1}
-              </Typography>
-              {order.shipping_address2 && (
-                <Typography>{order.shipping_address2}</Typography>
-              )}
-            </Paper>
-          )}
-
-          {/* Order Items */}
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              注文商品
-            </Typography>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>商品名</TableCell>
-                    <TableCell align="right">単価</TableCell>
-                    <TableCell align="right">数量</TableCell>
-                    <TableCell align="right">小計</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {order.order_items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.product_name}</TableCell>
-                      <TableCell align="right">¥{formatPrice(item.unit_price_yen)}</TableCell>
-                      <TableCell align="right">{item.qty}</TableCell>
-                      <TableCell align="right">¥{formatPrice(item.line_total_yen)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-end' }}>
-              <Box sx={{ display: 'flex', gap: 4 }}>
-                <Typography color="text.secondary">商品小計</Typography>
-                <Typography>¥{formatPrice(order.subtotal_yen)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 4 }}>
-                <Typography color="text.secondary">送料</Typography>
-                <Typography>¥{formatPrice(order.shipping_fee_yen)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 4 }}>
-                <Typography sx={{ fontWeight: 700 }}>合計</Typography>
-                <Typography sx={{ fontWeight: 700, color: 'primary.main' }}>
-                  ¥{formatPrice(order.total_yen)}
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-        </Grid>
+        <OrderDetailSummary order={order} />
 
         {/* Actions Sidebar */}
         <Grid size={{ xs: 12, md: 4 }}>
@@ -503,7 +281,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
                 onClick={() => setRefundDialogOpen(true)}
                 disabled={isRefunding}
               >
-                {isStripe ? '全額返金（Stripe）' : '返金済みにする'}
+                全額返金（Stripe）
               </Button>
             )}
           </Paper>
@@ -642,7 +420,7 @@ export default function AdminOrderDetailPage({ params }: Props) {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>{isStripe ? '全額返金の確認' : '返金済みにする'}</DialogTitle>
+        <DialogTitle>全額返金の確認</DialogTitle>
         <DialogContent>
           <DialogContentText component="div" sx={{ mb: 2 }}>
             <Box component="span" sx={{ display: 'block' }}>
@@ -653,27 +431,9 @@ export default function AdminOrderDetailPage({ params }: Props) {
             </Box>
           </DialogContentText>
 
-          {isStripe ? (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              Stripeを通じて全額を返金します。この操作は取り消せません。
-            </Alert>
-          ) : (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              店頭現金払いのため、Stripeでの返金は行われません。現金での返金が完了したことを確認のうえチェックしてください。
-            </Alert>
-          )}
-
-          {!isStripe && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={refundCashConfirmed}
-                  onChange={(e) => setRefundCashConfirmed(e.target.checked)}
-                />
-              }
-              label="現金での返金が完了したことを確認しました"
-            />
-          )}
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Stripeを通じて全額を返金します。この操作は取り消せません。
+          </Alert>
 
           <TextField
             label="返金理由（任意・管理用メモ）"
@@ -693,9 +453,9 @@ export default function AdminOrderDetailPage({ params }: Props) {
             color="error"
             variant="contained"
             onClick={handleRefund}
-            disabled={isRefunding || (!isStripe && !refundCashConfirmed)}
+            disabled={isRefunding}
           >
-            {isStripe ? '全額返金する' : '返金済みにする'}
+            全額返金する
           </Button>
         </DialogActions>
       </Dialog>

@@ -24,8 +24,6 @@ export async function GET() {
         customer_name,
         customer_phone,
         customer_email,
-        pickup_date,
-        pickup_time,
         delivery_date,
         delivery_time_slot,
         agreement_accepted,

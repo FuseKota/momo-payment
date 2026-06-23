@@ -14,6 +14,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { Link } from '@/i18n/navigation';
 import { formatPrice } from '@/lib/utils/format';
 import { getLocalizedName, getLocalizedDescription } from '@/lib/utils/localize-product';
+import { peachPink } from '@/lib/mui/theme';
 import QuantityControl from './QuantityControl';
 import type { Product } from '@/types/database';
 
@@ -72,7 +73,7 @@ export default function ProductCard({
     <CardMedia
       sx={{
         height: imageHeight,
-        backgroundColor: '#FFF0F3',
+        backgroundColor: peachPink[50],
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

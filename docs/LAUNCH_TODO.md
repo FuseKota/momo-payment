@@ -52,7 +52,7 @@ Pro化済みで利用可。login直送のブルートフォース対策。
 
 ## E. セキュリティ残（任意 / 業務判断）
 
-- ☐ **[業務判断]** 在庫の売り越し対策（PICKUP注文の在庫チェック / `products.stock_qty` 減算が全経路で欠落）
+- ☐ **[業務判断]** 在庫の売り越し対策（配送EC注文の在庫チェック / `products.stock_qty` 減算が全経路で欠落していないか確認）
 - ☐ (任意) gitleaks を GitHub Actions CI に追加（秘密コミットの再発防止）
 - ☑ Vercelトークン revoke（git履歴の漏洩・2026-06-10対応、gitleaksで全履歴クリーン確認）
 - ☑ Next.js 15.5.19 昇格・PII Cache-Control・variant `is_active`・DB advisor 固定 等（A/B/C・202テスト通過）

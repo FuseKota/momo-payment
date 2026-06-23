@@ -2,19 +2,21 @@ import { JWT } from 'google-auth-library';
 import { env } from '@/lib/env';
 import type {
   GoogleCalendarEvent,
+  GoogleCalendarEventDateTime,
   GoogleCalendarEventsListResponse,
 } from './types';
 
 /**
- * Google Calendar API クライアント（読み取り専用）。
+ * Google Calendar API クライアント（読み書き）。
  *
- * 店舗の単一 Google カレンダーをサービスアカウントのメールアドレスに共有し、
- * そのサービスアカウントの認証情報で events.list を読み取る。
+ * 店舗の単一 Google カレンダーをサービスアカウントに「予定の変更権限」付きで共有し、
+ * そのサービスアカウントの認証情報で events を読み取り／作成／削除する。
  * `getSupabaseAdmin()`（src/lib/supabase/admin.ts）と同形の遅延初期化シングルトン。
  */
 
 const CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
-const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
+// calendar.events は events の読み取り＋作成/更新/削除を許可（list もこのスコープで可）
+const SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
 
 let jwtClient: JWT | null = null;
 
@@ -81,4 +83,48 @@ export async function listCalendarEvents(
   } while (pageToken);
 
   return events;
+}
+
+/** 予定作成/更新の入力（Google Calendar events リソースの最小フィールド） */
+export interface CalendarEventInput {
+  summary: string;
+  description?: string;
+  start: GoogleCalendarEventDateTime;
+  end: GoogleCalendarEventDateTime;
+}
+
+/**
+ * 予定を作成する（events.insert）。
+ * @throws 認証情報・カレンダー ID 未設定、書き込み権限なし、または API エラー時
+ */
+export async function createCalendarEvent(input: CalendarEventInput): Promise<GoogleCalendarEvent> {
+  const calendarId = env.GOOGLE_CALENDAR_ID;
+  if (!calendarId) {
+    throw new Error('Missing GOOGLE_CALENDAR_ID');
+  }
+  const client = getGoogleCalendarClient();
+  const url = `${CALENDAR_API_BASE}/calendars/${encodeURIComponent(calendarId)}/events`;
+  const { data } = await client.request<GoogleCalendarEvent>({
+    url,
+    method: 'POST',
+    data: input,
+  });
+  return data;
+}
+
+/**
+ * 予定を削除する（events.delete）。
+ * @throws 認証情報・カレンダー ID 未設定、書き込み権限なし、または API エラー時
+ */
+export async function deleteCalendarEvent(eventId: string): Promise<void> {
+  const calendarId = env.GOOGLE_CALENDAR_ID;
+  if (!calendarId) {
+    throw new Error('Missing GOOGLE_CALENDAR_ID');
+  }
+  const client = getGoogleCalendarClient();
+  const url = `${CALENDAR_API_BASE}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`;
+  await client.request({
+    url,
+    method: 'DELETE',
+  });
 }

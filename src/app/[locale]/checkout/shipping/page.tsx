@@ -283,7 +283,7 @@ export default function ShippingCheckoutPage() {
           {t('backToCart')}
         </Button>
 
-        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700, color: '#1a1a1a' }}>
+        <Typography variant="h3" sx={{ mb: 4, fontWeight: 700, color: 'text.primary' }}>
           {t('title')}
         </Typography>
 

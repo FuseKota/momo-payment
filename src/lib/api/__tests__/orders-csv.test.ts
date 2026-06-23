@@ -20,9 +20,9 @@ function baseRow(overrides: Partial<AdminOrderExportRow> = {}): AdminOrderExport
   return {
     id: 'ord-id',
     order_no: 'ORD-001',
-    order_type: 'PICKUP',
+    order_type: 'SHIPPING',
     status: 'PAID',
-    payment_method: 'PAY_AT_PICKUP',
+    payment_method: 'STRIPE',
     temp_zone: null,
     subtotal_yen: 1000,
     shipping_fee_yen: 0,
@@ -30,8 +30,6 @@ function baseRow(overrides: Partial<AdminOrderExportRow> = {}): AdminOrderExport
     customer_name: '山田太郎',
     customer_phone: '09012345678',
     customer_email: 'taro@example.com',
-    pickup_date: null,
-    pickup_time: null,
     delivery_date: null,
     delivery_time_slot: null,
     agreement_accepted: true,
@@ -125,28 +123,6 @@ describe('paymentStatusLabel', () => {
     ).toBe('返金済');
   });
 
-  it('PAY_AT_PICKUP かつ paid_at あり → \'決済完了\'', () => {
-    expect(
-      paymentStatusLabel({
-        status: 'PAID',
-        paid_at: '2026-06-17T10:00:00Z',
-        payment_method: 'PAY_AT_PICKUP',
-        payments: null,
-      })
-    ).toBe('決済完了');
-  });
-
-  it('PAY_AT_PICKUP かつ paid_at なし → \'決済待ち\'', () => {
-    expect(
-      paymentStatusLabel({
-        status: 'RESERVED',
-        paid_at: null,
-        payment_method: 'PAY_AT_PICKUP',
-        payments: null,
-      })
-    ).toBe('決済待ち');
-  });
-
   it('STRIPE かつ payments[0].status=SUCCEEDED → \'決済完了\'', () => {
     expect(
       paymentStatusLabel({
@@ -197,36 +173,12 @@ describe('paymentMethodLabel', () => {
     expect(paymentMethodLabel('STRIPE')).toBe('オンライン決済');
   });
 
-  it('PAY_AT_PICKUP → \'店頭払い\'', () => {
-    expect(paymentMethodLabel('PAY_AT_PICKUP')).toBe('店頭払い');
-  });
-
-  it('SQUARE → \'Square\'', () => {
-    expect(paymentMethodLabel('SQUARE')).toBe('Square');
-  });
-
   it('未知の値はそのまま返す', () => {
     expect(paymentMethodLabel('UNKNOWN')).toBe('UNKNOWN');
   });
 });
 
 describe('preferredSchedule', () => {
-  it('PICKUP は pickup_date と pickup_time を連結する', () => {
-    expect(
-      preferredSchedule(
-        baseRow({ order_type: 'PICKUP', pickup_date: '2026-06-20', pickup_time: '14:00' })
-      )
-    ).toBe('2026-06-20 14:00');
-  });
-
-  it('PICKUP で片方が null なら空白なしで連結する', () => {
-    expect(
-      preferredSchedule(
-        baseRow({ order_type: 'PICKUP', pickup_date: '2026-06-20', pickup_time: null })
-      )
-    ).toBe('2026-06-20');
-  });
-
   it('SHIPPING は delivery_date と delivery_time_slot を連結する', () => {
     expect(
       preferredSchedule(
@@ -319,18 +271,6 @@ describe('buildCsv', () => {
     const csv = buildCsv([baseRow()]);
     expect(csv.startsWith(CSV_BOM)).toBe(false);
     expect(csv.charCodeAt(0)).not.toBe(0xfeff);
-  });
-
-  it('PICKUP は種別が \'キッチンカー\' で配送先住所セルが空', () => {
-    const csv = buildCsv([
-      baseRow({ order_type: 'PICKUP', shipping_addresses: null }),
-    ]);
-    const dataLine = csv.split('\r\n')[1];
-    expect(dataLine).toContain('"キッチンカー"');
-    // 配送先住所（13列目）は空セル
-    const cells = dataLine.split(',');
-    expect(cells[2]).toBe('"キッチンカー"');
-    expect(cells[12]).toBe('""');
   });
 
   it('SHIPPING は種別が \'配送\' で配送先住所が連結される', () => {

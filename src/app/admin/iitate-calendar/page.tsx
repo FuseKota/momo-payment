@@ -16,10 +16,59 @@ import {
   Snackbar,
   Alert,
   Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+/** 予定種別（Google 予定タイトルのキーワードに対応） */
+type EventType = 'day' | 'night' | 'stage' | 'closed';
+const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  day: '昼の部',
+  night: '夜の部',
+  stage: 'もも娘ステージ',
+  closed: '休園',
+};
+
+interface CalendarEvent {
+  id: string;
+  summary: string;
+  description: string;
+  start?: { date?: string; dateTime?: string };
+  end?: { date?: string; dateTime?: string };
+}
+
+interface EventForm {
+  date: string;
+  type: EventType;
+  startTime: string;
+  endTime: string;
+  note: string;
+}
+
+const defaultEventForm: EventForm = {
+  date: '',
+  type: 'day',
+  startTime: '',
+  endTime: '',
+  note: '',
+};
+
+/** 予定の日付・時間帯の表示用ラベル */
+function formatEventLine(ev: CalendarEvent): string {
+  const startStr = ev.start?.dateTime ?? ev.start?.date ?? '';
+  const [, mm, dd] = startStr.slice(0, 10).split('-');
+  const datePart = mm && dd ? `${Number(mm)}/${Number(dd)}` : '';
+  if (ev.start?.dateTime && ev.end?.dateTime) {
+    return `${datePart} ${ev.start.dateTime.slice(11, 16)}〜${ev.end.dateTime.slice(11, 16)}`;
+  }
+  return datePart;
+}
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -42,16 +91,29 @@ export default function AdminIitateCalendarPage() {
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [notesDraft, setNotesDraft] = useState<string>('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [eventForm, setEventForm] = useState<EventForm>(defaultEventForm);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const month = useMemo(() => ymKey(cursor.year, cursor.month), [cursor]);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const notesRes = await fetch(`/api/admin/iitate-calendar/month-notes?month=${month}`);
+      const [notesRes, eventsRes] = await Promise.all([
+        fetch(`/api/admin/iitate-calendar/month-notes?month=${month}`),
+        fetch(`/api/admin/iitate-calendar/events?month=${month}`),
+      ]);
       if (notesRes.ok) {
         const data = await notesRes.json();
         setMonthNotes(data.notes ?? []);
+      }
+      if (eventsRes.ok) {
+        const data = await eventsRes.json();
+        setEvents(data.events ?? []);
+      } else {
+        setEvents([]);
       }
     } finally {
       setIsLoading(false);
@@ -70,6 +132,62 @@ export default function AdminIitateCalendarPage() {
   const goNext = () => {
     const d = new Date(cursor.year, cursor.month + 1, 1);
     setCursor({ year: d.getFullYear(), month: d.getMonth() });
+  };
+
+  const handleAddEvent = async () => {
+    if (!eventForm.date) {
+      setSnackbar({ open: true, message: '日付を入力してください' });
+      return;
+    }
+    setIsSavingEvent(true);
+    try {
+      const body =
+        eventForm.type === 'closed'
+          ? { date: eventForm.date, type: eventForm.type, note: eventForm.note || undefined }
+          : {
+              date: eventForm.date,
+              type: eventForm.type,
+              startTime: eventForm.startTime || undefined,
+              endTime: eventForm.endTime || undefined,
+              note: eventForm.note || undefined,
+            };
+      const res = await fetch('/api/admin/iitate-calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setSnackbar({ open: true, message: '予定を追加しました' });
+        setEventForm({ ...defaultEventForm, date: eventForm.date });
+        await fetchData();
+      } else {
+        const err = await res.json().catch(() => null);
+        setSnackbar({ open: true, message: err?.error === 'validation_error' ? '入力内容を確認してください' : '予定の追加に失敗しました' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: '予定の追加に失敗しました' });
+    } finally {
+      setIsSavingEvent(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    setDeletingId(eventId);
+    try {
+      const res = await fetch(`/api/admin/iitate-calendar/events/${encodeURIComponent(eventId)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        setSnackbar({ open: true, message: '予定を削除しました' });
+      } else {
+        setSnackbar({ open: true, message: '予定の削除に失敗しました' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: '予定の削除に失敗しました' });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const openNotesDialog = () => {
@@ -116,11 +234,11 @@ export default function AdminIitateCalendarPage() {
 
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          日毎の営業日は Google カレンダーで管理します
+          日毎の営業日は下の「営業日の予定」から登録できます（Google カレンダーへ直接入力した予定も反映されます）
         </Typography>
         <Typography variant="body2" sx={{ mb: 0.5 }}>
-          共有された Google カレンダーに予定を登録すると、サイトのカレンダーに自動反映されます（最大1時間程度で反映）。
-          予定のタイトルに次の語を含めるとアイコンが自動で付きます:
+          管理画面から追加した予定は Google カレンダーへ書き込まれ、サイトのカレンダーに即時反映されます
+          （Google カレンダー側で直接編集した場合は最大1時間程度で反映）。種別は予定タイトルから自動判定されます:
         </Typography>
         <Typography variant="body2" component="div" sx={{ pl: 1 }}>
           ・「昼の部」→ 昼 / 「夜の部」→ 夜 / 「休園」→ 休園日 / 「もも娘ステージ」→ ステージ
@@ -144,6 +262,117 @@ export default function AdminIitateCalendarPage() {
         <IconButton onClick={goNext} aria-label="次の月">
           <ChevronRightIcon />
         </IconButton>
+      </Paper>
+
+      {/* 営業日の予定（Google カレンダーへ書き込む） */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+          営業日の予定（{month}）
+        </Typography>
+
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={2}
+          useFlexGap
+          flexWrap="wrap"
+          sx={{ mb: 3, alignItems: { md: 'flex-end' } }}
+        >
+          <TextField
+            type="date"
+            label="日付"
+            size="small"
+            InputLabelProps={{ shrink: true }}
+            value={eventForm.date}
+            onChange={(e) => setEventForm((p) => ({ ...p, date: e.target.value }))}
+          />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>種別</InputLabel>
+            <Select
+              label="種別"
+              value={eventForm.type}
+              onChange={(e) => setEventForm((p) => ({ ...p, type: e.target.value as EventType }))}
+            >
+              {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map((t) => (
+                <MenuItem key={t} value={t}>
+                  {EVENT_TYPE_LABELS[t]}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {eventForm.type !== 'closed' && (
+            <>
+              <TextField
+                type="time"
+                label="開始"
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                value={eventForm.startTime}
+                onChange={(e) => setEventForm((p) => ({ ...p, startTime: e.target.value }))}
+              />
+              <TextField
+                type="time"
+                label="終了"
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                value={eventForm.endTime}
+                onChange={(e) => setEventForm((p) => ({ ...p, endTime: e.target.value }))}
+              />
+            </>
+          )}
+          <TextField
+            label="メモ（任意）"
+            size="small"
+            value={eventForm.note}
+            onChange={(e) => setEventForm((p) => ({ ...p, note: e.target.value }))}
+            sx={{ flexGrow: 1, minWidth: 160 }}
+          />
+          <Button variant="contained" onClick={handleAddEvent} disabled={isSavingEvent}>
+            {isSavingEvent ? <CircularProgress size={20} /> : '追加'}
+          </Button>
+        </Stack>
+
+        {events.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            この月の予定はまだありません
+          </Typography>
+        ) : (
+          <Stack spacing={0}>
+            {events.map((ev) => (
+              <Box
+                key={ev.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2,
+                  py: 1,
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {formatEventLine(ev)}　{ev.summary}
+                  </Typography>
+                  {ev.description && (
+                    <Typography variant="caption" color="text.secondary">
+                      {ev.description}
+                    </Typography>
+                  )}
+                </Box>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleDeleteEvent(ev.id)}
+                  disabled={deletingId === ev.id}
+                  aria-label="予定を削除"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+          </Stack>
+        )}
       </Paper>
 
       {isLoading ? (

@@ -26,17 +26,16 @@
 
 ## 1. プロジェクト概要
 
-「もも娘」のオンライン注文システム。2つの購入体験を提供する。
+「もも娘」のオンライン注文システム。冷凍食品・グッズの配送ECを提供する。
 
 | 購入体験 | 説明 | 決済 |
 |---------|------|------|
-| **店頭受け取り（PICKUP）** | イベント・店頭での事前注文 | Stripe事前決済 または 店頭払い |
 | **配送EC（SHIPPING）** | 冷凍食品・グッズのオンライン配送 | Stripe（必須） |
 
 ### 重要な制約
 
 - **温度帯混在禁止**: 冷凍食品（FROZEN）とグッズ（AMBIENT）の同時購入は不可。別注文にする。
-- **配送はStripe必須**: SHIPPING注文はStripe決済のみ受け付ける。
+- **オンライン決済必須**: 注文はStripe決済のみ受け付ける。
 - **送料**: 一律 ¥1,200（環境変数 `SHIPPING_FEE_YEN` で変更可能）
 
 ---
@@ -69,12 +68,10 @@ momo-payment/
 │   │   ├── [locale]/                   # ロケールプレフィックス付きページ
 │   │   │   ├── layout.tsx              # ルートレイアウト（フォント切替、OGP）
 │   │   │   ├── page.tsx                # トップページ（Hero + ニュース）
-│   │   │   ├── pickup/                 # 店頭受け取り注文フォーム
 │   │   │   ├── shop/                   # 配送EC商品一覧
 │   │   │   │   └── [slug]/             # 商品詳細
 │   │   │   ├── cart/                   # カート（温度帯混在チェック）
 │   │   │   ├── checkout/
-│   │   │   │   ├── pickup/             # 店頭受け取り決済選択
 │   │   │   │   └── shipping/           # 配送チェックアウト（住所入力）
 │   │   │   ├── complete/               # 注文完了
 │   │   │   ├── login/                  # ユーザーログイン
@@ -101,7 +98,6 @@ momo-payment/
 │   │       ├── auth/signup/            # POST: ユーザー登録
 │   │       ├── postal-code/lookup/     # GET: 郵便番号検索
 │   │       ├── orders/
-│   │       │   ├── pickup/             # POST: 店頭受け取り注文作成
 │   │       │   ├── shipping/           # POST: 配送注文作成
 │   │       │   └── by-no/[orderNo]/    # GET: 注文番号検索
 │   │       ├── mypage/
@@ -117,8 +113,9 @@ momo-payment/
 │   │               ├── route.ts        # GET: 注文一覧
 │   │               └── [id]/
 │   │                   ├── route.ts    # GET: 注文詳細
-│   │                   ├── mark-paid/  # POST: 入金確認
-│   │                   └── ship/       # POST: 発送登録
+│   │                   ├── ship/       # POST: 発送登録
+│   │                   ├── refund/     # POST: 返金
+│   │                   └── resend-email/ # POST: メール再送
 │   ├── contexts/
 │   │   ├── CartContext.tsx             # カート状態管理（localStorage永続化）
 │   │   └── AuthContext.tsx             # ユーザー認証状態管理
@@ -357,7 +354,6 @@ news（独立テーブル）
 | `name` | text | 商品名（日本語） |
 | `name_zh_tw` | text | 商品名（繁体字中文） |
 | `price_yen` | int | 基本価格（円） |
-| `can_pickup` | bool | 店頭受け取り可否 |
 | `can_ship` | bool | 配送可否 |
 | `temp_zone` | enum | `AMBIENT` / `FROZEN` |
 | `stock_qty` | int? | 在庫数（null=無制限） |
@@ -375,18 +371,18 @@ news（独立テーブル）
 |-------|-----|------|
 | `id` | UUID | PK |
 | `order_no` | text | 注文番号（`YYYYMMDD-xxxxxxxx`） |
-| `order_type` | enum | `PICKUP` / `SHIPPING` |
+| `order_type` | enum | `SHIPPING` |
 | `status` | enum | 下記ステータスフロー参照 |
-| `payment_method` | enum | `STRIPE` / `PAY_AT_PICKUP` |
-| `temp_zone` | enum? | `AMBIENT` / `FROZEN`（SHIPPINGのみ） |
+| `payment_method` | enum | `STRIPE` |
+| `temp_zone` | enum | `AMBIENT` / `FROZEN` |
 | `subtotal_yen` | int | 小計 |
 | `shipping_fee_yen` | int | 送料 |
 | `total_yen` | int | 合計（= subtotal + shipping） |
 | `customer_name` | text | 顧客名 |
 | `customer_phone` | text | 電話番号 |
 | `customer_email` | text? | メールアドレス |
-| `pickup_date` | text? | 受取日（PICKUP時） |
-| `pickup_time` | text? | 受取時間（PICKUP時） |
+| `delivery_date` | date? | 配送希望日 |
+| `delivery_time_slot` | text? | 配送時間帯（`UNSPECIFIED`/`AM`/`T12_14`/`T14_16`/`T16_18`/`T18_21`） |
 | `user_id` | UUID? | ログインユーザーID（ゲスト注文はnull） |
 | `locale` | text | 注文時ロケール（`ja` / `zh-tw`） |
 | `admin_note` | text? | 管理者メモ |
@@ -405,24 +401,20 @@ news（独立テーブル）
 ### ステータスフロー
 
 ```
-店頭払い（PAY_AT_PICKUP）:
-  RESERVED → [管理者: mark-paid] → PAID → FULFILLED
+配送EC（Stripe決済）:
+  PENDING_PAYMENT → [Webhook: checkout.session.completed] → PAID → PACKING → [管理者: ship] → SHIPPED → FULFILLED
 
-Stripe決済（店頭受け取り）:
-  PENDING_PAYMENT → [Webhook: checkout.session.completed] → PAID → FULFILLED
+キャンセル（決済前）:
+  PENDING_PAYMENT → [Webhook: checkout.session.expired] → CANCELED
 
-Stripe決済（配送）:
-  PENDING_PAYMENT → [Webhook] → PAID → PACKING → [管理者: ship] → SHIPPED → FULFILLED
-
-キャンセル（いずれのフローからも）:
-  ～ → CANCELED
-  ～ → REFUNDED
+返金:
+  PAID 以降 → [管理者: refund] → REFUNDED
 ```
 
 ### データ制約
 
 1. **total_consistency**: `total_yen = subtotal_yen + shipping_fee_yen`
-2. **shipping_rules**: SHIPPING注文は決済方法がSTRIPEかつtemp_zone指定が必須
+2. **shipping_rules**: 注文は決済方法がSTRIPEかつtemp_zone指定が必須
 3. **line_total**: `line_total_yen = unit_price_yen * qty`
 
 ---
@@ -443,69 +435,9 @@ Stripe決済（配送）:
 
 ### 顧客向け API
 
-#### POST /api/orders/pickup
-
-店頭受け取り注文を作成する。レート制限・CSRF保護あり。
-
-**Request Body:**
-
-```json
-{
-  "customer": {
-    "name": "山田 太郎",
-    "phone": "090-1234-5678",
-    "email": "taro@example.com"
-  },
-  "items": [
-    { "productId": "uuid-1", "qty": 2 },
-    { "productId": "uuid-2", "variantId": "uuid-variant-1", "qty": 1 }
-  ],
-  "paymentMethod": "PAY_AT_PICKUP",
-  "pickupDate": "2026-04-01",
-  "pickupTime": "12:00",
-  "notes": "メモ（任意）",
-  "agreementAccepted": true
-}
-```
-
-`paymentMethod` は `"STRIPE"` または `"PAY_AT_PICKUP"`。
-
-**Response（店頭払い）:**
-
-```json
-{
-  "ok": true,
-  "data": {
-    "orderId": "uuid-order",
-    "orderNo": "20260401-abcdef12",
-    "status": "RESERVED",
-    "paymentMethod": "PAY_AT_PICKUP",
-    "totalYen": 1800
-  }
-}
-```
-
-**Response（Stripe決済）:**
-
-```json
-{
-  "ok": true,
-  "data": {
-    "orderId": "uuid-order",
-    "orderNo": "20260401-abcdef12",
-    "status": "PENDING_PAYMENT",
-    "paymentMethod": "STRIPE",
-    "totalYen": 1800,
-    "checkoutUrl": "https://checkout.stripe.com/pay/..."
-  }
-}
-```
-
----
-
 #### POST /api/orders/shipping
 
-配送注文を作成する（Stripe決済必須）。
+配送注文を作成する（Stripe決済必須）。レート制限・CSRF保護あり。
 
 **Request Body:**
 
@@ -523,6 +455,8 @@ Stripe決済（配送）:
     "address1": "新宿1-2-3",
     "address2": "ハイツ101"
   },
+  "deliveryDate": "2026-06-25",
+  "deliveryTimeSlot": "T14_16",
   "items": [
     { "productId": "uuid-frozen", "qty": 3 }
   ],
@@ -579,7 +513,6 @@ Stripe決済（配送）:
 
 | パラメータ | 説明 |
 |----------|------|
-| `mode` | `pickup` または `shipping`（省略可） |
 | `kind` | `FROZEN_FOOD` または `GOODS`（省略可） |
 
 ---
@@ -625,8 +558,9 @@ Stripe決済（配送）:
 |--------|------|------|
 | GET | `/api/admin/orders` | 注文一覧（フィルタ・ページネーション対応） |
 | GET | `/api/admin/orders/[id]` | 注文詳細（items, address, shipments, payments含む） |
-| POST | `/api/admin/orders/[id]/mark-paid` | 入金確認（RESERVED → PAID） |
 | POST | `/api/admin/orders/[id]/ship` | 発送登録（PAID/PACKING → SHIPPED、追跡番号登録） |
+| POST | `/api/admin/orders/[id]/refund` | 返金（→ REFUNDED） |
+| POST | `/api/admin/orders/[id]/resend-email` | 注文確認・発送通知メールの再送 |
 | GET | `/api/admin/products` | 商品一覧（バリアント含む） |
 | POST | `/api/admin/products` | 商品作成 |
 | PUT | `/api/admin/products/[id]` | 商品更新 |
@@ -717,7 +651,6 @@ Zodスキーマで全APIエンドポイントの入力を検証する。
 
 | スキーマ | 説明 |
 |---------|------|
-| `pickupOrderSchema` | 店頭注文（顧客情報・商品・支払方法） |
 | `shippingOrderSchema` | 配送注文（顧客情報・住所・商品） |
 | `phoneSchema` | 日本の電話番号（`0[0-9\-]{9,13}$`） |
 | `postalCodeSchema` | 日本の郵便番号（`\d{3}-?\d{4}$`） |
@@ -773,7 +706,7 @@ const t = useTranslations('namespace');
 
 ### Stripe Checkout Session 作成
 
-1. `/api/orders/pickup` または `/api/orders/shipping` にリクエスト
+1. `/api/orders/shipping` にリクエスト
 2. 注文レコード（`orders`, `order_items`）を作成
 3. Stripe Checkout Session を作成
 4. `payments` レコードを `LINK_CREATED` 状態で作成
@@ -835,7 +768,6 @@ src/
 ├── hooks/__tests__/usePostalCodeLookup.test.ts
 └── app/api/
     ├── orders/__tests__/
-    │   ├── pickup.test.ts
     │   └── shipping.test.ts
     └── webhooks/__tests__/stripe.test.ts
 ```

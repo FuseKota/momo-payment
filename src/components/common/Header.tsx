@@ -37,6 +37,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import { useAuth } from '@/contexts/AuthContext';
+import { shouldDisablePrefetch } from '@/lib/utils/constants';
 import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
@@ -127,6 +128,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   key={item.href}
                   component={Link}
                   href={item.href}
+                  prefetch={shouldDisablePrefetch(item.href) ? false : undefined}
                   color="inherit"
                   startIcon={item.icon}
                   size="small"
@@ -246,6 +248,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 <ListItemButton
                   component={Link}
                   href={item.href}
+                  prefetch={shouldDisablePrefetch(item.href) ? false : undefined}
                   onClick={() => setDrawerOpen(false)}
                 >
                   <ListItemIcon sx={{ color: 'primary.main' }}>

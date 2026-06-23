@@ -83,10 +83,10 @@ export async function POST(
       );
     }
 
-    // 注文ステータスを更新
+    // 注文ステータスを更新（発送日時は shipments テーブルに記録済み）
     const { error: updateError } = await supabaseAdmin
       .from('orders')
-      .update({ status: 'SHIPPED', shipped_at: new Date().toISOString() })
+      .update({ status: 'SHIPPED' })
       .eq('id', orderId);
 
     if (updateError) {

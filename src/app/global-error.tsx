@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 // アプリ全体の最終フォールバックのエラー境界。
 // global-error はエラー時にルートレイアウトを置き換えるため、
@@ -13,7 +14,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('App error boundary:', error);
+    secureLog('error', 'App error boundary', safeErrorLog(error));
   }, [error]);
 
   return (

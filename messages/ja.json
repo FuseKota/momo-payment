@@ -8,16 +8,16 @@
     "title": "もも娘 - 福島の本格台湾料理・冷凍お取り寄せ",
     "description": "福島もも娘のオンライン注文サイト。本格台湾料理の冷凍食品・グッズのお取り寄せ。全国配送に対応。",
     "home": {
-      "title": "福島の本格台湾料理・冷凍お取り寄せ",
-      "description": "福島もも娘の公式オンラインショップ。魯肉飯など本格台湾料理の冷凍食品やオリジナルグッズを全国配送でお取り寄せ。日本各地の台湾夜市イベント情報も掲載しています。"
+      "title": "福島・飯舘村の本格台湾料理・冷凍お取り寄せ",
+      "description": "福島県飯舘村のもも娘公式オンラインショップ。魯肉飯など本格台湾料理の冷凍食品やオリジナルグッズを全国配送でお取り寄せ。日本各地の台湾夜市イベント情報も掲載しています。"
     },
     "shop": {
       "title": "台湾料理の通販・冷凍お取り寄せ",
       "description": "魯肉飯（ルーローファン）など本格台湾料理の冷凍食品やオリジナルグッズをオンラインで全国配送。福島の食材を使ったもも娘のお取り寄せグルメで、ご自宅で本場台湾の味をお楽しみいただけます。"
     },
     "taiwanNightMarket": {
-      "title": "台湾夜市 福島｜台湾夜市フード通販",
-      "description": "士林・饒河街・寧夏など台湾夜市の名物屋台料理を通販でお取り寄せ。大鶏排・魯肉飯・小籠包など本格台湾フードを全国配送するもも娘のオンラインショップ。"
+      "title": "台湾夜市 福島・飯舘村｜台湾夜市フード通販",
+      "description": "福島県飯舘村を拠点とするもも娘。士林・饒河街・寧夏など台湾夜市の名物屋台料理を通販でお取り寄せ。大鶏排・魯肉飯・小籠包など本格台湾フードを全国配送。"
     },
     "news": {
       "title": "新着情報・お知らせ",
@@ -69,7 +69,7 @@
   },
   "home": {
     "heroTitle": "福島もも娘物販サイトへ\nようこそ",
-    "heroSubtitle": "本格台湾料理と福島もも娘オリジナルグッズ\n全国配送でお届けします",
+    "heroSubtitle": "福島県飯舘村から本格台湾料理ともも娘オリジナルグッズ\n全国配送でお届けします",
     "shippingButton": "配送注文",
     "orderMethods": "ご注文方法",
     "shippingTitle": "配送注文",
@@ -253,7 +253,6 @@
     "noOrders": "注文履歴はありません",
     "viewProducts": "商品を見る",
     "orderNo": "注文番号: {orderNo}",
-    "orderTypePickup": "店頭受け取り",
     "orderTypeShipping": "配送",
     "totalLabel": "合計: ¥{total}",
     "backToMypage": "マイページに戻る",
@@ -261,11 +260,9 @@
     "orderDate": "注文日時",
     "orderType": "注文種別",
     "paymentMethod": "支払方法",
-    "payAtPickup": "店頭払い",
     "creditCard": "クレジットカード",
     "deliveryDate": "お届け希望日時",
     "deliveryDateUnspecified": "指定なし",
-    "pickupDate": "受取日時",
     "products": "商品",
     "productName": "商品名",
     "unitPrice": "単価",
@@ -350,7 +347,10 @@
     "privacyContactText": "個人情報の取り扱いに関するお問い合わせは、以下の連絡先までご連絡ください。",
     "privacyContactBusiness": "事業者名：株式会社サクラ・シスターズ",
     "privacyContactEmail": "メールアドレス：info@sakura-sisters.com",
-    "footerPrivacy": "プライバシーポリシー"
+    "footerPrivacy": "プライバシーポリシー",
+    "contactTitle": "お問い合わせ",
+    "contactIntro": "ご不明な点やご注文に関するお問い合わせは、下記までメールにてご連絡ください。",
+    "contactDescription": "お問い合わせ先のご案内"
   },
   "news": {
     "heading": "新着情報",
@@ -385,7 +385,6 @@
     "orderNo": "注文番号:",
     "orderType": "注文種別:",
     "orderTypeShipping": "配送",
-    "orderTypePickup": "キッチンカー",
     "orderedItems": "ご注文商品",
     "productName": "商品名",
     "qty": "数量",
@@ -394,7 +393,6 @@
     "shippingFee": "送料:",
     "total": "合計:",
     "shippingDestination": "配送先",
-    "pickupSchedule": "受取予定",
     "deliverySchedule": "お届け希望日時",
     "dateTime": "日時:",
     "contactNotice": "ご不明な点がございましたら、お気軽にお問い合わせください。",
@@ -409,9 +407,6 @@
     "paymentCompleteMessage": "お支払いが完了しました。ありがとうございます。",
     "paymentAmount": "お支払い金額:",
     "paymentShipNotice": "商品の発送準備が整い次第、発送完了のお知らせをお送りします。",
-    "pickupPaidSubject": "【もも娘】お支払い確認のお知らせ - {orderNo}",
-    "pickupPaidGreeting": "お支払い確認のお知らせ",
-    "pickupPaidMessage": "店頭でのお支払いを確認いたしました。\nこの度はご利用いただき誠にありがとうございました。",
     "cancelSubject": "【もも娘】ご注文キャンセルのお知らせ - {orderNo}",
     "cancelGreeting": "ご注文キャンセルのお知らせ",
     "cancelMessage": "お支払い期限が過ぎたため、ご注文をキャンセルさせていただきました。\n再度ご注文をご希望の場合は、お手数ですが改めてお手続きをお願いいたします。",
@@ -427,7 +422,6 @@
     "adminCustomerEmail": "メール:",
     "adminPaymentMethod": "支払方法:",
     "adminPaymentStripe": "オンライン決済",
-    "adminPaymentOnSite": "店頭払い",
     "adminViewInDashboard": "管理画面で詳細を見る"
   },
   "postalCodeLookup": {
@@ -455,7 +449,7 @@
     "ctaPickup": "店頭受け取りを予約",
     "guideTitle": "台湾夜市ガイド",
     "guideSubtitle": "国内外の台湾夜市の魅力をたっぷり紹介",
-    "momoEventsTitle": "福島ももむすめ イベント情報",
+    "momoEventsTitle": "福島・飯舘村 ももむすめ イベント情報",
     "domesticEventsTitle": "日本国内 台湾夜市情報",
     "taiwanNightMarketInfoTitle": "本場台湾の夜市情報",
     "readMore": "詳しく読む",

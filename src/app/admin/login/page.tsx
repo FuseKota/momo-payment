@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useAuth } from '@/contexts/AuthContext';
+import { peachPink } from '@/lib/mui/theme';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export default function AdminLoginPage() {
                 width: 60,
                 height: 60,
                 borderRadius: '50%',
-                backgroundColor: '#FFF0F3',
+                backgroundColor: peachPink[50],
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
