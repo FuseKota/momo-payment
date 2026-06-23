@@ -96,3 +96,7 @@ jobs:
           RESEND_API_KEY: re_ci_dummy
           EMAIL_FROM: noreply@example.com
           ADMIN_EMAIL: admin@example.com
+          # 本番必須化された Google Calendar 系（ビルド検証用ダミー）
+          GOOGLE_CALENDAR_CLIENT_EMAIL: calendar-ci-dummy@example.com
+          GOOGLE_CALENDAR_PRIVATE_KEY: ci-dummy-private-key
+          GOOGLE_CALENDAR_ID: ci-dummy-calendar-id
