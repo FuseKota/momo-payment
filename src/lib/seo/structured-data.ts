@@ -63,6 +63,18 @@ function logoUrl(appUrl: string): string {
   return `${appUrl}${LOGO_PATH}`;
 }
 
+/** 事業者所在地（特商法表記より。Organization / LocalBusiness で共有。ローカル検索向けに飯舘村を明示） */
+function postalAddress(locale: string) {
+  return {
+    '@type': 'PostalAddress',
+    postalCode: '960-1721',
+    addressRegion: locale === 'zh-tw' ? '福島縣' : locale === 'en' ? 'Fukushima' : '福島県',
+    addressLocality: '相馬郡飯舘村',
+    streetAddress: '飯樋字原361番地',
+    addressCountry: 'JP',
+  };
+}
+
 /**
  * 相対パスを絶対 URL に正規化する。
  * JSON-LD の image/url は絶対 URL が推奨（OG と異なり metadataBase の補完が効かない）。
@@ -105,6 +117,7 @@ export function organizationSchema(appUrl: string, locale: string) {
       url: logoUrl(appUrl),
     },
     email: CONTACT_EMAIL,
+    address: postalAddress(locale),
     sameAs: SOCIAL_LINKS,
   };
 }
@@ -138,14 +151,7 @@ export function localBusinessSchema(appUrl: string, locale: string) {
     servesCuisine: locale === 'zh-tw' ? '台灣料理' : locale === 'en' ? 'Taiwanese Cuisine' : '台湾料理',
     priceRange: '¥¥',
     email: CONTACT_EMAIL,
-    address: {
-      '@type': 'PostalAddress',
-      postalCode: '960-1721',
-      addressRegion: locale === 'zh-tw' ? '福島縣' : locale === 'en' ? 'Fukushima' : '福島県',
-      addressLocality: '相馬郡飯舘村',
-      streetAddress: '飯樋字原361番地',
-      addressCountry: 'JP',
-    },
+    address: postalAddress(locale),
     parentOrganization: { '@id': orgId(appUrl) },
   };
 }
