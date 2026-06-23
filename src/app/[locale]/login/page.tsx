@@ -154,7 +154,14 @@ function LoginPageContent() {
 
     if (error) {
       if (error.message === 'signup_duplicate') {
+        // 既存アカウント: ログインタブへ切り替え、メールは保持してパスワードのみ再入力させる
+        setTab(0);
+        setSignupStep(0);
+        setPassword('');
+        setFieldErrors({});
         setError(t('signupDuplicate'));
+        setIsLoading(false);
+        return;
       } else if (
         (error as { code?: string }).code === 'weak_password' ||
         /weak|pwned|leaked|compromis/i.test(error.message)
