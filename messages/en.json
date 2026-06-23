@@ -8,16 +8,16 @@
     "title": "Momomusume - Authentic Taiwanese Cuisine & Food Truck in Fukushima",
     "description": "Fukushima Momomusume online store. Order authentic Taiwanese frozen foods and original goods. Food truck sales also available.",
     "home": {
-      "title": "Authentic Taiwanese Cuisine & Frozen Delivery | Food Truck Sales",
-      "description": "Official online shop of Fukushima Momomusume. Order authentic Taiwanese frozen foods such as Lu Rou Fan and original goods with nationwide delivery. Food truck and Taiwan night market event info also available."
+      "title": "Authentic Taiwanese Cuisine in Iitate, Fukushima | Frozen Delivery",
+      "description": "Official online shop of Momomusume in Iitate Village, Fukushima. Order authentic Taiwanese frozen foods such as Lu Rou Fan and original goods with nationwide delivery. Food truck and Taiwan night market event info also available."
     },
     "shop": {
       "title": "Taiwanese Food Online Shop & Frozen Delivery",
       "description": "Order authentic Taiwanese frozen foods like Lu Rou Fan (braised pork rice) and original goods online with nationwide delivery. Enjoy authentic Taiwanese flavors at home with Momomusume."
     },
     "taiwanNightMarket": {
-      "title": "Taiwan Night Market Fukushima | Night Market Food Delivery",
-      "description": "Order famous Taiwan night market street foods like Shilin, Raohe and Ningxia. Authentic Taiwanese dishes including Da Ji Pai, Lu Rou Fan and Xiao Long Bao delivered nationwide by Momomusume."
+      "title": "Taiwan Night Market in Iitate, Fukushima | Night Market Food Delivery",
+      "description": "Momomusume, based in Iitate Village, Fukushima. Order famous Taiwan night market street foods like Shilin, Raohe and Ningxia. Authentic Taiwanese dishes including Da Ji Pai, Lu Rou Fan and Xiao Long Bao delivered nationwide."
     },
     "news": {
       "title": "News & Announcements",
@@ -69,7 +69,7 @@
   },
   "home": {
     "heroTitle": "Welcome to the\nFukushima Momomusume Shop",
-    "heroSubtitle": "Authentic Taiwanese cuisine and original Momomusume goods\nDelivered via food truck and shipping",
+    "heroSubtitle": "Authentic Taiwanese cuisine and original Momomusume goods from Iitate, Fukushima\nDelivered via food truck and shipping",
     "shippingButton": "Delivery Order",
     "orderMethods": "How to Order",
     "shippingTitle": "Delivery Order",
@@ -449,7 +449,7 @@
     "ctaPickup": "Reserve Food Truck Pickup",
     "guideTitle": "Taiwan Night Market Guide",
     "guideSubtitle": "Discover the charm of Taiwan night markets at home and abroad",
-    "momoEventsTitle": "Fukushima Momomusume Event Info",
+    "momoEventsTitle": "Momomusume Events in Iitate, Fukushima",
     "domesticEventsTitle": "Taiwan Night Markets in Japan",
     "taiwanNightMarketInfoTitle": "Authentic Taiwan Night Market Info",
     "readMore": "Read more",
