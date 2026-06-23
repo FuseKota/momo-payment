@@ -102,7 +102,9 @@ export default function TaiwanNightMarketFooter() {
                 {t('footerOrder')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link href="/news" style={{ textDecoration: 'none' }}>
+                {/* /news は news.module.css を持つが当ページ(台湾夜市)では未使用。
+                    自動プリフェッチによる「preloaded but not used」警告を防ぐため無効化。 */}
+                <Link href="/news" prefetch={false} style={{ textDecoration: 'none' }}>
                   <Typography variant="body2" sx={linkSx}>
                     {tc('news')}
                   </Typography>

@@ -30,6 +30,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { shouldDisablePrefetch } from '@/lib/utils/constants';
 
 const gold = '#fbc02d';
 const goldHover = 'rgba(251, 192, 45, 0.12)';
@@ -93,8 +94,10 @@ export default function TaiwanNightMarketHeader() {
             </IconButton>
           )}
 
-          {/* Logo */}
-          <Link href="/taiwan-night-market" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Logo（このヘッダーは /news・/news/[slug] でも流用される。それらのページでは
+              taiwan-night-market.module.css が未使用のため、ロゴの遷移先プリフェッチを無効化して
+              「preloaded but not used」警告を防ぐ） */}
+          <Link href="/taiwan-night-market" prefetch={false} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Box sx={{ position: 'relative', width: 100, height: 100, flexShrink: 0 }}>
               <Image
                 src="/images/sakura-sisters-logo.svg"
@@ -130,6 +133,7 @@ export default function TaiwanNightMarketHeader() {
                   key={item.href}
                   component={Link}
                   href={item.href}
+                  prefetch={shouldDisablePrefetch(item.href) ? false : undefined}
                   startIcon={item.icon}
                   size="small"
                   sx={{
@@ -213,6 +217,7 @@ export default function TaiwanNightMarketHeader() {
                 <ListItemButton
                   component={Link}
                   href={item.href}
+                  prefetch={shouldDisablePrefetch(item.href) ? false : undefined}
                   onClick={() => setDrawerOpen(false)}
                   sx={{ '&:hover': { backgroundColor: goldHover } }}
                 >

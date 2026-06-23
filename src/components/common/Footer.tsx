@@ -112,7 +112,9 @@ export default function Footer() {
               {t('order')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link href="/news" style={{ textDecoration: 'none' }}>
+              {/* /news は専用 CSS Module を持つ。自動プリフェッチすると未使用CSSが先読みされ
+                  「preloaded but not used」警告が出るためプリフェッチを無効化する。 */}
+              <Link href="/news" prefetch={false} style={{ textDecoration: 'none' }}>
                 <Typography
                   variant="body2"
                   sx={{

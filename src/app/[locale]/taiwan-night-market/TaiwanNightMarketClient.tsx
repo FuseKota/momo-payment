@@ -141,6 +141,7 @@ export default function TaiwanNightMarketClient({ momoNews, domesticNews, taiwan
                   <Link
                     key={article.id}
                     href={`/news/${article.slug}`}
+                    prefetch={false}
                     className={styles.cardLink}
                   >
                     <div
