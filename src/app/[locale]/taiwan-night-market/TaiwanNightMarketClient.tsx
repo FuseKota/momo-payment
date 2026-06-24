@@ -13,7 +13,7 @@ import type { News } from '@/types/database';
 import { getLocalizedNewsTitle, getLocalizedNewsExcerpt } from '@/lib/utils/localize-news';
 
 // 画像は本番 Supabase Storage に配置（wikimedia の thumb はホットリンク制限で400になるため）。
-// アップロードは scripts/upload-night-market-images.ts。URL は DB 移行に追従するよう env 基準。
+// URL は DB 移行に追従するよう env 基準（本番 Supabase Storage に配置）。
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/product-images/night-market`;
 const NIGHT_MARKET_IMAGES: Record<string, string> = {
   'shilin-night-market': `${STORAGE_BASE}/shilin-night-market.jpg`,
