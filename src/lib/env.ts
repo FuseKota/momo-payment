@@ -115,5 +115,3 @@ function getEnv() {
 }
 
 export const env = getEnv();
-
-export type Env = z.infer<typeof envSchema>;

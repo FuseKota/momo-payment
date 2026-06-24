@@ -11,13 +11,3 @@ export const DELIVERY_TIME_SLOTS = [
 ] as const;
 
 export type DeliveryTimeSlot = (typeof DELIVERY_TIME_SLOTS)[number];
-
-/** デフォルト（指定なし） */
-export const DEFAULT_DELIVERY_TIME_SLOT: DeliveryTimeSlot = 'UNSPECIFIED';
-
-/** 指定の有無判定（UNSPECIFIED は「指定なし」） */
-export function isTimeSlotSpecified(
-  slot: string | null | undefined
-): slot is Exclude<DeliveryTimeSlot, 'UNSPECIFIED'> {
-  return !!slot && slot !== 'UNSPECIFIED' && (DELIVERY_TIME_SLOTS as readonly string[]).includes(slot);
-}
