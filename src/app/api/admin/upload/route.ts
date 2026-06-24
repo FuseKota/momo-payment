@@ -17,21 +17,21 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'no_file' },
         { status: 400 }
       );
     }
 
     if (!productSlug) {
       return NextResponse.json(
-        { error: 'Product slug is required' },
+        { error: 'invalid_slug' },
         { status: 400 }
       );
     }
 
     if (!/^[a-z0-9-]+$/.test(productSlug)) {
       return NextResponse.json(
-        { error: 'Invalid product slug' },
+        { error: 'invalid_slug' },
         { status: 400 }
       );
     }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (productId && result.url) {
       const idParse = uuidSchema.safeParse(productId);
       if (!idParse.success) {
-        return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 });
+        return NextResponse.json({ error: 'validation_error' }, { status: 400 });
       }
       const supabase = getSupabaseAdmin();
       await supabase
