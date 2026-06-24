@@ -176,7 +176,6 @@
 | ヘルスチェック | `GET /api/health`（死活監視用） |
 | 郵便番号検索 | `GET /api/postal-code/lookup` |
 | 管理者作成スクリプト | `npm run create-admin`（新規環境は `scripts/create-admin-on-new.ts`） |
-| シードデータ投入 | `npm run seed` |
 | コンテンツ移行スクリプト | `scripts/migrate-content-to-prod.ts` |
 | 在庫減算 RPC | `decrement_variant_stock` |
 | 商品並び替え RPC | `reorder_products` |
