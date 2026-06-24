@@ -75,7 +75,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             maxWidth: 1200,
             width: '100%',
             mx: 'auto',
-            px: { xs: 2, md: 4 },
+            px: { xs: 2, md: 3 },
             minHeight: { xs: 70, md: 80 },
             py: 1,
           }}
@@ -93,8 +93,8 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
             </IconButton>
           )}
 
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-            <Box sx={{ position: 'relative', width: { xs: 44, md: 88 }, height: { xs: 44, md: 88 }, flexShrink: 0 }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ position: 'relative', width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 }, flexShrink: 0 }}>
               <Image
                 src="/images/logo.svg"
                 alt="Sakura Sisters"
@@ -107,9 +107,11 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
               component="span"
               sx={{
                 fontWeight: 700,
-                // mdは項目過密なヘッダー内で1行に収まるサイズ（1.5remだとnav等に圧迫され折返す）。
-                // xsは通常幅(>=360px)で1行、極小幅では折り返して横スクロールを防ぐ（nowrapしない）。
-                fontSize: { xs: '0.85rem', md: '1.25rem' },
+                // ブランド名は「福島もも娘 / 物販サイト」の2行固定（siteNameStacked の \n で改行）。
+                // md以上は pre で \n のみ改行＝常に2行（Toolbarは maxWidth:1200 固定のため幅は一定）。
+                // xsは pre-line で必要時に折り返し、極小端末での横あふれを防ぐ。
+                whiteSpace: { xs: 'pre-line', md: 'pre' },
+                fontSize: { xs: '0.85rem', md: '1.15rem' },
                 lineHeight: 1.2,
                 background: 'linear-gradient(135deg, #FF6680 0%, #E84D6A 100%)',
                 backgroundClip: 'text',
@@ -117,12 +119,12 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              {t('siteName')}
+              {t('siteNameStacked')}
             </Typography>
           </Link>
 
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 0.5, ml: 2, flexShrink: 0 }}>
+            <Box sx={{ display: 'flex', gap: 0.25, ml: 1.5, flexShrink: 0 }}>
               {navItems.map((item) => (
                 <Button
                   key={item.href}
@@ -135,7 +137,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                   sx={{
                     color: 'text.secondary',
                     fontSize: '0.85rem',
-                    px: 1.2,
+                    px: 0.6,
                     py: 0.5,
                     whiteSpace: 'nowrap',
                     minWidth: 0,

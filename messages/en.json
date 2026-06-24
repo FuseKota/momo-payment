@@ -26,6 +26,7 @@
   },
   "common": {
     "siteName": "Fukushima Momomusume Shop",
+    "siteNameStacked": "Fukushima\nMomomusume Shop",
     "brandShort": "Momomusume",
     "home": "Home",
     "shipping": "Delivery Order",
