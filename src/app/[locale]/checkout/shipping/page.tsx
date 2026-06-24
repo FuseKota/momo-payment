@@ -32,6 +32,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFormField } from '@/hooks/useFormField';
 import { validateCustomerFields, validateAddressFields } from '@/lib/utils/form-validators';
 import { getLocalizedName } from '@/lib/utils/localize-product';
+import { commonErrorKeyForStatus, networkErrorKey } from '@/lib/api/client-errors';
 import {
   calcShippingFee,
   calcMinDeliveryYmd,
@@ -198,9 +199,11 @@ export default function ShippingCheckoutPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
+        // 業務エラーは画面固有の文言へ。横断ステータス(429/403/401/5xx)は共通文言へ。
+        // いずれにも該当しない場合のみ汎用文言。API の生エラーコードは絶対に表示しない。
         const errorMessages: Record<string, string> = {
           temp_zone_mixed: t('errors.tempZoneMixed'),
           product_not_shippable: t('errors.productNotShippable'),
@@ -211,21 +214,31 @@ export default function ShippingCheckoutPage() {
           agreement_required: t('errors.agreementRequired'),
           unsupported_region: t('errors.unsupportedRegion'),
           invalid_delivery_date: t('errors.invalidDeliveryDate'),
+          variant_out_of_stock: t('errors.outOfStock'),
+          variant_not_found: t('errors.outOfStock'),
+          payment_session_failed: t('errors.paymentSessionFailed'),
+          validation_error: tc('requiredFieldsError'),
         };
-        const message = errorMessages[data.error] || data.error || t('errors.orderFailed');
-        throw new Error(message);
+        const token = typeof data?.error === 'string' ? data.error : '';
+        const commonKey = commonErrorKeyForStatus(response.status);
+        setError(errorMessages[token] ?? (commonKey ? tc(commonKey) : t('errors.orderFailed')));
+        setIsLoading(false);
+        return;
       }
 
-      if (data.data?.checkoutUrl) {
+      if (data?.data?.checkoutUrl) {
         // カートクリアはリダイレクト直前に行う（リダイレクト失敗時もStripe側で注文は作成済み）
         clearCart();
         window.location.href = data.data.checkoutUrl;
         return; // リダイレクト後は何もしない
-      } else {
-        throw new Error(t('errors.checkoutUrlFailed'));
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tc('unexpectedError'));
+
+      // 200 だが決済URLが取得できなかった（請求は発生していない）
+      setError(t('errors.checkoutUrlFailed'));
+      setIsLoading(false);
+    } catch {
+      // fetch 自体の失敗（オフライン/通信断/タイムアウト）。生の例外メッセージは表示しない。
+      setError(tc(networkErrorKey()));
       setIsLoading(false);
     }
   };

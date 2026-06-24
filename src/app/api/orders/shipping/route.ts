@@ -261,8 +261,9 @@ export async function POST(request: NextRequest) {
     const successUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/complete?orderNo=${orderRow.order_no}&token=${orderRow.lookup_token ?? ''}`);
     // Stripe ホスト型 Checkout の戻る矢印（←）は cancel_url へ遷移する。
     // 戻ったらカート（商品は CartContext に保持）から再開できるよう /cart へ送る。
+    // canceled=1 を付けてカート画面で「お支払い未完了」の案内を表示する。
     // キャンセル注文のクリーンアップは Stripe Webhook(checkout.session.expired)が担う。
-    const cancelUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/cart`);
+    const cancelUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/cart?canceled=1`);
 
     let session;
     try {
