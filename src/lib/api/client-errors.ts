@@ -7,8 +7,6 @@
  *
  * 使い方（next-intl）:
  *   const tc = useTranslations('common');
- *   // GET（取得系）: status から必ずキーを得る
- *   setError(tc(loadErrorKey(res.status)));
  *   // mutation（保存/決済系）: 横断キーがあれば優先、無ければ画面固有の汎用へ
  *   const key = commonErrorKeyForStatus(res.status);
  *   setError(key ? tc(key) : t('errors.orderFailed'));
@@ -51,14 +49,6 @@ export function commonErrorKeyForStatus(status: number): CommonErrorKey | null {
   if (status === 429) return 'errors.rateLimited';
   if (status >= 500) return 'errors.serverError';
   return null;
-}
-
-/**
- * 取得系（GET）向け: status から必ず共通エラーキーを返す。
- * 横断キーが無い場合は汎用の「読み込みに失敗しました」(loadFailed) に倒す。
- */
-export function loadErrorKey(status: number): CommonErrorKey {
-  return commonErrorKeyForStatus(status) ?? 'errors.loadFailed';
 }
 
 /** セッション切れ（401）か。検知時はログイン画面へ誘導するために使う。 */
