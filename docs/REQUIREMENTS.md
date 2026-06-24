@@ -1,6 +1,6 @@
 # momo-payment 要件定義書 v3.0
 
-**最終更新**: 2026-06-18
+**最終更新**: 2026-06-23
 **ステータス**: 本番リリース版
 **改訂履歴**: v1.0 (MVP, 決済=Square 想定) → v2.0（決済を Stripe に変更、顧客アカウント・マイページ・ニュース・多言語・商品バリエーション・配送日時指定・台湾夜市カレンダーを反映） → **v3.0（店頭受け取り／店頭払い／Square を全廃し、配送EC・Stripe オンライン決済専用に一本化）**
 
@@ -32,7 +32,7 @@
 - Supabase (PostgreSQL + Auth + Storage)
 - **Stripe (決済)** ← v1.0 の Square から変更
 - Resend (メール通知)
-- next-intl v4（日本語・繁体字中文）
+- next-intl v4（日本語・繁体字中文・英語）
 - Vitest（テスト）
 
 ---
@@ -43,7 +43,7 @@
 
 - **対象**: 冷凍の魯肉飯＋もも娘グッズ
 - **支払い**: オンライン決済必須（**Stripe**）
-- **配送**: 送料は一律（`SHIPPING_FEE_YEN`、既定 ¥1,200）
+- **配送**: 送料は配送先都道府県に応じた地帯別運賃＋箱代で算出（`src/lib/shipping/`。固定送料ではない。沖縄は暫定で南九州と同額）
 - **配送日時指定**: 配送日（`delivery_date`）・時間帯（`delivery_time_slot`）を選択可能
 - **発送管理**: 管理画面で発送ステータス/追跡番号を扱う
 
@@ -266,13 +266,14 @@ Stripe 返金を実行し、注文を `REFUNDED` に更新する。
 | `customer_addresses` | 顧客の保存住所 |
 | `news` | お知らせ |
 | `iitate_calendar_events` / `iitate_calendar_month_notes` | 台湾夜市カレンダー |
-| `rate_limit_buckets` | レート制限バケット（DB バックアップ用） |
+| `audit_logs` | 管理操作の監査ログ |
+| `rate_limit_buckets` | 永続レート制限ストア（RPC `check_rate_limit`） |
 | `square_webhook_events` | （旧 Square 仕様の名残・未使用） |
 
 ### 主要な制約
 
 1. **orders_total_consistency**: `total_yen = subtotal_yen + shipping_fee_yen`
-2. **orders_shipping_rules**: 配送注文は `payment_method IN ('SQUARE','STRIPE')`（実運用は STRIPE）＋ `temp_zone` 必須
+2. **orders_shipping_rules**: `order_type = 'SHIPPING' AND payment_method = 'STRIPE' AND temp_zone IS NOT NULL`（00026 で enum を SHIPPING / STRIPE の単一値へ整理）
 3. **order_items_line_total**: `line_total_yen = unit_price_yen * qty`
 4. **orders_delivery_time_slot_check**: 配送時間帯は `UNSPECIFIED/AM/T12_14/T14_16/T16_18/T18_21` のいずれか
 
@@ -320,7 +321,7 @@ MVP（v1.0）以降に追加・実装された機能。
 | **顧客アカウント** | Supabase Auth によるメール/パスワード登録・ログイン。注文の顧客ひも付け（`orders.user_id`） |
 | **マイページ** | 注文履歴、注文詳細、配送先住所の CRUD |
 | **商品バリエーション** | サイズ別の価格・在庫（`product_variants`） |
-| **多言語対応** | 日本語・繁体字中文（next-intl）。商品は `name_zh_tw` 等で翻訳 |
+| **多言語対応** | 日本語・繁体字中文・英語（next-intl）。商品は `name_zh_tw` / `name_en` 等で翻訳 |
 | **配送日時指定** | 配送日・時間帯の選択 |
 | **ニュース** | お知らせの公開・一覧・詳細、管理画面での CRUD |
 | **台湾夜市特設ページ／カレンダー** | 飯舘村台湾夜市の開催カレンダー（Google Calendar 連携・管理画面編集） |
@@ -333,11 +334,11 @@ MVP（v1.0）以降に追加・実装された機能。
 
 | 区分 | 要件 |
 |-----|------|
-| セキュリティ | 環境変数 Zod 検証、入力バリデーション、CSRF（Origin 検証）、レート制限（10req/min/IP）、CSP/セキュリティヘッダ、PII マスクログ、Stripe Webhook 署名検証、RLS |
-| 多言語 | 全公開 URL にロケールプレフィックス（`/ja` `/zh-tw`）、デフォルト `ja` |
+| セキュリティ | 環境変数 Zod 検証、入力バリデーション、CSRF（Origin 検証）、永続レート制限（Supabase RPC・注文10/管理30/認証5 req/min/IP）、CSP/セキュリティヘッダ、PII マスクログ・監査ログ、Stripe Webhook 署名検証、RLS |
+| 多言語 | ja / zh-tw / en の3言語。`localePrefix: 'as-needed'`（デフォルト `ja` はプレフィックスなし） |
 | 可用性 | ヘルスチェック API（`/api/health`）を提供 |
 | 性能 | `docs/PERFORMANCE_AUDIT.md` 参照 |
-| テスト | Vitest 13 ファイル / 133 件 |
+| テスト | Vitest 33 ファイル / 372 件（CI で実行） |
 | SEO | 公開ページに構造化データ（JSON-LD）・メタデータ |
 
 ---

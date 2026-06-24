@@ -341,7 +341,7 @@ erDiagram
 | `reset_at` | timestamptz | NOT NULL | リセット時刻 |
 | `created_at` | timestamptz | NOT NULL, default `now()` | |
 
-> アプリの主たるレート制限はインメモリ実装。本テーブルは DB バックアップ用途。
+> アプリのレート制限は本テーブル（`rate_limit_buckets`）と RPC `check_rate_limit` による永続ストアで実装。サーバレスでも共有カウンタとして機能する。
 
 ### 3.16 square_webhook_events —（旧仕様・未使用、`00001`）
 

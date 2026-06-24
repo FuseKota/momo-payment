@@ -158,7 +158,6 @@ cp .env.example .env.local
 | `GOOGLE_CALENDAR_ID` | 本番✅ | `xxx@group.calendar.google.com` | 対象カレンダー ID |
 | `GOOGLE_CALENDAR_TIMEZONE` | 任意 | `Asia/Tokyo`（既定） | タイムゾーン |
 | `NODE_ENV` | ✅ | `production` | 本番は必ず `production` |
-| `SHIPPING_FEE_YEN` | 任意 | `1200` | 送料（円） |
 
 > 環境変数は `src/lib/env.ts` で **Zod により起動時検証**されます。`NODE_ENV=production` のときは Email・Google Calendar 系も必須となり、未設定だと起動時にエラーで停止します（不正設定の早期検出）。
 
@@ -420,7 +419,7 @@ sudo systemctl restart momo-payment
 | Stripe Webhook が 400 | 署名シークレット不一致。`STRIPE_WEBHOOK_SECRET` を再確認しアプリ再起動 |
 | 画像が表示されない | `product-images` バケット未作成、または `next.config.ts` の `remotePatterns` に Supabase ホスト不一致 |
 | メールが届かない | `RESEND_API_KEY` 未設定 / 送信元ドメインの DNS（SPF/DKIM）未認証 |
-| 複数台構成でレート制限が緩い | レート制限はインメモリ実装（再起動でリセット）。水平スケール時は共有ストア（Redis 等）への移行を推奨 |
+| 複数台構成でレート制限が緩い | レート制限は Supabase Postgres の永続ストア（RPC `check_rate_limit`）で実装済み。水平スケールしても共有カウンタとして機能する |
 | 管理画面に入れない | `npm run create-admin` で管理者未作成、または Cookie/HTTPS 設定の問題 |
 
 ---

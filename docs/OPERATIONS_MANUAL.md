@@ -223,7 +223,7 @@ pm2 restart momo-payment               # PM2
 
 | 観点 | 現状 | 拡張時の指針 |
 |-----|------|------------|
-| レート制限 | インメモリ（10req/min/IP・再起動でリセット） | **複数台構成にする場合は Redis 等の共有ストアへ移行必須**（台ごとにカウントが分かれ制限が緩くなる） |
+| レート制限 | 永続ストア（Supabase RPC `check_rate_limit`・注文10/管理30/認証5 req/min/IP） | 水平スケールしても共有カウンタとして機能。DB障害時はフェイルオープン |
 | アプリ水平スケール | 1 プロセス前提 | ロードバランサ + 複数インスタンス。セッションは Supabase Cookie ベースのためステートレス化は容易 |
 | DB | Supabase マネージド | 接続数・プランを監視し必要に応じ増強 |
 | 画像配信 | Supabase Storage（CDN） | 大量アクセス時は CDN キャッシュ設定を確認 |
@@ -301,7 +301,7 @@ sudo systemctl restart momo-payment
 
 ## 12. テスト（保守時の回帰確認）
 
-コード変更後は自動テストで回帰を確認できます（13 ファイル / 133 件）。
+コード変更後は自動テストで回帰を確認できます（33 ファイル / 372 件）。
 
 ```bash
 npx vitest run                 # 全テスト
@@ -316,7 +316,7 @@ npx vitest run --coverage      # カバレッジ
 
 | 項目 | 内容 |
 |-----|------|
-| レート制限 | インメモリ。再起動でリセット、複数台では共有されない（要 Redis） |
+| レート制限 | Supabase Postgres の永続ストア（RPC `check_rate_limit`）。複数台でも共有される |
 | `PENDING_PAYMENT` 自動失効 | Webhook（`checkout.session.expired`）で `CANCELED` に更新。長期滞留は手動確認 |
 | 返金 | 管理画面の「返金（refund）」で Stripe 返金 + ステータス更新。ダッシュボード直接操作時は手動整合 |
 | 温度帯混在 | 冷凍とグッズの同一注文は不可（仕様） |

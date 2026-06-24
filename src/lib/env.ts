@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeServiceAccountKey } from '@/lib/env-utils';
 
 /**
  * 環境変数のバリデーションスキーマ
@@ -37,12 +38,12 @@ const envSchema = z.object({
   // Google Calendar（飯舘村台湾夜市カレンダーの読み取り元）
   // 本番では必須、開発/テストでは optional（未設定時は API が空イベントで応答）
   GOOGLE_CALENDAR_CLIENT_EMAIL: z.string().email().optional().or(z.literal('')),
-  // サービスアカウントの秘密鍵（PEM）。.env では改行を \n エスケープで記述するため、
-  // ここで実際の改行へ復元してから JWT クライアントに渡す
+  // サービスアカウントの秘密鍵（PEM）。前後のクォート除去と \n の改行復元を行う
+  // （normalizeServiceAccountKey 参照）
   GOOGLE_CALENDAR_PRIVATE_KEY: z
     .string()
     .optional()
-    .transform((s) => (s ? s.replace(/\\n/g, '\n') : s)),
+    .transform(normalizeServiceAccountKey),
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_CALENDAR_TIMEZONE: z.string().default('Asia/Tokyo'),
 
