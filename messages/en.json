@@ -110,7 +110,7 @@
     "protein": "Protein: {value} g",
     "fat": "Fat: {value} g",
     "carbohydrates": "Carbohydrates: {value} g",
-    "sodium": "Salt equivalent: {value} g"
+    "sodium": "Sodium: {value} mg"
   },
   "cart": {
     "title": "Cart",

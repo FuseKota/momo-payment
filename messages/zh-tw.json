@@ -110,7 +110,7 @@
     "protein": "蛋白質：{value}g",
     "fat": "脂肪：{value}g",
     "carbohydrates": "碳水化合物：{value}g",
-    "sodium": "鈉含量：{value}g"
+    "sodium": "鈉含量：{value}mg"
   },
   "cart": {
     "title": "購物車",

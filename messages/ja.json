@@ -110,7 +110,7 @@
     "protein": "たんぱく質: {value}g",
     "fat": "脂質: {value}g",
     "carbohydrates": "炭水化物: {value}g",
-    "sodium": "食塩相当量: {value}g"
+    "sodium": "ナトリウム: {value}mg"
   },
   "cart": {
     "title": "カート",
