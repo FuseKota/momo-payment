@@ -353,6 +353,23 @@ export type AdminOrdersFilter = z.infer<typeof adminOrdersFilterSchema>;
 export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
 
 /**
+ * 管理者：顧客マスタ一覧クエリ（GET /api/admin/customers）
+ * 氏名/メール/電話の部分一致検索 + ページネーション。
+ */
+export const adminCustomersQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type AdminCustomersQuery = z.infer<typeof adminCustomersQuerySchema>;
+
+/**
  * 管理者：監査ログ一覧クエリ（GET /api/admin/audit-logs）
  */
 export const adminAuditLogQuerySchema = z.object({

@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ArticleIcon from '@mui/icons-material/Article';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -33,6 +34,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: 'ダッシュボード', icon: <DashboardIcon />, href: '/admin/dashboard' },
   { text: '注文管理', icon: <ShoppingCartIcon />, href: '/admin/orders' },
+  { text: '顧客マスタ', icon: <PeopleIcon />, href: '/admin/customers' },
   { text: '商品管理', icon: <InventoryIcon />, href: '/admin/products' },
   { text: 'ニュース管理', icon: <ArticleIcon />, href: '/admin/news' },
   { text: '台湾夜市カレンダー', icon: <CalendarMonthIcon />, href: '/admin/iitate-calendar' },
