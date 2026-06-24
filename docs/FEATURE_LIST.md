@@ -51,7 +51,7 @@
 |-----|------|
 | カート追加・数量変更・削除 | クライアント状態（`CartContext`）で管理 |
 | 温度帯混在チェック | 冷凍（FROZEN）とグッズ（AMBIENT）の同時購入を禁止 |
-| 小計・送料・合計表示 | 送料は一律（`SHIPPING_FEE_YEN`、既定 ¥1,200） |
+| 小計・送料・合計表示 | 送料は配送先都道府県の地帯別運賃＋箱代（`src/lib/shipping/`） |
 
 ### 2.3 配送EC注文（SHIPPING）
 
@@ -162,7 +162,7 @@
 |-----|------------|
 | 環境変数検証（Zod・起動時） | `src/lib/env.ts` |
 | 入力バリデーション（日本の電話/郵便番号対応） | `src/lib/validation/schemas.ts` |
-| レート制限（10req/min/IP・インメモリ） | `src/lib/security/rate-limit.ts` |
+| レート制限（永続・Supabase RPC。注文10/管理30/認証5 req/min/IP） | `src/lib/security/rate-limit.ts` |
 | CSRF 保護（Origin/Referer 検証） | `src/lib/security/csrf.ts` |
 | セキュリティヘッダ・CSP（per-request nonce 方針） | `next.config.ts`・`src/middleware.ts` |
 | PII マスクログ | `src/lib/logging/secure-logger.ts` |

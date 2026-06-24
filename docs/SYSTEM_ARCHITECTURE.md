@@ -322,7 +322,7 @@ stateDiagram-v2
 | 決済 | Stripe SDK（API `2025-12-15.clover`） | 20.x |
 | メール | Resend | 6.x |
 | カレンダー連携 | google-auth-library | 10.x |
-| テスト | Vitest（13ファイル / 133件） | 4.x |
+| テスト | Vitest（33ファイル / 372件） | 4.x |
 | ランタイム | Node.js | 20 LTS |
 | ホスティング（現状） | Netlify（`@netlify/plugin-nextjs`） | — |
 
@@ -353,7 +353,7 @@ graph LR
 | 環境変数検証 | `src/lib/env.ts`（Zod・起動時） |
 | 入力バリデーション | `src/lib/validation/schemas.ts`（Zod） |
 | CSRF 保護 | `src/lib/security/csrf.ts`（Origin/Referer 検証） |
-| レート制限 | `src/lib/security/rate-limit.ts`（10req/min/IP・インメモリ） |
+| レート制限 | `src/lib/security/rate-limit.ts`（永続・Supabase RPC。注文10/管理30/認証5 req/min/IP） |
 | セキュリティヘッダ / CSP | `next.config.ts` + `src/middleware.ts`（per-request nonce） |
 | PII マスクログ | `src/lib/logging/secure-logger.ts` |
 | Webhook 署名検証 | `src/lib/stripe/webhook.ts` |

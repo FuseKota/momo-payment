@@ -1,6 +1,6 @@
 # 本番公開 残タスク（LAUNCH TODO）
 
-最終更新: 2026-06-10
+最終更新: 2026-06-23
 
 dev/prod分離・セキュリティ対応の過程で出た、本番公開までの未了タスク。
 凡例: ☐ 未了 / ☑ 完了 ／ 担当: **[開発]** **[社長/ドメイン管理]** **[業務判断]**
@@ -44,18 +44,21 @@ Pro化済みで利用可。login直送のブルートフォース対策。
 
 ## D. 本番カットオーバー（dev/prod分離の仕上げ）[開発]
 
-- ☐ 新本番に管理者作成: `scripts/create-admin-on-new.ts`（`.env.local` に `SETUP_ADMIN_EMAIL`/`SETUP_ADMIN_PASSWORD` を一時設定→実行→2行削除）
-- ☐ Netlify env を新本番Supabaseに切替（`NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY`/`SERVICE_ROLE_KEY`）→ **Clear cache & deploy**
-- ☐ Stripe Webhook を本番エンドポイントに登録（`whsec_` 更新、events: `checkout.session.completed` / `checkout.session.expired`）
-- ☐ 切替後の動作確認（商品表示 / 画像 / 管理ログイン / テスト注文）
-- ☑ 新本番へスキーマ＋コンテンツ＋画像を移行（migration `00001`〜`00020` 適用済）
+- ☑ 新本番に管理者作成（2026-06-16）
+- ☑ Netlify env を新本番Supabaseに切替（`URL`/`ANON`/`SERVICE_ROLE`・Clear cache & deploy 済、2026-06-16）
+- ☑ 新本番へスキーマ＋コンテンツ＋画像を移行（migration `00001`〜`00027` を dev/prod 両方へ適用済）
+- ☐ **Stripe Webhook を本番エンドポイントに登録**（`sk_live_`/`whsec_` 更新、events: `checkout.session.completed` / `checkout.session.expired`）
+- ☐ **Confirm email を再ON**（A の Resend 独自ドメイン認証後。現状はサインアップ500回避のため暫定OFF）
+- ☐ 切替後の最終動作確認（商品表示 / 画像 / 管理ログイン / テスト注文・決済）
 
 ## E. セキュリティ残（任意 / 業務判断）
 
-- ☐ **[業務判断]** 在庫の売り越し対策（配送EC注文の在庫チェック / `products.stock_qty` 減算が全経路で欠落していないか確認）
+- ☐ **[業務判断]** 沖縄県の送料が暫定（南九州と同額）。本番前に実費確定 or 配送対象外を決定（`src/lib/shipping/zones.ts`）
 - ☐ (任意) gitleaks を GitHub Actions CI に追加（秘密コミットの再発防止）
+- ☑ 在庫売り越し対策（配送注文で在庫チェック＋Webhookで `decrement_variant_stock` 減算。2026-06-23確認）
+- ☑ レート制限の永続化（Supabase RPC `check_rate_limit`・`00016`。サーバレスで有効）
 - ☑ Vercelトークン revoke（git履歴の漏洩・2026-06-10対応、gitleaksで全履歴クリーン確認）
-- ☑ Next.js 15.5.19 昇格・PII Cache-Control・variant `is_active`・DB advisor 固定 等（A/B/C・202テスト通過）
+- ☑ Next.js 15.5.19 昇格・PII Cache-Control・variant `is_active`・DB advisor 固定 等
 
 ---
 
