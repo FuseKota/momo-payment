@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { localeUrl, languageAlternates } from '@/lib/seo/locale-url';
-import { getShippingProducts } from '@/lib/api/product-queries';
+import { getShippingProductsResult } from '@/lib/api/product-queries';
 import ShopClient from './ShopClient';
 import { JsonLd } from '@/components/JsonLd';
 import { breadcrumbSchema, shopItemListSchema } from '@/lib/seo/structured-data';
@@ -43,7 +43,8 @@ export default async function ShopPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
-  const products = await getShippingProducts();
+  // 取得失敗（DB障害等）と0件を区別し、失敗時は ShopClient でエラー表示する
+  const { products, error: loadError } = await getShippingProductsResult();
 
   const homeLabel = locale === 'zh-tw' ? '首頁' : locale === 'en' ? 'Home' : 'ホーム';
   const shopLabel = locale === 'zh-tw' ? '商店' : locale === 'en' ? 'Shop' : 'ショップ';
@@ -57,7 +58,7 @@ export default async function ShopPage({
         ])}
       />
       <JsonLd data={shopItemListSchema(appUrl, locale, products)} />
-      <ShopClient initialProducts={products} />
+      <ShopClient initialProducts={products} loadError={loadError} />
     </>
   );
 }

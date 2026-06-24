@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { peachPink } from '@/lib/mui/theme';
 import { Layout, QuantityControl } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
@@ -27,9 +28,11 @@ import type { Product, ProductVariant, ProductWithVariants } from '@/types/datab
 interface Props {
   /** サーバー側で取得済みの商品（存在しなければ null） */
   product: ProductWithVariants | null;
+  /** サーバー側での取得に失敗したか（true のときは「存在しない」でなくエラー表示） */
+  loadError?: boolean;
 }
 
-export default function ProductDetailClient({ product }: Props) {
+export default function ProductDetailClient({ product, loadError = false }: Props) {
   const t = useTranslations('productDetail');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -62,6 +65,35 @@ export default function ProductDetailClient({ product }: Props) {
   };
 
   if (!product) {
+    // 取得失敗（DB障害・通信断等）は「存在しない」と区別し、再試行導線を出す
+    if (loadError) {
+      return (
+        <Layout>
+          <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              {t('loadError')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                startIcon={<RefreshIcon />}
+                onClick={() => window.location.reload()}
+              >
+                {tc('retry')}
+              </Button>
+              <Button
+                component={Link}
+                href="/shop"
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+              >
+                {t('backToList')}
+              </Button>
+            </Box>
+          </Container>
+        </Layout>
+      );
+    }
     return (
       <Layout>
         <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>

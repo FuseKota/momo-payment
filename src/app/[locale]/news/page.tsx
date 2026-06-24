@@ -35,7 +35,8 @@ export default async function NewsPage({
   const { locale } = await params;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
   const supabase = getSupabaseAdmin();
-  const { data: news } = await supabase
+  // 取得失敗（loadError）と本当に0件（空状態）を区別するため、error も受け取る。
+  const { data: news, error } = await supabase
     .from('news')
     .select('*')
     .eq('is_published', true)
@@ -52,7 +53,7 @@ export default async function NewsPage({
           { name: newsLabel, path: '/news' },
         ])}
       />
-      <NewsListClient items={news ?? []} />
+      <NewsListClient items={news ?? []} loadError={!!error} />
     </>
   );
 }

@@ -51,9 +51,13 @@ export async function GET(request: NextRequest) {
 
   // events は Google（正）、notes は Supabase（継続）。互いに独立して取得し、
   // 片方が失敗してももう片方は返せるようにする。
+  // events 取得が失敗した場合は degraded=true を立て、クライアントが
+  // 「0件」ではなく「読み込み失敗」として扱えるようにする。
+  let eventsDegraded = false;
   const [events, notes] = await Promise.all([
     fetchEventsCached(month).catch((error) => {
       secureLog('error', 'Failed to fetch Google Calendar events', safeErrorLog(error));
+      eventsDegraded = true;
       return [] as MappedCalendarEvent[];
     }),
     supabase
@@ -70,5 +74,6 @@ export async function GET(request: NextRequest) {
       }),
   ]);
 
-  return NextResponse.json({ month, events, notes });
+  // 既存の正常レスポンス形（month/events/notes）は維持し、degraded は失敗時のみ付与する。
+  return NextResponse.json({ month, events, notes, ...(eventsDegraded ? { degraded: true } : {}) });
 }
