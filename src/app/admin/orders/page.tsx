@@ -20,6 +20,8 @@ import {
   CircularProgress,
   MenuItem,
   Stack,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -27,6 +29,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { translateAdminError, adminNetworkErrorMessage } from '@/lib/admin/error-messages';
 
 interface OrderItem {
   id: string;
@@ -67,6 +70,14 @@ export default function AdminOrdersPage() {
   const [total, setTotal] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 一覧取得失敗時のエラー文言（null=正常 / 空状態と区別する）
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // CSV出力など操作系の通知
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
+    open: false,
+    message: '',
+  });
+  const [isExporting, setIsExporting] = useState(false);
 
   // 検索入力の debounce（300ms）。サーバーフィルタに渡す値のみ遅延させる。
   // 検索語が変わったら先頭ページへ戻す（debounce 後にまとめて反映）。
@@ -113,6 +124,7 @@ export default function AdminOrdersPage() {
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const params = buildFilterParams();
       params.set('limit', String(rowsPerPage));
@@ -122,9 +134,18 @@ export default function AdminOrdersPage() {
         const data = await response.json();
         setOrders(data.orders ?? []);
         setTotal(data.total ?? 0);
+      } else {
+        const body = await response.json().catch(() => null);
+        // 取得失敗時は一覧をクリアし、空状態ではなくエラーとして扱う
+        setOrders([]);
+        setTotal(0);
+        setLoadError(translateAdminError(body, response.status, '注文一覧を取得できませんでした'));
       }
     } catch (error) {
       secureLog('error', 'Failed to fetch orders', safeErrorLog(error));
+      setOrders([]);
+      setTotal(0);
+      setLoadError(adminNetworkErrorMessage());
     } finally {
       setIsLoading(false);
     }
@@ -134,9 +155,36 @@ export default function AdminOrdersPage() {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleExport = () => {
-    const params = buildFilterParams();
-    window.location.assign(`/api/admin/orders/export?${params}`);
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const params = buildFilterParams();
+      const response = await fetch(`/api/admin/orders/export?${params}`);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setSnackbar({
+          open: true,
+          message: translateAdminError(body, response.status, 'CSVの出力に失敗しました'),
+        });
+        return;
+      }
+      // 成功時は Blob を生成し、a要素クリックでダウンロードさせる（生JSONを画面表示しない）
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `orders_${dateStr}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      secureLog('error', 'Failed to export orders', safeErrorLog(error));
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -147,9 +195,10 @@ export default function AdminOrdersPage() {
         </Typography>
         <Stack direction="row" spacing={1}>
           <Button
-            startIcon={<DownloadIcon />}
+            startIcon={isExporting ? <CircularProgress size={16} /> : <DownloadIcon />}
             variant="outlined"
             onClick={handleExport}
+            disabled={isExporting}
           >
             CSV出力
           </Button>
@@ -222,6 +271,22 @@ export default function AdminOrdersPage() {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
         </Box>
+      ) : loadError ? (
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={fetchOrders}
+            >
+              再読み込み
+            </Button>
+          }
+        >
+          {loadError}
+        </Alert>
       ) : (
         <TableContainer component={Paper}>
           <Table>
@@ -313,6 +378,13 @@ export default function AdminOrdersPage() {
           />
         </TableContainer>
       )}
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
     </Box>
   );
 }

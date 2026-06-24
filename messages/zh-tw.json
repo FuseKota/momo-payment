@@ -64,8 +64,19 @@
     "yen": "¥{price}",
     "requiredFieldsError": "請填寫必填欄位",
     "unexpectedError": "發生了意外的錯誤",
+    "errors": {
+      "networkError": "連線失敗。請確認您的網路連線後再試一次。",
+      "offline": "無法連線至網際網路。請確認您的網路後再試一次。",
+      "rateLimited": "目前存取量過大，請稍候片刻後再試一次。",
+      "forbidden": "無法完成操作。請重新整理頁面後再試一次。",
+      "sessionExpired": "登入已逾期，請重新登入。",
+      "serverError": "伺服器發生問題，請稍後再試。",
+      "loadFailed": "資料載入失敗。請確認網路連線後重新整理。",
+      "somethingWrong": "顯示頁面時發生問題。請重新整理或稍後再試。"
+    },
     "taiwanNightMarket": "台灣夜市",
-    "news": "最新消息"
+    "news": "最新消息",
+    "retry": "重試"
   },
   "home": {
     "heroTitle": "歡迎來到\n福島桃娘商品網站",
@@ -87,10 +98,12 @@
     "aboutShipping": "關於配送",
     "shippingFeeInfo": "• 運費：840日圓〜880日圓（依配送地區而異・含稅）",
     "shippingDeliveryInfo": "• 配送天數：自下單起最快3〜5天（依地區而異）。可指定希望配送日期與時段。",
-    "addedToCart": "已將{name}加入購物車"
+    "addedToCart": "已將{name}加入購物車",
+    "loadError": "商品載入失敗。請確認網路連線後重新整理頁面。"
   },
   "productDetail": {
     "notFound": "找不到商品",
+    "loadError": "無法載入商品資訊。請稍後再試，或從商品列表中尋找。",
     "backToList": "返回商品列表",
     "breadcrumbHome": "首頁",
     "breadcrumbShop": "宅配訂購",
@@ -110,7 +123,7 @@
     "protein": "蛋白質：{value}g",
     "fat": "脂肪：{value}g",
     "carbohydrates": "碳水化合物：{value}g",
-    "sodium": "鈉含量：{value}g"
+    "sodium": "鈉含量：{value}mg"
   },
   "cart": {
     "title": "購物車",
@@ -123,7 +136,12 @@
     "orderSummary": "訂單摘要",
     "proceedToOrder": "前往訂購",
     "proceedToCheckout": "前往結帳",
-    "shippingFeeVaries": "依配送地區而定"
+    "shippingFeeVaries": "依配送地區而定",
+    "paymentCanceledNotice": "尚未完成付款。若要確認訂單，請再次點選「前往結帳」。購物車內容已為您保留。",
+    "errors": {
+      "saveFailed": "購物車儲存失敗。請確認瀏覽器設定（無痕模式或儲存空間）。您仍可繼續結帳。",
+      "restoreFailed": "無法載入先前儲存的購物車資訊，已重設購物車。請重新將商品加入購物車。"
+    }
   },
   "checkoutShipping": {
     "backToCart": "返回購物車",
@@ -151,6 +169,14 @@
     "proceedToPayment": "前往付款",
     "payment": "付款",
     "shippingDestination": "配送地址",
+    "paymentMethodTitle": "付款方式・付款時間",
+    "paymentMethodLabel": "付款方式",
+    "paymentMethodValue": "信用卡（Visa・Mastercard・American Express・JCB）",
+    "paymentTimingLabel": "付款時間",
+    "paymentTimingValue": "於訂單確認時線上付款（信用卡即時付款）",
+    "returnPolicyTitle": "退換貨・取消相關事項",
+    "returnPolicySummary": "因商品性質，恕不接受因客戶個人因素之退貨、換貨或取消。\n如商品有瑕疵或損壞，請於收到商品後7日內與我們聯繫。運費由本公司負擔，將以換貨或退款至付款之信用卡方式處理。",
+    "viewTokushoho": "查看特定商業交易法相關標示",
     "paymentNotice": "點擊「付款」按鈕後，將跳轉至付款頁面。",
     "pay": "付款",
     "orderSummary": "訂單摘要",
@@ -168,7 +194,9 @@
       "orderFailed": "訂單建立失敗",
       "checkoutUrlFailed": "無法取得付款連結",
       "unsupportedRegion": "很抱歉，此地區目前無法配送。",
-      "invalidDeliveryDate": "希望配送日期超出可選範圍。"
+      "invalidDeliveryDate": "希望配送日期超出可選範圍。",
+      "outOfStock": "很抱歉，您訂購的商品庫存不足。請確認購物車並調整數量後再試一次。",
+      "paymentSessionFailed": "準備付款頁面時發生錯誤。尚未對您收取任何費用。請稍候再試一次。"
     },
     "validation": {
       "nameRequired": "請輸入姓名",
@@ -241,10 +269,12 @@
     "passwordTooShort": "密碼需要8個字元以上。",
     "nameRequired": "請輸入姓名。",
     "emailRequired": "請輸入電子信箱。",
-    "signupFailed": "註冊失敗。請嘗試其他電子信箱。",
+    "signupFailed": "註冊失敗。請稍候再試一次。若問題持續發生，請與我們聯絡。",
     "signupDuplicate": "此電子信箱已被註冊。請直接登入。",
     "passwordWeak": "此密碼容易被猜測或已知遭外洩，無法使用。請設定其他密碼。",
-    "signupSuccess": "註冊完成。請確認驗證信件。"
+    "signupSuccess": "註冊完成。請確認驗證信件。",
+    "emailNotConfirmed": "您的電子信箱尚未完成驗證。請先點擊註冊時寄送的驗證信連結，再進行登入。",
+    "emailInvalid": "電子信箱格式不正確。"
   },
   "mypage": {
     "title": "我的頁面",
@@ -270,7 +300,13 @@
     "shippingStatus": "配送狀態",
     "carrier": "物流業者：{carrier}",
     "trackingNo": "追蹤編號：{trackingNo}",
-    "shippedAt": "出貨日期：{date}"
+    "shippedAt": "出貨日期：{date}",
+    "errors": {
+      "fetchOrdersFailed": "無法載入訂單記錄。請確認網路連線後重新整理頁面。若問題持續，請重新登入後再試一次。",
+      "fetchOrderFailed": "無法載入訂單明細。請確認網路連線後重新整理頁面。若問題持續，請重新登入後再試一次。",
+      "orderNotFound": "找不到您指定的訂單，請從訂單記錄重新選擇。",
+      "sessionExpired": "登入已逾期，請重新登入。"
+    }
   },
   "addresses": {
     "title": "配送地址",
@@ -332,21 +368,24 @@
     "deliveryTiming": "交貨時間",
     "deliveryTimingValue": "確認付款後，3個工作日內出貨",
     "returns": "退貨・換貨",
-    "returnsValue": "基於商品性質，恕不接受顧客因個人因素提出的退貨或換貨申請。如商品有瑕疵或損壞，請於收到商品後7日內聯繫我們。",
+    "returnsValue": "基於商品性質，恕不接受顧客因個人因素提出的退貨或換貨申請。如商品有瑕疵或損壞，請於收到商品後7日內聯繫我們。運費由本公司負擔，將以換貨或退款至付款之信用卡方式處理。退款可能需要付款公司的處理期間（數日至數週）。",
     "privacyCollectionTitle": "個人資訊的收集",
     "privacyCollectionText": "本網站在您訂購時，會收集您的姓名、電子信箱、電話號碼及地址等個人資訊。",
     "privacyPurposeTitle": "個人資訊的使用目的",
     "privacyPurposeText": "我們僅將收集的個人資訊用於以下目的。\n・訂購商品的出貨及配送狀態通知\n・回應訂單相關的詢問\n・用於提升服務品質的分析",
     "privacyThirdPartyTitle": "個人資訊的第三方提供",
-    "privacyThirdPartyText": "除法律規定外，我們不會將您的個人資訊提供給第三方。但在商品出貨所必要的範圍內，可能會將資訊提供給物流業者。",
+    "privacyThirdPartyText": "除法律規定外，我們不會將您的個人資訊提供給第三方。但在提供服務所必要的範圍內，可能會委託以下業者並提供個人資訊：\n・物流業者（用於商品出貨）\n・金流代理業者（Stripe, Inc.／美國。用於信用卡付款處理）\n・郵件發送業者（用於寄送訂單確認・出貨通知郵件）\n上述部分委託對象位於國外（如美國）。本公司將依個人資料保護法對委託對象進行必要且適當的監督。",
     "privacyCookieTitle": "Cookie・訪問分析",
-    "privacyCookieText": "本網站可能會使用Cookie及訪問分析工具以改善服務。這些資訊不會用於識別個人身份。",
+    "privacyCookieText": "本網站使用維持登入狀態、提供購物車功能等服務運作所必要的Cookie。目前未使用第三方訪問分析（如Google Analytics）。若日後導入，將於本政策中載明傳送對象、取得資訊及使用目的後實施。",
     "privacyManagementTitle": "個人資訊的管理",
-    "privacyManagementText": "我們將採取適當的安全管理措施來保護您的個人資訊。如您希望查詢、更正或刪除所保存的個人資訊，請透過以下聯絡方式與我們聯繫。",
+    "privacyManagementText": "為防止個人資訊洩漏、滅失或毀損，我們將採取限制存取權限、通訊SSL/TLS加密、監督委託對象等安全管理措施加以保護。如您希望查詢、更正、停止使用或刪除所保存的個人資料，請透過以下聯絡方式與我們聯繫。",
     "privacyContactTitle": "聯絡我們",
     "privacyContactText": "如有關於個人資訊處理的相關詢問，請透過以下方式與我們聯繫。",
     "privacyContactBusiness": "業者名稱：株式会社サクラ・シスターズ",
+    "privacyContactRepresentative": "負責人：峯岸　ちひろ",
+    "privacyContactAddress": "地址：〒960-1721 福島縣相馬郡飯舘村飯樋字原361番地",
     "privacyContactEmail": "電子信箱：info@sakura-sisters.com",
+    "privacyRevisedDate": "制定日：2026年6月24日／最後修訂日：2026年6月24日",
     "footerPrivacy": "隱私權政策",
     "contactTitle": "聯絡我們",
     "contactIntro": "如有任何疑問或關於訂單的諮詢，請透過以下電子郵件與我們聯繫。",
@@ -356,7 +395,8 @@
     "heading": "最新消息",
     "noItems": "目前沒有最新消息",
     "backToList": "返回消息列表",
-    "noContent": "暫無內容"
+    "noContent": "暫無內容",
+    "loadError": "無法載入最新消息。請稍後重新整理頁面再試一次。"
   },
   "footer": {
     "brand": "福島桃娘",
@@ -428,7 +468,8 @@
     "search": "搜尋",
     "notFound": "找不到對應的地址",
     "rateLimited": "請稍後再試",
-    "lookupFailed": "地址搜尋失敗，請手動輸入"
+    "lookupFailed": "地址搜尋失敗，請手動輸入",
+    "invalidFormat": "郵遞區號格式不正確，請輸入半形數字（日本: 7碼 / 台灣: 3〜6碼）。"
   },
   "languageSwitcher": {
     "ja": "日本語",
@@ -492,7 +533,8 @@
       "legendNight": "夜間場",
       "legendStage": "福島桃娘🍑舞台",
       "disclaimer": "※也可能有臨時休園日，敬請見諒 m(_ _)m",
-      "noEvents": "此月份的活動資訊尚未公開"
+      "noEvents": "此月份的活動資訊尚未公開",
+      "loadError": "無法載入行事曆。請確認網路連線後，試著切換月份或重新整理頁面。"
     }
   }
 }

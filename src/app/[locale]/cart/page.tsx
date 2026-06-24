@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import {
@@ -12,6 +14,8 @@ import {
   Divider,
   Grid,
   Chip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -26,12 +30,25 @@ import { getLocalizedName } from '@/lib/utils/localize-product';
 import { MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
 import { peachPink } from '@/lib/mui/theme';
 
-export default function CartPage() {
+function CartPageContent() {
   const t = useTranslations('cart');
   const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { items, updateQty, removeItem, clearCart, subtotal, itemCount } = useCart();
+
+  // Stripe Checkout からの戻り（cancel_url の ?canceled=1）。お支払い未完了の案内を出す。
+  const paymentCanceled = searchParams.get('canceled') === '1';
+
+  // 「レジに進む」の二重遷移ガード。一度押したら再クリックを無効化する。
+  const [navigating, setNavigating] = useState(false);
+
+  const proceedToCheckout = () => {
+    if (navigating) return;
+    setNavigating(true);
+    router.push('/checkout/shipping');
+  };
 
   // 配送料はお届け先（都道府県）で変動するため、カート段階では確定しない
   const shippingPending = items.length > 0;
@@ -83,6 +100,11 @@ export default function CartPage() {
   return (
     <Layout cartItemCount={itemCount}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {paymentCanceled && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            {t('paymentCanceledNotice')}
+          </Alert>
+        )}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
             <Typography variant="h3" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.75rem', md: '3rem' } }}>
@@ -218,8 +240,9 @@ export default function CartPage() {
                 variant="contained"
                 size="large"
                 fullWidth
-                onClick={() => router.push('/checkout/shipping')}
-                startIcon={<LocalShippingIcon />}
+                onClick={proceedToCheckout}
+                disabled={navigating}
+                startIcon={navigating ? <CircularProgress size={20} color="inherit" /> : <LocalShippingIcon />}
                 sx={{ mb: 2 }}
               >
                 {t('proceedToCheckout')}
@@ -229,5 +252,22 @@ export default function CartPage() {
         </Grid>
       </Container>
     </Layout>
+  );
+}
+
+// useSearchParams(canceled=1) を使うため Suspense 境界でラップする
+export default function CartPage() {
+  return (
+    <Suspense
+      fallback={
+        <Layout>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Layout>
+      }
+    >
+      <CartPageContent />
+    </Suspense>
   );
 }

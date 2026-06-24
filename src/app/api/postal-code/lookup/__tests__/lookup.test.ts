@@ -45,11 +45,25 @@ describe('GET /api/postal-code/lookup', () => {
     expect(res.headers.get('Retry-After')).toBe('42');
   });
 
-  it('パラメータ不正は 400 INVALID_PARAMS', async () => {
+  it('パラメータ不正は 400 INVALID_FORMAT', async () => {
     const res = await GET(makeReq({ zipcode: '1' })); // locale 欠落 & 桁不足
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toBe('INVALID_PARAMS');
+    expect(data.error).toBe('INVALID_FORMAT');
+  });
+
+  it('日本: 桁数不正は 400 INVALID_FORMAT（外部API障害と区別）', async () => {
+    const res = await GET(makeReq({ zipcode: '12345', locale: 'ja' })); // 7桁未満
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toBe('INVALID_FORMAT');
+  });
+
+  it('台湾: 桁数不正は 400 INVALID_FORMAT（外部API障害と区別）', async () => {
+    const res = await GET(makeReq({ zipcode: '1234', locale: 'zh-tw' })); // 3/5/6桁いずれでもない
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toBe('INVALID_FORMAT');
   });
 
   it('日本: 正常に住所を返す', async () => {

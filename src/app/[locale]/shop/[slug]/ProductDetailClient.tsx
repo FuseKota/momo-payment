@@ -16,20 +16,23 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { peachPink } from '@/lib/mui/theme';
 import { Layout, QuantityControl } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils/format';
-import { getLocalizedName, getLocalizedDescription } from '@/lib/utils/localize-product';
+import { getLocalizedName, getLocalizedDescription, getLocalizedFoodLabel } from '@/lib/utils/localize-product';
 import { MAX_ITEM_QUANTITY } from '@/lib/utils/constants';
 import type { Product, ProductVariant, ProductWithVariants } from '@/types/database';
 
 interface Props {
   /** サーバー側で取得済みの商品（存在しなければ null） */
   product: ProductWithVariants | null;
+  /** サーバー側での取得に失敗したか（true のときは「存在しない」でなくエラー表示） */
+  loadError?: boolean;
 }
 
-export default function ProductDetailClient({ product }: Props) {
+export default function ProductDetailClient({ product, loadError = false }: Props) {
   const t = useTranslations('productDetail');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -62,6 +65,35 @@ export default function ProductDetailClient({ product }: Props) {
   };
 
   if (!product) {
+    // 取得失敗（DB障害・通信断等）は「存在しない」と区別し、再試行導線を出す
+    if (loadError) {
+      return (
+        <Layout>
+          <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              {t('loadError')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                startIcon={<RefreshIcon />}
+                onClick={() => window.location.reload()}
+              >
+                {tc('retry')}
+              </Button>
+              <Button
+                component={Link}
+                href="/shop"
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+              >
+                {t('backToList')}
+              </Button>
+            </Box>
+          </Container>
+        </Layout>
+      );
+    }
     return (
       <Layout>
         <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
@@ -82,6 +114,33 @@ export default function ProductDetailClient({ product }: Props) {
   }
 
   const outOfStock = product.stock_qty !== null && product.stock_qty <= 0;
+
+  // 食品表示ラベル（冷凍食品のみ）。ロケール別ラベルが無ければ日本語にフォールバック
+  const foodLabel = getLocalizedFoodLabel(product, locale);
+  const nutrition = foodLabel?.nutrition;
+  const nutritionLines = nutrition
+    ? [
+        nutrition.calories != null ? t('calories', { value: nutrition.calories }) : null,
+        nutrition.protein != null ? t('protein', { value: nutrition.protein }) : null,
+        nutrition.fat != null ? t('fat', { value: nutrition.fat }) : null,
+        nutrition.carbohydrates != null ? t('carbohydrates', { value: nutrition.carbohydrates }) : null,
+        nutrition.sodium != null ? t('sodium', { value: nutrition.sodium }) : null,
+      ].filter((v): v is string => v !== null)
+    : [];
+  const foodLabelRows: { label: string; value: string }[] = foodLabel
+    ? [
+        foodLabel.ingredients ? { label: t('ingredients'), value: foodLabel.ingredients } : null,
+        foodLabel.allergens ? { label: t('allergens'), value: foodLabel.allergens } : null,
+        foodLabel.net_weight_grams != null
+          ? { label: t('netWeight'), value: `${foodLabel.net_weight_grams}g` }
+          : null,
+        foodLabel.expiry_info ? { label: t('expiryInfo'), value: foodLabel.expiry_info } : null,
+        foodLabel.storage_method ? { label: t('storageMethod'), value: foodLabel.storage_method } : null,
+        foodLabel.manufacturer ? { label: t('manufacturer'), value: foodLabel.manufacturer } : null,
+        nutritionLines.length > 0 ? { label: t('nutrition'), value: nutritionLines.join('\n') } : null,
+      ].filter((r): r is { label: string; value: string } => r !== null)
+    : [];
+  const showFoodLabel = product.kind === 'FROZEN_FOOD' && foodLabelRows.length > 0;
 
   const handleAddToCart = () => {
     if (outOfStock) return;
@@ -304,6 +363,57 @@ export default function ProductDetailClient({ product }: Props) {
               </Box>
           </Grid>
         </Grid>
+
+        {/* 食品表示ラベル（冷凍食品の食品表示法対応） */}
+        {showFoodLabel && (
+          <Box sx={{ mt: 6 }}>
+            <Typography component="h2" variant="h5" sx={{ mb: 2, fontWeight: 700, color: 'text.primary' }}>
+              {t('productInfo')}
+            </Typography>
+            <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                <Box component="tbody">
+                  {foodLabelRows.map((row) => (
+                    <Box
+                      component="tr"
+                      key={row.label}
+                      sx={{ '&:not(:last-of-type)': { borderBottom: '1px solid', borderColor: 'divider' } }}
+                    >
+                      <Box
+                        component="th"
+                        scope="row"
+                        sx={{
+                          width: { xs: 110, sm: 160 },
+                          textAlign: 'left',
+                          verticalAlign: 'top',
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          backgroundColor: peachPink[50],
+                          px: 2,
+                          py: 1.5,
+                        }}
+                      >
+                        {row.label}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          px: 2,
+                          py: 1.5,
+                          color: 'text.secondary',
+                          whiteSpace: 'pre-line',
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {row.value}
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
+        )}
 
         {/* Back Button */}
         <Box sx={{ mt: 4, textAlign: 'center' }}>

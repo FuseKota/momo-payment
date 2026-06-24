@@ -6,8 +6,14 @@ import type { Product, ProductVariant, ProductWithVariants } from '@/types/datab
  * 配送（SHIPPING）対象の公開商品一覧をサーバー側で取得する。
  * Server Component から直接呼び出し、初期 HTML に商品・画像を含めるために使う。
  * （クライアントからの `/api/products?mode=shipping` フェッチを置き換える）
+ *
+ * 取得失敗（DB障害等）と「本当に0件」を呼び出し側で区別できるよう、
+ * `error` フラグ付きで返す。失敗時は products を空配列に倒しつつ error: true とする。
  */
-export async function getShippingProducts(): Promise<Product[]> {
+export async function getShippingProductsResult(): Promise<{
+  products: Product[];
+  error: boolean;
+}> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('products')
@@ -16,18 +22,34 @@ export async function getShippingProducts(): Promise<Product[]> {
     .eq('can_ship', true)
     .order('sort_order');
 
-  if (error || !data) return [];
-  return data as Product[];
+  if (error || !data) return { products: [], error: true };
+  return { products: data as Product[], error: false };
+}
+
+/**
+ * 配送対象の公開商品一覧を取得する（取得失敗時も空配列）。
+ * 取得失敗と0件を区別する必要がない用途向けの薄いラッパー。
+ */
+export async function getShippingProducts(): Promise<Product[]> {
+  const { products } = await getShippingProductsResult();
+  return products;
 }
 
 /**
  * slug 単一商品を variants 付きでサーバー側取得する。
- * 見つからない場合は null を返す（呼び出し側で notFound() 等を行う）。
  * （クライアントからの `/api/products?slug=` フェッチを置き換える）
+ *
+ * 「本当に存在しない slug（404）」と「DB障害等の取得失敗」を呼び出し側で
+ * 区別できるよう、`error` フラグ付きで返す。
+ * - 存在しない: { product: null, error: false } → 呼び出し側で notFound()
+ * - 取得失敗:   { product: null, error: true }  → 呼び出し側でエラー表示
+ *
+ * `.single()` は対象0件のとき PGRST116 エラーを返すため、これは「存在しない」
+ * （error: false）として扱い、それ以外の error のみ取得失敗とみなす。
  */
-export async function getProductBySlug(
+export async function getProductBySlugResult(
   slug: string
-): Promise<ProductWithVariants | null> {
+): Promise<{ product: ProductWithVariants | null; error: boolean }> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('products')
@@ -49,7 +71,12 @@ export async function getProductBySlug(
     .eq('is_active', true)
     .single();
 
-  if (error || !data) return null;
+  if (error) {
+    // PGRST116 = 行が見つからない（`.single()` で0件）。これは「存在しない」扱い
+    const notFound = error.code === 'PGRST116';
+    return { product: null, error: !notFound };
+  }
+  if (!data) return { product: null, error: false };
 
   // アクティブな variant のみに絞り、sort_order で並べ替え
   const product = data as ProductWithVariants;
@@ -59,5 +86,17 @@ export async function getProductBySlug(
       .sort((a: ProductVariant, b: ProductVariant) => a.sort_order - b.sort_order);
   }
 
+  return { product, error: false };
+}
+
+/**
+ * slug 単一商品を variants 付きでサーバー側取得する。
+ * 見つからない場合・取得失敗時いずれも null を返す薄いラッパー。
+ * （取得失敗と404を区別する必要がない用途向け）
+ */
+export async function getProductBySlug(
+  slug: string
+): Promise<ProductWithVariants | null> {
+  const { product } = await getProductBySlugResult(slug);
   return product;
 }

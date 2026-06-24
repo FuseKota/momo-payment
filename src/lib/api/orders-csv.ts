@@ -6,6 +6,7 @@
  */
 
 import { statusLabels } from '@/lib/utils/constants';
+import { firstShippingAddress } from '@/lib/api/shipping-address';
 import type { AdminOrderExportRow } from '@/types/database';
 
 /** CSV エクスポートの安全上限（全件取得時の暴発を防ぐ） */
@@ -67,9 +68,9 @@ export function preferredSchedule(o: AdminOrderExportRow): string {
   return [o.delivery_date, o.delivery_time_slot].filter(Boolean).join(' ');
 }
 
-/** 配送先住所を1セルに結合 */
+/** 配送先住所を1セルに結合（埋め込みは配列・単一オブジェクトどちらでも受ける） */
 export function fullAddress(addr: AdminOrderExportRow['shipping_addresses']): string {
-  const a = addr?.[0];
+  const a = firstShippingAddress(addr);
   if (!a) return '';
   return [a.pref, a.city, a.address1, a.address2].filter(Boolean).join('');
 }
@@ -101,7 +102,7 @@ export function buildCsv(rows: AdminOrderExportRow[]): string {
   const lines: string[] = [header.map(esc).join(',')];
 
   for (const o of rows) {
-    const addr = o.shipping_addresses?.[0];
+    const addr = firstShippingAddress(o.shipping_addresses);
     const items = (o.order_items ?? [])
       .map((it) => `${it.product_name}×${it.qty}`)
       .join(' / ');

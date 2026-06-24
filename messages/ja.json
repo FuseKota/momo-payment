@@ -64,8 +64,19 @@
     "yen": "¥{price}",
     "requiredFieldsError": "必須項目を入力してください",
     "unexpectedError": "予期しないエラーが発生しました",
+    "errors": {
+      "networkError": "通信に失敗しました。インターネット接続をご確認のうえ、もう一度お試しください。",
+      "offline": "インターネットに接続できません。通信環境をご確認のうえ、再度お試しください。",
+      "rateLimited": "アクセスが集中しています。しばらく時間をおいてから再度お試しください。",
+      "forbidden": "操作を完了できませんでした。ページを再読み込みしてから、もう一度お試しください。",
+      "sessionExpired": "ログインの有効期限が切れました。お手数ですが、もう一度ログインしてください。",
+      "serverError": "サーバーで問題が発生しました。しばらく時間をおいて再度お試しください。",
+      "loadFailed": "データの読み込みに失敗しました。通信環境をご確認のうえ、再読み込みしてください。",
+      "somethingWrong": "ページの表示中に問題が発生しました。再読み込みするか、時間をおいてお試しください。"
+    },
     "taiwanNightMarket": "台湾夜市",
-    "news": "ニュース"
+    "news": "ニュース",
+    "retry": "再試行"
   },
   "home": {
     "heroTitle": "福島もも娘物販サイトへ\nようこそ",
@@ -87,10 +98,12 @@
     "aboutShipping": "配送について",
     "shippingFeeInfo": "• 送料: 840円〜880円（お届け地域により異なります・税込）",
     "shippingDeliveryInfo": "• お届け日数: ご注文から最短3〜5日（地域により異なります）。お届け希望日・時間帯のご指定も可能です。",
-    "addedToCart": "{name}をカートに追加しました"
+    "addedToCart": "{name}をカートに追加しました",
+    "loadError": "商品の読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。"
   },
   "productDetail": {
     "notFound": "商品が見つかりません",
+    "loadError": "商品情報を読み込めませんでした。時間をおいて再度お試しいただくか、商品一覧からお探しください。",
     "backToList": "商品一覧に戻る",
     "breadcrumbHome": "ホーム",
     "breadcrumbShop": "配送注文",
@@ -110,7 +123,7 @@
     "protein": "たんぱく質: {value}g",
     "fat": "脂質: {value}g",
     "carbohydrates": "炭水化物: {value}g",
-    "sodium": "食塩相当量: {value}g"
+    "sodium": "ナトリウム: {value}mg"
   },
   "cart": {
     "title": "カート",
@@ -123,7 +136,12 @@
     "orderSummary": "注文内容",
     "proceedToOrder": "注文に進む",
     "proceedToCheckout": "レジに進む",
-    "shippingFeeVaries": "お届け先により変動します"
+    "shippingFeeVaries": "お届け先により変動します",
+    "paymentCanceledNotice": "お支払いは完了していません。ご注文を確定するには、もう一度「レジに進む」からお進みください。カートの内容は保持されています。",
+    "errors": {
+      "saveFailed": "カートの保存に失敗しました。ブラウザの保存容量やプライベートモードをご確認ください。このまま購入手続きには進めます。",
+      "restoreFailed": "保存されていたカート情報を読み込めなかったため、カートをリセットしました。お手数ですが商品をもう一度追加してください。"
+    }
   },
   "checkoutShipping": {
     "backToCart": "カートに戻る",
@@ -151,6 +169,14 @@
     "proceedToPayment": "お支払いへ進む",
     "payment": "お支払い",
     "shippingDestination": "配送先",
+    "paymentMethodTitle": "お支払い方法・時期",
+    "paymentMethodLabel": "お支払い方法",
+    "paymentMethodValue": "クレジットカード（Visa・Mastercard・American Express・JCB）",
+    "paymentTimingLabel": "お支払い時期",
+    "paymentTimingValue": "ご注文確定時にオンライン決済（クレジットカード即時決済）",
+    "returnPolicyTitle": "返品・キャンセルについて",
+    "returnPolicySummary": "商品の性質上、お客様のご都合による返品・交換・キャンセルはお受けできません。\n商品に不備・破損があった場合は、商品到着後7日以内にご連絡ください。送料は当社負担で、交換または決済済みクレジットカードへの返金にて対応いたします。",
+    "viewTokushoho": "特定商取引法に基づく表記を見る",
     "paymentNotice": "「決済する」ボタンをクリックすると、決済ページに移動します。",
     "pay": "決済する",
     "orderSummary": "注文内容",
@@ -168,7 +194,9 @@
       "orderFailed": "注文の作成に失敗しました",
       "checkoutUrlFailed": "決済URLの取得に失敗しました",
       "unsupportedRegion": "申し訳ございません。この地域へのお届けには対応していません。",
-      "invalidDeliveryDate": "お届け希望日が選択可能な範囲外です。"
+      "invalidDeliveryDate": "お届け希望日が選択可能な範囲外です。",
+      "outOfStock": "申し訳ございません。ご注文の商品の在庫が不足しています。カートをご確認のうえ、数量を調整して再度お試しください。",
+      "paymentSessionFailed": "決済ページの準備中にエラーが発生しました。お客様への請求は発生していません。しばらくしてからもう一度お試しください。"
     },
     "validation": {
       "nameRequired": "お名前を入力してください",
@@ -241,10 +269,12 @@
     "passwordTooShort": "パスワードは8文字以上で入力してください。",
     "nameRequired": "お名前を入力してください。",
     "emailRequired": "メールアドレスを入力してください。",
-    "signupFailed": "登録に失敗しました。別のメールアドレスをお試しください。",
+    "signupFailed": "登録に失敗しました。しばらくしてからもう一度お試しください。問題が続く場合はお問い合わせください。",
     "signupDuplicate": "このメールアドレスはすでに登録されています。ログインしてください。",
     "passwordWeak": "このパスワードは推測されやすい、または漏洩が確認されているため使用できません。別のパスワードを設定してください。",
-    "signupSuccess": "登録が完了しました。確認メールをご確認ください。"
+    "signupSuccess": "登録が完了しました。確認メールをご確認ください。",
+    "emailNotConfirmed": "メールアドレスの確認が完了していません。登録時にお送りした確認メールのリンクを開いてからログインしてください。",
+    "emailInvalid": "メールアドレスの形式が正しくありません。"
   },
   "mypage": {
     "title": "マイページ",
@@ -270,7 +300,13 @@
     "shippingStatus": "配送状況",
     "carrier": "配送業者: {carrier}",
     "trackingNo": "追跡番号: {trackingNo}",
-    "shippedAt": "発送日: {date}"
+    "shippedAt": "発送日: {date}",
+    "errors": {
+      "fetchOrdersFailed": "注文履歴を読み込めませんでした。通信環境をご確認のうえ、ページを再読み込みしてください。問題が続く場合は再度ログインしてお試しください。",
+      "fetchOrderFailed": "注文詳細を読み込めませんでした。通信環境をご確認のうえ、ページを再読み込みしてください。問題が続く場合は再度ログインしてお試しください。",
+      "orderNotFound": "ご指定の注文が見つかりませんでした。注文履歴からもう一度お選びください。",
+      "sessionExpired": "ログインの有効期限が切れました。お手数ですが、もう一度ログインしてください。"
+    }
   },
   "addresses": {
     "title": "配送先住所",
@@ -332,21 +368,24 @@
     "deliveryTiming": "引渡時期",
     "deliveryTimingValue": "入金確認後、3営業日以内に発送",
     "returns": "返品・交換について",
-    "returnsValue": "商品の性質上、お客様都合による返品・交換はお受けできません。商品に不備・破損があった場合は、到着後7日以内にご連絡ください。",
+    "returnsValue": "商品の性質上、お客様都合による返品・交換はお受けできません。商品に不備・破損があった場合は、商品到着後7日以内にご連絡ください。送料は当社負担で、交換または決済済みクレジットカードへの返金にて対応いたします。返金には決済会社の処理期間（数日〜数週間）を要する場合があります。",
     "privacyCollectionTitle": "個人情報の収集について",
     "privacyCollectionText": "当サイトでは、ご注文時にお名前・メールアドレス・電話番号・住所等の個人情報をお預かりしています。",
     "privacyPurposeTitle": "個人情報の利用目的",
     "privacyPurposeText": "お預かりした個人情報は、以下の目的にのみ使用いたします。\n・ご注文商品の発送および配送状況のご連絡\n・ご注文に関するお問い合わせへの回答\n・サービス向上のための分析",
     "privacyThirdPartyTitle": "個人情報の第三者提供",
-    "privacyThirdPartyText": "法令に基づく場合を除き、お客様の個人情報を第三者に提供することはありません。ただし、商品の発送に必要な範囲で配送業者に情報を提供することがあります。",
+    "privacyThirdPartyText": "法令に基づく場合を除き、お客様の個人情報を第三者に提供することはありません。ただし、サービス提供に必要な範囲で、以下の事業者へ業務を委託し個人情報を提供することがあります。\n・配送業者（商品の発送のため）\n・決済代行事業者（Stripe, Inc.／米国。クレジットカード決済の処理のため）\n・メール配信事業者（注文確認・発送通知メールの送信のため）\nこれらの委託先の一部は外国（米国等）に所在します。当社は委託先に対し、個人情報保護法に基づき必要かつ適切な監督を行います。",
     "privacyCookieTitle": "Cookie・アクセス解析",
-    "privacyCookieText": "当サイトでは、サービス改善のためCookieおよびアクセス解析ツールを使用することがあります。これらの情報は個人を特定するものではありません。",
+    "privacyCookieText": "当サイトでは、ログイン状態の維持やカート機能の提供など、サービスの動作に必要なCookieを使用します。現在、第三者によるアクセス解析（Google Analytics等）は利用していません。将来的に導入する場合は、送信先・取得する情報・利用目的を本ポリシーで通知のうえ実施します。",
     "privacyManagementTitle": "個人情報の管理",
-    "privacyManagementText": "お預かりした個人情報は、適切な安全管理措置を講じて保護いたします。保有する個人情報の開示・訂正・削除をご希望の場合は、下記連絡先までお問い合わせください。",
+    "privacyManagementText": "お預かりした個人情報は、漏えい・滅失・毀損の防止のため、アクセス権限の制限、通信のSSL/TLS暗号化、委託先の監督等の安全管理措置を講じて保護します。保有個人データの開示・訂正・利用停止・削除をご希望の場合は、下記連絡先までお問い合わせください。",
     "privacyContactTitle": "お問い合わせ",
     "privacyContactText": "個人情報の取り扱いに関するお問い合わせは、以下の連絡先までご連絡ください。",
     "privacyContactBusiness": "事業者名：株式会社サクラ・シスターズ",
+    "privacyContactRepresentative": "代表者名：峯岸　ちひろ",
+    "privacyContactAddress": "所在地：〒960-1721 福島県相馬郡飯舘村飯樋字原361番地",
     "privacyContactEmail": "メールアドレス：info@sakura-sisters.com",
+    "privacyRevisedDate": "制定日：2026年6月24日／最終改定日：2026年6月24日",
     "footerPrivacy": "プライバシーポリシー",
     "contactTitle": "お問い合わせ",
     "contactIntro": "ご不明な点やご注文に関するお問い合わせは、下記までメールにてご連絡ください。",
@@ -356,7 +395,8 @@
     "heading": "新着情報",
     "noItems": "ニュースはまだありません",
     "backToList": "ニュース一覧",
-    "noContent": "本文はありません"
+    "noContent": "本文はありません",
+    "loadError": "最新情報を読み込めませんでした。お手数ですが、時間をおいてページを再読み込みしてください。"
   },
   "footer": {
     "brand": "福島もも娘",
@@ -428,7 +468,8 @@
     "search": "検索",
     "notFound": "該当する住所が見つかりませんでした",
     "rateLimited": "しばらく時間をおいてから再度お試しください",
-    "lookupFailed": "住所検索に失敗しました。手動で入力してください"
+    "lookupFailed": "住所検索に失敗しました。手動で入力してください",
+    "invalidFormat": "郵便番号の形式が正しくありません。半角数字でご入力ください（日本: 7桁 / 台湾: 3〜6桁）。"
   },
   "languageSwitcher": {
     "ja": "日本語",
@@ -492,7 +533,8 @@
       "legendNight": "夜の部",
       "legendStage": "福島もも娘🍑ステージ",
       "disclaimer": "※臨時休園日になる事もございますm(_ _)m",
-      "noEvents": "この月の開催情報はまだ公開されていません"
+      "noEvents": "この月の開催情報はまだ公開されていません",
+      "loadError": "カレンダーを読み込めませんでした。通信環境をご確認のうえ、月の切り替えやページの再読み込みをお試しください。"
     }
   }
 }

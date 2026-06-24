@@ -64,8 +64,19 @@
     "yen": "¥{price}",
     "requiredFieldsError": "Please fill in all required fields",
     "unexpectedError": "An unexpected error occurred",
+    "errors": {
+      "networkError": "Connection failed. Please check your internet connection and try again.",
+      "offline": "You appear to be offline. Please check your connection and try again.",
+      "rateLimited": "Too many requests. Please wait a moment and try again.",
+      "forbidden": "We couldn't complete this action. Please reload the page and try again.",
+      "sessionExpired": "Your session has expired. Please log in again.",
+      "serverError": "A server error occurred. Please try again in a moment.",
+      "loadFailed": "Failed to load. Please check your connection and reload.",
+      "somethingWrong": "There was a problem showing this page. Please reload or try again later."
+    },
     "taiwanNightMarket": "Taiwan Night Market",
-    "news": "News"
+    "news": "News",
+    "retry": "Try again"
   },
   "home": {
     "heroTitle": "Welcome to the\nFukushima Momomusume Shop",
@@ -87,10 +98,12 @@
     "aboutShipping": "About Shipping",
     "shippingFeeInfo": "• Shipping fee: 840-880 yen (varies by region, tax incl.)",
     "shippingDeliveryInfo": "• Delivery time: 3-5 days from order at the earliest (varies by region). You may also specify a preferred delivery date and time.",
-    "addedToCart": "Added {name} to your cart"
+    "addedToCart": "Added {name} to your cart",
+    "loadError": "Failed to load products. Please check your connection and reload the page."
   },
   "productDetail": {
     "notFound": "Product not found",
+    "loadError": "Could not load product information. Please try again later or browse the product list.",
     "backToList": "Back to product list",
     "breadcrumbHome": "Home",
     "breadcrumbShop": "Delivery Order",
@@ -110,7 +123,7 @@
     "protein": "Protein: {value} g",
     "fat": "Fat: {value} g",
     "carbohydrates": "Carbohydrates: {value} g",
-    "sodium": "Salt equivalent: {value} g"
+    "sodium": "Sodium: {value} mg"
   },
   "cart": {
     "title": "Cart",
@@ -123,7 +136,12 @@
     "orderSummary": "Order Summary",
     "proceedToOrder": "Proceed to order",
     "proceedToCheckout": "Proceed to checkout",
-    "shippingFeeVaries": "Varies by destination"
+    "shippingFeeVaries": "Varies by destination",
+    "paymentCanceledNotice": "Your payment was not completed. To finish your order, please proceed to checkout again. Your cart has been saved.",
+    "errors": {
+      "saveFailed": "We couldn't save your cart. Please check your browser settings (private mode or storage space). You can still proceed to checkout.",
+      "restoreFailed": "We couldn't restore your saved cart, so it has been reset. Please add your items to the cart again."
+    }
   },
   "checkoutShipping": {
     "backToCart": "Back to cart",
@@ -151,6 +169,14 @@
     "proceedToPayment": "Proceed to payment",
     "payment": "Payment",
     "shippingDestination": "Delivery Address",
+    "paymentMethodTitle": "Payment Method & Timing",
+    "paymentMethodLabel": "Payment method",
+    "paymentMethodValue": "Credit card (Visa, Mastercard, American Express, JCB)",
+    "paymentTimingLabel": "Payment timing",
+    "paymentTimingValue": "Online payment charged immediately when the order is confirmed",
+    "returnPolicyTitle": "Returns & Cancellations",
+    "returnPolicySummary": "Due to the nature of the products, we cannot accept returns, exchanges, or cancellations for customer convenience.\nIf an item is defective or damaged, please contact us within 7 days of delivery. We will cover the shipping cost and provide a replacement or a refund to the credit card used.",
+    "viewTokushoho": "View Specified Commercial Transactions Act notice",
     "paymentNotice": "Clicking the \"Pay\" button will take you to the payment page.",
     "pay": "Pay",
     "orderSummary": "Order Summary",
@@ -168,7 +194,9 @@
       "orderFailed": "Failed to create order",
       "checkoutUrlFailed": "Failed to retrieve payment link",
       "unsupportedRegion": "Sorry, we do not deliver to this region.",
-      "invalidDeliveryDate": "The preferred delivery date is outside the selectable range."
+      "invalidDeliveryDate": "The preferred delivery date is outside the selectable range.",
+      "outOfStock": "Sorry, the item you ordered is out of stock. Please check your cart, adjust the quantity, and try again.",
+      "paymentSessionFailed": "An error occurred while preparing the payment page. You have not been charged. Please try again in a moment."
     },
     "validation": {
       "nameRequired": "Please enter your name",
@@ -241,10 +269,12 @@
     "passwordTooShort": "Password must be at least 8 characters.",
     "nameRequired": "Please enter your name.",
     "emailRequired": "Please enter your email.",
-    "signupFailed": "Sign up failed. Please try a different email.",
+    "signupFailed": "Sign-up failed. Please try again shortly. If the problem continues, please contact us.",
     "signupDuplicate": "This email is already registered. Please log in.",
     "passwordWeak": "This password is easily guessed or known to be compromised and cannot be used. Please set a different password.",
-    "signupSuccess": "Sign up complete. Please check your confirmation email."
+    "signupSuccess": "Sign up complete. Please check your confirmation email.",
+    "emailNotConfirmed": "Your email hasn't been verified yet. Please open the link in the confirmation email we sent, then log in.",
+    "emailInvalid": "Invalid email format."
   },
   "mypage": {
     "title": "My Page",
@@ -270,7 +300,13 @@
     "shippingStatus": "Shipping Status",
     "carrier": "Carrier: {carrier}",
     "trackingNo": "Tracking Number: {trackingNo}",
-    "shippedAt": "Shipped on: {date}"
+    "shippedAt": "Shipped on: {date}",
+    "errors": {
+      "fetchOrdersFailed": "We couldn't load your order history. Please check your connection and reload the page. If the problem continues, sign in again and try once more.",
+      "fetchOrderFailed": "We couldn't load the order details. Please check your connection and reload the page. If the problem continues, sign in again and try once more.",
+      "orderNotFound": "We couldn't find that order. Please choose it again from your order history.",
+      "sessionExpired": "Your session has expired. Please sign in again."
+    }
   },
   "addresses": {
     "title": "Delivery Addresses",
@@ -332,21 +368,24 @@
     "deliveryTiming": "Delivery Timing",
     "deliveryTimingValue": "Shipped within 3 business days after payment confirmation",
     "returns": "Returns & Exchanges",
-    "returnsValue": "Due to the nature of the products, we cannot accept returns or exchanges for customer convenience. If a product is defective or damaged, please contact us within 7 days of arrival.",
+    "returnsValue": "Due to the nature of the products, we cannot accept returns or exchanges for customer convenience. If a product is defective or damaged, please contact us within 7 days of arrival. We will cover the shipping cost and provide a replacement or a refund to the credit card used. Refunds may take the payment processor's handling period (several days to a few weeks).",
     "privacyCollectionTitle": "Collection of Personal Information",
     "privacyCollectionText": "On this site, we collect personal information such as your name, email address, phone number, and address when you place an order.",
     "privacyPurposeTitle": "Purpose of Use of Personal Information",
     "privacyPurposeText": "We use the personal information we receive only for the following purposes.\n・Shipping ordered products and providing delivery status updates\n・Responding to inquiries regarding orders\n・Analysis for service improvement",
     "privacyThirdPartyTitle": "Provision of Personal Information to Third Parties",
-    "privacyThirdPartyText": "Except as required by law, we will not provide your personal information to third parties. However, we may provide information to delivery companies to the extent necessary for shipping products.",
+    "privacyThirdPartyText": "Except as required by law, we will not provide your personal information to third parties. However, to the extent necessary to provide our services, we may entrust operations to and share personal information with the following providers:\n- Delivery companies (to ship products)\n- Payment processor (Stripe, Inc. / USA, to process credit card payments)\n- Email delivery provider (to send order confirmation and shipping notification emails)\nSome of these providers are located overseas (e.g., the USA). We supervise these providers as required and appropriate under the Act on the Protection of Personal Information.",
     "privacyCookieTitle": "Cookies & Access Analysis",
-    "privacyCookieText": "This site may use cookies and access analysis tools to improve our services. This information does not identify individuals.",
+    "privacyCookieText": "This site uses cookies necessary for the service to function, such as maintaining your login state and cart. We do not currently use third-party access analytics (such as Google Analytics). If we introduce such tools in the future, we will disclose the recipient, the information collected, and the purpose in this policy beforehand.",
     "privacyManagementTitle": "Management of Personal Information",
-    "privacyManagementText": "We protect the personal information we receive with appropriate security measures. If you wish to disclose, correct, or delete your personal information, please contact us at the address below.",
+    "privacyManagementText": "To prevent leakage, loss, or damage, we protect the personal information we receive with security measures such as access controls, SSL/TLS encryption of communications, and supervision of subcontractors. If you wish to disclose, correct, suspend the use of, or delete your retained personal data, please contact us at the address below.",
     "privacyContactTitle": "Contact",
     "privacyContactText": "For inquiries regarding the handling of personal information, please contact us at the following.",
     "privacyContactBusiness": "Business Name: Sakura Sisters Co., Ltd.",
+    "privacyContactRepresentative": "Representative: Chihiro Minegishi",
+    "privacyContactAddress": "Address: 361 Hara, Iitoi, Iitate-mura, Soma-gun, Fukushima 960-1721, Japan",
     "privacyContactEmail": "Email: info@sakura-sisters.com",
+    "privacyRevisedDate": "Established: June 24, 2026 / Last revised: June 24, 2026",
     "footerPrivacy": "Privacy Policy",
     "contactTitle": "Contact",
     "contactIntro": "For questions or order inquiries, please contact us by email below.",
@@ -356,7 +395,8 @@
     "heading": "Latest News",
     "noItems": "No news yet",
     "backToList": "Back to news list",
-    "noContent": "No content available"
+    "noContent": "No content available",
+    "loadError": "We couldn't load the latest news. Please refresh the page and try again in a moment."
   },
   "footer": {
     "brand": "Fukushima Momomusume",
@@ -428,7 +468,8 @@
     "search": "Search",
     "notFound": "No matching address found",
     "rateLimited": "Please wait a moment and try again",
-    "lookupFailed": "Address lookup failed. Please enter manually"
+    "lookupFailed": "Address lookup failed. Please enter manually",
+    "invalidFormat": "The postal code format is invalid. Please enter digits only (Japan: 7, Taiwan: 3–6)."
   },
   "languageSwitcher": {
     "ja": "日本語",
@@ -492,7 +533,8 @@
       "legendNight": "Nighttime",
       "legendStage": "Fukushima Momomusume🍑 Stage",
       "disclaimer": "*Temporary closures may occur. m(_ _)m",
-      "noEvents": "Event information for this month has not been published yet"
+      "noEvents": "Event information for this month has not been published yet",
+      "loadError": "We couldn't load the calendar. Please check your connection, then try switching the month or reloading the page."
     }
   }
 }

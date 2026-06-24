@@ -20,6 +20,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { Layout } from '@/components/common';
 import { formatPrice } from '@/lib/utils/format';
+import { commonErrorKeyForStatus, networkErrorKey } from '@/lib/api/client-errors';
 
 interface OrderItem {
   id: string;
@@ -91,23 +92,27 @@ function CompleteContent() {
           ? `/api/orders/by-no/${orderNo}?token=${encodeURIComponent(token)}`
           : `/api/orders/by-no/${orderNo}`;
         const response = await fetch(url);
-        const data = await response.json();
+        const data = await response.json().catch(() => null);
 
-        if (!response.ok || !data.ok) {
-          setError(t('fetchError'));
+        if (!response.ok || !data?.ok) {
+          // 横断的に扱う status（429 等）は共通文言、それ以外は注文照会固有の文言。
+          // API の生エラーコードは画面に出さない。
+          const key = commonErrorKeyForStatus(response.status);
+          setError(key ? tc(key) : t('fetchError'));
           return;
         }
 
         setOrder(data.data);
       } catch {
-        setError(t('fetchError'));
+        // fetch reject（オフライン / 通信断）は通信エラー文言へ。
+        setError(tc(networkErrorKey()));
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrder();
-  }, [orderNo, token, t]);
+  }, [orderNo, token, t, tc]);
 
   if (loading) {
     return (

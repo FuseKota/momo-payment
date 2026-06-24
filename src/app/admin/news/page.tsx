@@ -24,6 +24,7 @@ import {
   Divider,
   CircularProgress,
   Snackbar,
+  Stack,
   FormControl,
   InputLabel,
   Select,
@@ -32,7 +33,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import type { News } from '@/types/database';
+import { translateAdminError, adminNetworkErrorMessage } from '@/lib/admin/error-messages';
 
 interface NewsFormData {
   title: string;
@@ -77,6 +80,8 @@ function formatDate(dateStr: string | null): string {
 export default function AdminNewsPage() {
   const [newsList, setNewsList] = useState<News[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 一覧取得の失敗（取得不能）と「0件（空状態）」を区別するための state
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingNews, setEditingNews] = useState<News | null>(null);
   const [formData, setFormData] = useState<NewsFormData>(defaultFormData);
@@ -86,14 +91,24 @@ export default function AdminNewsPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const fetchNews = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch('/api/admin/news');
       if (res.ok) {
         const data = await res.json();
         setNewsList(data);
+      } else {
+        // 取得失敗は空状態として握り潰さず、専用のエラー文言＋再読み込み導線を出す
+        const body = await res.json().catch(() => null);
+        const message = translateAdminError(body, res.status, 'ニュースの読み込みに失敗しました');
+        setLoadError(message);
+        setSnackbar({ open: true, message });
       }
     } catch {
-      // ignore
+      const message = adminNetworkErrorMessage();
+      setLoadError(message);
+      setSnackbar({ open: true, message });
     } finally {
       setIsLoading(false);
     }
@@ -114,9 +129,13 @@ export default function AdminNewsPage() {
         const updated = await res.json();
         setNewsList((prev) => prev.map((n) => (n.id === news.id ? updated : n)));
         setSnackbar({ open: true, message: '公開状態を更新しました' });
+      } else {
+        // fetch は非okで reject しないため、明示的に else 分岐でエラー通知する
+        const body = await res.json().catch(() => null);
+        setSnackbar({ open: true, message: translateAdminError(body, res.status, '公開状態の更新に失敗しました') });
       }
     } catch {
-      setSnackbar({ open: true, message: '更新に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     }
   };
 
@@ -162,14 +181,15 @@ export default function AdminNewsPage() {
       fd.append('file', file);
       fd.append('productSlug', `news-${formData.slug}`);
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok && data.url) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
         setFormData((p) => ({ ...p, image_url: data.url }));
       } else {
-        setSnackbar({ open: true, message: data.error || '画像のアップロードに失敗しました' });
+        // data.error の生トークン（file_too_large 等）を直出ししない
+        setSnackbar({ open: true, message: translateAdminError(data, res.status, '画像のアップロードに失敗しました') });
       }
     } catch {
-      setSnackbar({ open: true, message: '画像のアップロードに失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsUploading(false);
     }
@@ -199,11 +219,16 @@ export default function AdminNewsPage() {
         setSnackbar({ open: true, message: editingNews ? '更新しました' : '追加しました' });
         handleCloseDialog();
       } else {
-        const err = await res.json();
-        setSnackbar({ open: true, message: err.error || '保存に失敗しました' });
+        const body = await res.json().catch(() => null);
+        // 409（スラッグ重複）はサーバが日本語メッセージを返すためそのまま表示する
+        const message =
+          res.status === 409 && typeof body?.error === 'string'
+            ? body.error
+            : translateAdminError(body, res.status, '保存に失敗しました');
+        setSnackbar({ open: true, message });
       }
     } catch {
-      setSnackbar({ open: true, message: '保存に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsSaving(false);
     }
@@ -215,9 +240,13 @@ export default function AdminNewsPage() {
       if (res.ok) {
         setNewsList((prev) => prev.filter((n) => n.id !== id));
         setSnackbar({ open: true, message: '削除しました' });
+      } else {
+        // fetch は非okで reject しないため、明示的に else 分岐でエラー通知する
+        const body = await res.json().catch(() => null);
+        setSnackbar({ open: true, message: translateAdminError(body, res.status, '削除に失敗しました') });
       }
     } catch {
-      setSnackbar({ open: true, message: '削除に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setDeleteConfirmId(null);
     }
@@ -290,7 +319,22 @@ export default function AdminNewsPage() {
             {newsList.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                  <Typography color="text.secondary">ニュースがありません</Typography>
+                  {loadError ? (
+                    // 取得失敗（空状態と区別）: エラー文言＋再読み込み導線
+                    <Stack spacing={1.5} alignItems="center">
+                      <Typography color="error">{loadError}</Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<RefreshIcon />}
+                        onClick={fetchNews}
+                      >
+                        再読み込み
+                      </Button>
+                    </Stack>
+                  ) : (
+                    <Typography color="text.secondary">ニュースがありません</Typography>
+                  )}
                 </TableCell>
               </TableRow>
             )}

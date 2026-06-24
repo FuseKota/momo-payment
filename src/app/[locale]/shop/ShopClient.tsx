@@ -11,7 +11,9 @@ import {
   Tab,
   Alert,
   Snackbar,
+  Button,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { Layout, ProductCard } from '@/components/common';
 import { useCart } from '@/contexts/CartContext';
 import { useSnackbar } from '@/hooks/useSnackbar';
@@ -24,9 +26,11 @@ type TabValue = 'all' | 'frozen' | 'goods';
 interface ShopClientProps {
   /** サーバー側でプリフェッチした配送対象商品一覧 */
   initialProducts: Product[];
+  /** サーバー側での取得に失敗したか（true のときは空状態でなくエラー表示） */
+  loadError?: boolean;
 }
 
-export default function ShopClient({ initialProducts }: ShopClientProps) {
+export default function ShopClient({ initialProducts, loadError = false }: ShopClientProps) {
   const t = useTranslations('shop');
   const tc = useTranslations('common');
   const tRoot = useTranslations();
@@ -127,33 +131,51 @@ export default function ShopClient({ initialProducts }: ShopClientProps) {
           </Tabs>
         </Box>
 
-        <Grid container spacing={3}>
-          {getDisplayProducts().map((product, index) => (
-            <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <ProductCard
-                product={product}
-                locale={locale}
-                cartQty={getCartQty(product.id)}
-                onAdd={() => handleAddToCart(product)}
-                onUpdateQty={(delta) => handleUpdateQty(product.id, delta)}
-                disabled={!canAddProduct(product) || isOutOfStock(product)}
-                isOutOfStock={isOutOfStock(product)}
-                outOfStockLabel={tc('outOfStock')}
-                variantLink={product.has_variants ? `/shop/${product.slug}` : undefined}
-                variantLinkLabel={product.has_variants ? t('selectSize') : undefined}
-                addLabel={tc('add')}
-                detailLink={`/shop/${product.slug}`}
-                imageHeight={200}
-                priority={index < 3}
-              />
-            </Grid>
-          ))}
-        </Grid>
-
-        {getDisplayProducts().length === 0 && (
+        {/* 取得失敗（DB障害・通信断等）は空状態と区別し、再読み込み導線を出す */}
+        {loadError ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography color="text.secondary">{t('noProducts')}</Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              {t('loadError')}
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => window.location.reload()}
+            >
+              {tc('retry')}
+            </Button>
           </Box>
+        ) : (
+          <>
+            <Grid container spacing={3}>
+              {getDisplayProducts().map((product, index) => (
+                <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <ProductCard
+                    product={product}
+                    locale={locale}
+                    cartQty={getCartQty(product.id)}
+                    onAdd={() => handleAddToCart(product)}
+                    onUpdateQty={(delta) => handleUpdateQty(product.id, delta)}
+                    disabled={!canAddProduct(product) || isOutOfStock(product)}
+                    isOutOfStock={isOutOfStock(product)}
+                    outOfStockLabel={tc('outOfStock')}
+                    variantLink={product.has_variants ? `/shop/${product.slug}` : undefined}
+                    variantLinkLabel={product.has_variants ? t('selectSize') : undefined}
+                    addLabel={tc('add')}
+                    detailLink={`/shop/${product.slug}`}
+                    imageHeight={200}
+                    priority={index < 3}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+
+            {getDisplayProducts().length === 0 && (
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <Typography color="text.secondary">{t('noProducts')}</Typography>
+              </Box>
+            )}
+          </>
         )}
 
         {/* Shipping Info */}

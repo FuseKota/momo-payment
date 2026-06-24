@@ -195,7 +195,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                     {t('mypage')}
                   </Button>
                   <IconButton
-                    onClick={signOut}
+                    onClick={() => void signOut()}
                     size="small"
                     aria-label={t('logout')}
                     sx={{ color: 'text.secondary' }}
@@ -295,7 +295,7 @@ export default function Header({ cartItemCount = 0 }: HeaderProps) {
                 <ListItem disablePadding>
                   <ListItemButton
                     onClick={() => {
-                      signOut();
+                      void signOut();
                       setDrawerOpen(false);
                     }}
                   >

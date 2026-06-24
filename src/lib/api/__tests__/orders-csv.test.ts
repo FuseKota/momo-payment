@@ -225,6 +225,20 @@ describe('fullAddress', () => {
     ).toBe('東京都千代田区千代田1-1');
   });
 
+  it('PostgREST の one-to-one 埋め込み（単一オブジェクト）も連結する', () => {
+    expect(
+      fullAddress({
+        postal_code: '1000001',
+        pref: '東京都',
+        city: '千代田区',
+        address1: '千代田1-1',
+        address2: '101号室',
+        recipient_name: '受取太郎',
+        recipient_phone: '0312345678',
+      })
+    ).toBe('東京都千代田区千代田1-1101号室');
+  });
+
   it('null / 空配列なら空文字を返す', () => {
     expect(fullAddress(null)).toBe('');
     expect(fullAddress([])).toBe('');
@@ -295,6 +309,29 @@ describe('buildCsv', () => {
     expect(dataLine).toContain('"東京都千代田区千代田1-1"');
     expect(dataLine).toContain('"1000001"');
     expect(dataLine).toContain('"受取太郎"');
+  });
+
+  it('shipping_addresses が単一オブジェクト（実 PostgREST 形状）でも住所列が出力される', () => {
+    const csv = buildCsv([
+      baseRow({
+        order_type: 'SHIPPING',
+        // PostgREST は UNIQUE FK を one-to-one と判定し配列ではなくオブジェクトを返す
+        shipping_addresses: {
+          postal_code: '5300001',
+          pref: '大阪府',
+          city: '大阪市北区',
+          address1: '梅田1-1',
+          address2: null,
+          recipient_name: '受取花子',
+          recipient_phone: '0612345678',
+        },
+      }),
+    ]);
+    const dataLine = csv.split('\r\n')[1];
+    expect(dataLine).toContain('"大阪府大阪市北区梅田1-1"');
+    expect(dataLine).toContain('"5300001"');
+    expect(dataLine).toContain('"受取花子"');
+    expect(dataLine).toContain('"0612345678"');
   });
 
   it('order_items は \'商品×数量 / ...\' 形式で連結する', () => {

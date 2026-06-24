@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useLocale } from 'next-intl';
 
-export type LookupErrorCode = 'NOT_FOUND' | 'RATE_LIMITED' | 'LOOKUP_FAILED';
+export type LookupErrorCode = 'NOT_FOUND' | 'RATE_LIMITED' | 'LOOKUP_FAILED' | 'INVALID_FORMAT';
 
 interface AddressResult {
   prefecture: string;
@@ -22,7 +22,9 @@ const ERROR_MAP: Record<string, LookupErrorCode> = {
   NOT_FOUND: 'NOT_FOUND',
   RATE_LIMITED: 'RATE_LIMITED',
   LOOKUP_FAILED: 'LOOKUP_FAILED',
-  INVALID_PARAMS: 'LOOKUP_FAILED',
+  // 形式不正は障害と区別し、入力案内を出す。旧トークン INVALID_PARAMS も後方互換で同扱い
+  INVALID_FORMAT: 'INVALID_FORMAT',
+  INVALID_PARAMS: 'INVALID_FORMAT',
 };
 
 export function usePostalCodeLookup(): UsePostalCodeLookupReturn {

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { getProductBySlug } from '@/lib/api/product-queries';
+import { getProductBySlugResult } from '@/lib/api/product-queries';
 import ProductDetailClient from './ProductDetailClient';
 import { JsonLd } from '@/components/JsonLd';
 import { breadcrumbSchema, productSchema } from '@/lib/seo/structured-data';
@@ -86,7 +87,13 @@ export default async function ProductDetailPage({
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taiwanyoichi-momomusume.com';
-  const product = await getProductBySlug(slug);
+  // 取得失敗（DB障害等）と「本当に存在しない slug」を区別する。
+  // 存在しない slug は 404、取得失敗は ProductDetailClient でエラー表示する。
+  const { product, error: loadError } = await getProductBySlugResult(slug);
+
+  if (!product && !loadError) {
+    notFound();
+  }
 
   const homeLabel = locale === 'zh-tw' ? '首頁' : locale === 'en' ? 'Home' : 'ホーム';
   const shopLabel = locale === 'zh-tw' ? '商店' : locale === 'en' ? 'Shop' : 'ショップ';
@@ -108,7 +115,7 @@ export default async function ProductDetailPage({
           <JsonLd data={productSchema(appUrl, locale, product)} />
         </>
       )}
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={product} loadError={loadError} />
     </>
   );
 }

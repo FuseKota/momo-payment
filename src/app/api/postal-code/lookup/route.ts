@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'INVALID_PARAMS' }, { status: 400 });
+    // 入力形式の不正（システム障害ではない）。クライアント側で形式案内を出すため LOOKUP_FAILED と区別する
+    return NextResponse.json({ error: 'INVALID_FORMAT' }, { status: 400 });
   }
 
   const { zipcode, locale } = parsed.data;
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
 async function lookupJapan(zipcode: string): Promise<NextResponse> {
   const cleaned = zipcode.replace(/-/g, '');
   if (!/^\d{7}$/.test(cleaned)) {
-    return NextResponse.json({ error: 'INVALID_PARAMS' }, { status: 400 });
+    return NextResponse.json({ error: 'INVALID_FORMAT' }, { status: 400 });
   }
 
   try {
@@ -84,7 +85,7 @@ async function lookupJapan(zipcode: string): Promise<NextResponse> {
 function lookupTaiwan(zipcode: string): NextResponse {
   // 3桁・5桁・6桁を許可
   if (!/^\d{3}(\d{2}\d?)?$/.test(zipcode)) {
-    return NextResponse.json({ error: 'INVALID_PARAMS' }, { status: 400 });
+    return NextResponse.json({ error: 'INVALID_FORMAT' }, { status: 400 });
   }
 
   // 先頭3桁で地区を特定

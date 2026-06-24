@@ -28,9 +28,11 @@ function truncate(text: string | null, max = 80): string {
 
 interface Props {
   items: News[];
+  /** Supabase からの取得に失敗した場合 true。空状態（0件）とは区別する。 */
+  loadError?: boolean;
 }
 
-export default function NewsListClient({ items }: Props) {
+export default function NewsListClient({ items, loadError = false }: Props) {
   const t = useTranslations('news');
   const locale = useLocale();
 
@@ -64,7 +66,11 @@ export default function NewsListClient({ items }: Props) {
         {/* List */}
         <Box className={styles.listSection}>
           <Container maxWidth="lg">
-            {items.length === 0 ? (
+            {loadError ? (
+              <Typography sx={{ py: 8, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                {t('loadError')}
+              </Typography>
+            ) : items.length === 0 ? (
               <Typography sx={{ py: 8, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
                 {t('noItems')}
               </Typography>

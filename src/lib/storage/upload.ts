@@ -86,10 +86,11 @@ export async function uploadProductImage(
   productSlug: string
 ): Promise<UploadResult> {
   // 申告 MIME チェック（第1段）
+  // error は機械可読コードを返す（フロントで日本語へ変換: src/lib/admin/error-messages.ts）
   if (!ALLOWED_TYPES.includes(file.type as AllowedMime)) {
     return {
       success: false,
-      error: `Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`,
+      error: 'invalid_file_type',
     };
   }
 
@@ -97,7 +98,7 @@ export async function uploadProductImage(
   if (file.size > MAX_FILE_SIZE) {
     return {
       success: false,
-      error: `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+      error: 'file_too_large',
     };
   }
 
@@ -105,7 +106,7 @@ export async function uploadProductImage(
   if (!/^[a-z0-9-]+$/.test(productSlug)) {
     return {
       success: false,
-      error: 'Invalid product slug',
+      error: 'invalid_slug',
     };
   }
 
@@ -117,13 +118,13 @@ export async function uploadProductImage(
   if (!detectedMime) {
     return {
       success: false,
-      error: 'File content does not match any allowed image format',
+      error: 'invalid_image',
     };
   }
   if (detectedMime !== file.type) {
     return {
       success: false,
-      error: `MIME type mismatch: declared ${file.type}, detected ${detectedMime}`,
+      error: 'mime_mismatch',
     };
   }
 
@@ -146,7 +147,7 @@ export async function uploadProductImage(
       secureLog('error', 'Storage upload error', safeErrorLog(error));
       return {
         success: false,
-        error: 'Upload failed',
+        error: 'upload_failed',
       };
     }
 
@@ -163,7 +164,7 @@ export async function uploadProductImage(
     secureLog('error', 'Storage upload exception', safeErrorLog(error));
     return {
       success: false,
-      error: 'Failed to upload image',
+      error: 'upload_failed',
     };
   }
 }

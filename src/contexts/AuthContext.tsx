@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 import type { User, Session } from '@supabase/supabase-js';
 
 export interface SignUpAddress {
@@ -182,7 +183,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    // signOut が失敗（ネットワーク断 / トークン失効済み等）してもローカルのログアウトは
+    // 必ず完了させる。例外で setUser(null) 等に到達しないとUI上はログイン状態のまま固まるため、
+    // try/catch で握ってからローカル状態をリセットする。
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      secureLog('warn', 'signOut failed; clearing local auth state anyway', safeErrorLog(error));
+    }
     // 別アカウントで再ログインした際に ensure を再実行できるようリセットする
     ensuredProfileUsers.current.clear();
     setUser(null);

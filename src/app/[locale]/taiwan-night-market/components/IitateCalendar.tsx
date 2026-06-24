@@ -22,6 +22,8 @@ interface ApiResponse {
   month: string;
   events: ApiEvent[];
   notes: string[];
+  /** events 取得が失敗した場合のみ true。0件と区別する。 */
+  degraded?: boolean;
 }
 
 function monthKey(year: number, month: number): string {
@@ -100,18 +102,27 @@ export default function IitateCalendar() {
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [monthData, setMonthData] = useState<{ events: Record<number, CalendarDayEvent>; notes: string[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // 取得失敗（res.ok=false / fetch reject / degraded=true）を「0件」と区別するためのフラグ。
+  const [loadError, setLoadError] = useState(false);
 
   const month = useMemo(() => monthKey(cursor.year, cursor.month), [cursor]);
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
+    setLoadError(false);
     fetch(`/api/iitate-calendar?month=${month}`)
-      .then((res) => (res.ok ? (res.json() as Promise<ApiResponse>) : null))
+      .then(async (res) => {
+        // res.ok=false は読み込み失敗として扱い、生のエラー本文は読まない。
+        if (!res.ok) return null;
+        return (await res.json()) as ApiResponse;
+      })
       .then((data) => {
         if (cancelled) return;
-        if (!data) {
+        // data が null（res.ok=false）、または degraded=true（events取得失敗）は読み込み失敗。
+        if (!data || data.degraded) {
           setMonthData(null);
+          setLoadError(true);
           return;
         }
         const eventMap: Record<number, CalendarDayEvent> = {};
@@ -122,7 +133,11 @@ export default function IitateCalendar() {
         setMonthData({ events: eventMap, notes: data.notes });
       })
       .catch(() => {
-        if (!cancelled) setMonthData(null);
+        // fetch reject（オフライン / 通信断）も読み込み失敗。
+        if (!cancelled) {
+          setMonthData(null);
+          setLoadError(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -256,8 +271,12 @@ export default function IitateCalendar() {
                 {note}
               </div>
             ))}
-            {!isLoading && !hasAnyEvents && (
-              <div className={styles.legendExtra}>{t('iitateCalendar.noEvents')}</div>
+            {!isLoading && loadError ? (
+              <div className={styles.legendExtra}>{t('iitateCalendar.loadError')}</div>
+            ) : (
+              !isLoading && !hasAnyEvents && (
+                <div className={styles.legendExtra}>{t('iitateCalendar.noEvents')}</div>
+              )
             )}
           </div>
         </div>

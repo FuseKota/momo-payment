@@ -23,7 +23,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout, PostalCodeField } from '@/components/common';
-import { PHONE_REGEX, validateAddressFields } from '@/lib/utils/form-validators';
+import { EMAIL_REGEX, PHONE_REGEX, validateAddressFields } from '@/lib/utils/form-validators';
 import { peachPink } from '@/lib/mui/theme';
 
 export default function LoginPage() {
@@ -91,7 +91,16 @@ function LoginPageContent() {
       const { error } = await signIn(email, password);
 
       if (error) {
-        setError(t('loginFailed'));
+        // メール確認が未完了の場合はログイン情報の誤りではなく、確認メールの未開封が原因。
+        // Supabase は code='email_not_confirmed'（旧環境では message に "Email not confirmed"）で返す。
+        if (
+          (error as { code?: string }).code === 'email_not_confirmed' ||
+          /email\s+not\s+confirmed/i.test(error.message)
+        ) {
+          setError(t('emailNotConfirmed'));
+        } else {
+          setError(t('loginFailed'));
+        }
         setIsLoading(false);
         return;
       }
@@ -108,7 +117,11 @@ function LoginPageContent() {
     const errors: Partial<Record<string, string>> = {};
 
     if (!name.trim()) errors.name = t('nameRequired');
-    if (!email.trim()) errors.email = t('emailRequired');
+    if (!email.trim()) {
+      errors.email = t('emailRequired');
+    } else if (!EMAIL_REGEX.test(email.trim())) {
+      errors.email = t('emailInvalid');
+    }
     if (password.length < 8) errors.password = t('passwordTooShort');
     if (!phone.trim()) {
       errors.phone = t('phoneRequired');
@@ -143,14 +156,23 @@ function LoginPageContent() {
     setError(null);
     setSuccess(null);
 
-    const { error } = await signUp(email, password, name.trim(), {
-      phone,
-      postalCode,
-      pref: prefecture,
-      city,
-      address1,
-      address2: address2 || undefined,
-    });
+    let error: Error | null = null;
+    try {
+      ({ error } = await signUp(email, password, name.trim(), {
+        phone,
+        postalCode,
+        pref: prefecture,
+        city,
+        address1,
+        address2: address2 || undefined,
+      }));
+    } catch {
+      // ネットワーク断・タイムアウト等で signUp 自体が reject した場合。
+      // 生の例外メッセージ（'Failed to fetch' 等）は出さず汎用文言に倒す。
+      setError(t('signupFailed'));
+      setIsLoading(false);
+      return;
+    }
 
     if (error) {
       if (error.message === 'signup_duplicate') {

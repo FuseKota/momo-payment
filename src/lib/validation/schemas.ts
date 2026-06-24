@@ -289,7 +289,6 @@ export const adminCalendarEventSchema = z
  */
 export const adminOrderUpdateSchema = z.object({
   status: z.enum(['PAID', 'PACKING', 'SHIPPED', 'FULFILLED', 'CANCELED']).optional(),
-  tracking_number: z.string().max(100).nullable().optional(),
 });
 
 /**

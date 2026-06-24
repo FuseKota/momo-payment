@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import type { Product, ProductVariant, TempZone } from '@/types/database';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 export type CartMode = 'shipping' | null;
 
@@ -81,9 +82,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Save cart to localStorage on change (skip until hydrated)
+  // QuotaExceeded やプライベートモード等で setItem が throw しても、
+  // アプリをクラッシュさせずログに留める（カートはメモリ上では維持される）。
   useEffect(() => {
     if (!isHydrated) return;
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch (err) {
+      secureLog('warn', 'Failed to persist cart to localStorage', safeErrorLog(err));
+    }
   }, [cart, isHydrated]);
 
   // pickup 廃止により全商品が配送モード。モード競合は発生しないため常に追加可能。

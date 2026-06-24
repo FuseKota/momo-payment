@@ -25,6 +25,8 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import { translateAdminError, adminNetworkErrorMessage } from '@/lib/admin/error-messages';
 
 /** 予定種別（Google 予定タイトルのキーワードに対応） */
 type EventType = 'day' | 'night' | 'stage' | 'closed';
@@ -87,6 +89,8 @@ export default function AdminIitateCalendarPage() {
   const [cursor, setCursor] = useState(todayYm());
   const [monthNotes, setMonthNotes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 取得失敗（カレンダー連携エラー等）と「予定0件（空状態）」を区別するための state
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [notesDraft, setNotesDraft] = useState<string>('');
@@ -100,6 +104,7 @@ export default function AdminIitateCalendarPage() {
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const [notesRes, eventsRes] = await Promise.all([
         fetch(`/api/admin/iitate-calendar/month-notes?month=${month}`),
@@ -113,8 +118,26 @@ export default function AdminIitateCalendarPage() {
         const data = await eventsRes.json();
         setEvents(data.events ?? []);
       } else {
+        // events の非ok（特に 502 calendar_fetch_failed）を握り潰さず、
+        // 空状態と区別してエラー文言を出す
         setEvents([]);
+        const body = await eventsRes.json().catch(() => null);
+        const message = translateAdminError(body, eventsRes.status, 'カレンダーの読み込みに失敗しました');
+        setLoadError(message);
+        setSnackbar({ open: true, message });
       }
+      // notes 単体の取得失敗も握り潰さない（events が成功していてもエラーを通知）
+      if (!notesRes.ok) {
+        const body = await notesRes.json().catch(() => null);
+        const message = translateAdminError(body, notesRes.status, '月別ノートの読み込みに失敗しました');
+        setLoadError((prev) => prev ?? message);
+        setSnackbar({ open: true, message });
+      }
+    } catch {
+      // 通信断・例外時もスピナーで固まらせず、ネットワークエラー文言を出す
+      const message = adminNetworkErrorMessage();
+      setLoadError(message);
+      setSnackbar({ open: true, message });
     } finally {
       setIsLoading(false);
     }
@@ -161,11 +184,11 @@ export default function AdminIitateCalendarPage() {
         setEventForm({ ...defaultEventForm, date: eventForm.date });
         await fetchData();
       } else {
-        const err = await res.json().catch(() => null);
-        setSnackbar({ open: true, message: err?.error === 'validation_error' ? '入力内容を確認してください' : '予定の追加に失敗しました' });
+        const body = await res.json().catch(() => null);
+        setSnackbar({ open: true, message: translateAdminError(body, res.status, '予定の追加に失敗しました') });
       }
     } catch {
-      setSnackbar({ open: true, message: '予定の追加に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsSavingEvent(false);
     }
@@ -181,10 +204,11 @@ export default function AdminIitateCalendarPage() {
         setEvents((prev) => prev.filter((e) => e.id !== eventId));
         setSnackbar({ open: true, message: '予定を削除しました' });
       } else {
-        setSnackbar({ open: true, message: '予定の削除に失敗しました' });
+        const body = await res.json().catch(() => null);
+        setSnackbar({ open: true, message: translateAdminError(body, res.status, '予定の削除に失敗しました') });
       }
     } catch {
-      setSnackbar({ open: true, message: '予定の削除に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setDeletingId(null);
     }
@@ -213,9 +237,11 @@ export default function AdminIitateCalendarPage() {
         setSnackbar({ open: true, message: '月別ノートを保存しました' });
         setNotesDialogOpen(false);
       } else {
-        const err = await res.json();
-        setSnackbar({ open: true, message: err.error || '保存に失敗しました' });
+        const body = await res.json().catch(() => null);
+        setSnackbar({ open: true, message: translateAdminError(body, res.status, '月別ノートの保存に失敗しました') });
       }
+    } catch {
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsSavingNotes(false);
     }
@@ -331,7 +357,23 @@ export default function AdminIitateCalendarPage() {
           </Button>
         </Stack>
 
-        {events.length === 0 ? (
+        {loadError ? (
+          // 取得失敗（空状態と区別）: エラー文言＋再読み込み導線
+          <Stack spacing={1.5} alignItems="flex-start">
+            <Typography variant="body2" color="error">
+              {loadError}
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={fetchData}
+              disabled={isLoading}
+            >
+              再読み込み
+            </Button>
+          </Stack>
+        ) : events.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             この月の予定はまだありません
           </Typography>
