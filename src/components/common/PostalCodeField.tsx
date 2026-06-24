@@ -38,6 +38,7 @@ export default function PostalCodeField({
     NOT_FOUND: t('notFound'),
     RATE_LIMITED: t('rateLimited'),
     LOOKUP_FAILED: t('lookupFailed'),
+    INVALID_FORMAT: t('invalidFormat'),
   };
 
   const handleSearch = async () => {
