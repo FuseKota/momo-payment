@@ -13,6 +13,7 @@ import {
   Stack,
   Button,
   CircularProgress,
+  Alert,
   Table,
   TableBody,
   TableCell,
@@ -69,7 +70,7 @@ function StatCard({
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { data, isLoading, refetch } = useFetch<DashboardData>('/api/admin/dashboard');
+  const { data, isLoading, isError, refetch } = useFetch<DashboardData>('/api/admin/dashboard');
 
   return (
     <Box>
@@ -87,10 +88,24 @@ export default function AdminDashboardPage() {
         </Button>
       </Box>
 
-      {isLoading || !data ? (
+      {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
         </Box>
+      ) : !data ? (
+        // 取得失敗（isError）でも未取得でも、無限スピナーにせずエラーUI＋更新導線を出す
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={refetch} startIcon={<RefreshIcon />}>
+              更新
+            </Button>
+          }
+        >
+          {isError
+            ? 'ダッシュボードの読み込みに失敗しました。時間をおいて「更新」をお試しください。'
+            : 'ダッシュボードのデータを取得できませんでした。「更新」をお試しください。'}
+        </Alert>
       ) : (
         <>
           {/* 数値カード */}

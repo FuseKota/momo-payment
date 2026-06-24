@@ -52,7 +52,8 @@ export default function AdminShell({
   useEffect(() => {
     if (pathname === '/admin/login') return;
     if (!isLoading && !isAdmin) {
-      router.push('/admin/login');
+      // 権限なし / セッション切れ。理由をクエリで渡し、ログイン画面で一言案内する。
+      router.push('/admin/login?reason=session_expired');
     }
   }, [pathname, isLoading, isAdmin, router]);
 
@@ -85,7 +86,12 @@ export default function AdminShell({
   };
 
   const handleLogout = async () => {
-    await signOut();
+    // signOut が万一例外を投げてもクラッシュさせず、必ずログイン画面へ遷移する。
+    try {
+      await signOut();
+    } catch {
+      // 例外時もローカルのログアウトは AuthContext 側で完了しているため、遷移のみ行う
+    }
     router.push('/admin/login');
   };
 

@@ -21,6 +21,7 @@ import {
   CircularProgress,
   Snackbar,
   Slider,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Cropper from 'react-easy-crop';
@@ -29,8 +30,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import type { Product, FoodLabel } from '@/types/database';
 import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
+import { translateAdminError, adminNetworkErrorMessage } from '@/lib/admin/error-messages';
 import { peachPink } from '@/lib/mui/theme';
 import ProductTable from './ProductTable';
 
@@ -181,6 +184,8 @@ function FoodLabelFields({
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 一覧取得失敗時のエラー文言（null=正常 / 空状態と区別する）
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(defaultFormData);
@@ -203,14 +208,20 @@ export default function AdminProductsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
     try {
       const response = await fetch('/api/admin/products');
       if (response.ok) {
         const data = await response.json();
         setProducts(data);
+      } else {
+        const body = await response.json().catch(() => null);
+        setLoadError(translateAdminError(body, response.status, '商品の読み込みに失敗しました'));
       }
     } catch (error) {
       secureLog('error', 'Failed to fetch products', safeErrorLog(error));
+      setLoadError(adminNetworkErrorMessage());
     } finally {
       setIsLoading(false);
     }
@@ -233,9 +244,15 @@ export default function AdminProductsPage() {
           prev.map((p) => (p.id === product.id ? { ...p, is_active: !p.is_active } : p))
         );
         setSnackbar({ open: true, message: '公開状態を更新しました' });
+      } else {
+        const body = await response.json().catch(() => null);
+        setSnackbar({
+          open: true,
+          message: translateAdminError(body, response.status, '公開状態の更新に失敗しました'),
+        });
       }
-    } catch (error) {
-      setSnackbar({ open: true, message: '更新に失敗しました' });
+    } catch {
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     }
   };
 
@@ -293,11 +310,14 @@ export default function AdminProductsPage() {
         setFormData((prev) => ({ ...prev, image_url: result.url }));
         setSnackbar({ open: true, message: '画像をアップロードしました' });
       } else {
-        const error = await response.json();
-        setSnackbar({ open: true, message: error.error || 'アップロードに失敗しました' });
+        const body = await response.json().catch(() => null);
+        setSnackbar({
+          open: true,
+          message: translateAdminError(body, response.status, 'アップロードに失敗しました'),
+        });
       }
     } catch {
-      setSnackbar({ open: true, message: 'アップロードに失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -382,10 +402,18 @@ export default function AdminProductsPage() {
         setProducts((prev) => prev.filter((p) => p.id !== id));
         setSnackbar({ open: true, message: '商品を削除しました' });
       } else {
-        setSnackbar({ open: true, message: '削除に失敗しました（注文履歴に含まれている商品は削除できません）' });
+        const body = await response.json().catch(() => null);
+        setSnackbar({
+          open: true,
+          message: translateAdminError(
+            body,
+            response.status,
+            '削除に失敗しました（注文履歴に含まれている商品は削除できません）'
+          ),
+        });
       }
     } catch {
-      setSnackbar({ open: true, message: '削除に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setDeleteConfirmId(null);
     }
@@ -429,10 +457,14 @@ export default function AdminProductsPage() {
         setIsReorderMode(false);
         setSnackbar({ open: true, message: '並び順を保存しました' });
       } else {
-        setSnackbar({ open: true, message: '保存に失敗しました' });
+        const body = await response.json().catch(() => null);
+        setSnackbar({
+          open: true,
+          message: translateAdminError(body, response.status, '並び順の保存に失敗しました'),
+        });
       }
     } catch {
-      setSnackbar({ open: true, message: '保存に失敗しました' });
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsReordering(false);
     }
@@ -561,11 +593,16 @@ export default function AdminProductsPage() {
         setSnackbar({ open: true, message: editingProduct ? '商品を更新しました' : '商品を追加しました' });
         handleCloseDialog();
       } else {
-        const error = await response.json();
-        setSnackbar({ open: true, message: error.error || '保存に失敗しました' });
+        const body = await response.json().catch(() => null);
+        // スラッグ重複(409)はサーバが日本語メッセージを返すため、それを優先表示する
+        const message =
+          response.status === 409 && typeof body?.error === 'string'
+            ? body.error
+            : translateAdminError(body, response.status, '保存に失敗しました');
+        setSnackbar({ open: true, message });
       }
-    } catch (error) {
-      setSnackbar({ open: true, message: '保存に失敗しました' });
+    } catch {
+      setSnackbar({ open: true, message: adminNetworkErrorMessage() });
     } finally {
       setIsSaving(false);
     }
@@ -623,6 +660,25 @@ export default function AdminProductsPage() {
           )}
         </Box>
       </Box>
+
+      {loadError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 3 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={fetchProducts}
+            >
+              再読み込み
+            </Button>
+          }
+        >
+          {loadError}
+        </Alert>
+      )}
 
       <ProductTable
         products={products}
