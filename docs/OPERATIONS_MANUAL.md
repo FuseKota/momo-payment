@@ -227,7 +227,7 @@ pm2 restart momo-payment               # PM2
 | アプリ水平スケール | 1 プロセス前提 | ロードバランサ + 複数インスタンス。セッションは Supabase Cookie ベースのためステートレス化は容易 |
 | DB | Supabase マネージド | 接続数・プランを監視し必要に応じ増強 |
 | 画像配信 | Supabase Storage（CDN） | 大量アクセス時は CDN キャッシュ設定を確認 |
-| 性能監査 | `docs/PERFORMANCE_AUDIT.md` 参照 | — |
+| 性能監査 | Lighthouse 等で計測の都度実施 | — |
 
 ---
 
@@ -331,4 +331,3 @@ npx vitest run --coverage      # カバレッジ
 | `docs/SYSTEM_ARCHITECTURE.md` | システム構成図（清書版） |
 | `docs/TECHNICAL.md` | 技術ドキュメント（API・DB・セキュリティ詳細） |
 | `docs/REQUIREMENTS.md` | 要件定義書 |
-| `docs/PERFORMANCE_AUDIT.md` | 性能監査レポート |

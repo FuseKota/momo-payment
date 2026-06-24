@@ -337,7 +337,7 @@ MVP（v1.0）以降に追加・実装された機能。
 | セキュリティ | 環境変数 Zod 検証、入力バリデーション、CSRF（Origin 検証）、永続レート制限（Supabase RPC・注文10/管理30/認証5 req/min/IP）、CSP/セキュリティヘッダ、PII マスクログ・監査ログ、Stripe Webhook 署名検証、RLS |
 | 多言語 | ja / zh-tw / en の3言語。`localePrefix: 'as-needed'`（デフォルト `ja` はプレフィックスなし） |
 | 可用性 | ヘルスチェック API（`/api/health`）を提供 |
-| 性能 | `docs/PERFORMANCE_AUDIT.md` 参照 |
+| 性能 | Lighthouse 等で計測の都度実施 |
 | テスト | Vitest 33 ファイル / 372 件（CI で実行） |
 | SEO | 公開ページに構造化データ（JSON-LD）・メタデータ |
 
