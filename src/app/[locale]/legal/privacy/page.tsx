@@ -61,9 +61,13 @@ export default function PrivacyPage() {
             <p className="text-sm text-zinc-900 leading-relaxed">{t('privacyContactText')}</p>
             <div className="mt-2 space-y-1 text-sm text-zinc-900">
               <p>{t('privacyContactBusiness')}</p>
+              <p>{t('privacyContactRepresentative')}</p>
+              <p>{t('privacyContactAddress')}</p>
               <p>{t('privacyContactEmail')}</p>
             </div>
           </section>
+
+          <p className="text-xs text-zinc-500">{t('privacyRevisedDate')}</p>
         </div>
       </main>
     </div>
