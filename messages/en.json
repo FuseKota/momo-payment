@@ -405,7 +405,6 @@
     "support": "Support"
   },
   "status": {
-    "RESERVED": "Reserved",
     "PENDING_PAYMENT": "Awaiting Payment",
     "PAID": "Paid",
     "PACKING": "Packing",
@@ -414,7 +413,6 @@
     "CANCELED": "Canceled",
     "REFUNDED": "Refunded"
   },
-  "cartContext": {},
   "email": {
     "brandName": "Momomusume",
     "orderConfirmSubject": "[Momomusume] Order Confirmation - {orderNo}",
@@ -487,7 +485,6 @@
     "eventDetail": "Details",
     "menuTitle": "Stall Menu",
     "ctaShop": "Order Online",
-    "ctaPickup": "Reserve Food Truck Pickup",
     "guideTitle": "Taiwan Night Market Guide",
     "guideSubtitle": "Discover the charm of Taiwan night markets at home and abroad",
     "momoEventsTitle": "Momomusume Events in Iitate, Fukushima",

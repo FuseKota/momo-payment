@@ -405,7 +405,6 @@
     "support": "支援"
   },
   "status": {
-    "RESERVED": "已預約",
     "PENDING_PAYMENT": "待付款",
     "PAID": "已付款",
     "PACKING": "包裝中",
@@ -414,7 +413,6 @@
     "CANCELED": "已取消",
     "REFUNDED": "已退款"
   },
-  "cartContext": {},
   "email": {
     "brandName": "桃娘",
     "orderConfirmSubject": "【桃娘】訂單確認 - {orderNo}",
@@ -487,7 +485,6 @@
     "eventDetail": "詳細內容",
     "menuTitle": "攤位菜單",
     "ctaShop": "線上訂購",
-    "ctaPickup": "預約餐車取餐",
     "guideTitle": "台灣夜市指南",
     "guideSubtitle": "感受充滿活力的美食世界",
     "momoEventsTitle": "福島・飯舘村 桃娘 活動資訊",

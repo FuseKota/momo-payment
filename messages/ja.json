@@ -405,7 +405,6 @@
     "support": "サポート"
   },
   "status": {
-    "RESERVED": "予約済",
     "PENDING_PAYMENT": "決済待ち",
     "PAID": "入金済",
     "PACKING": "梱包中",
@@ -414,7 +413,6 @@
     "CANCELED": "キャンセル",
     "REFUNDED": "返金済"
   },
-  "cartContext": {},
   "email": {
     "brandName": "もも娘",
     "orderConfirmSubject": "【もも娘】ご注文確認 - {orderNo}",
@@ -487,7 +485,6 @@
     "eventDetail": "詳細",
     "menuTitle": "屋台メニュー",
     "ctaShop": "オンラインで注文する",
-    "ctaPickup": "店頭受け取りを予約",
     "guideTitle": "台湾夜市ガイド",
     "guideSubtitle": "国内外の台湾夜市の魅力をたっぷり紹介",
     "momoEventsTitle": "福島・飯舘村 ももむすめ イベント情報",
