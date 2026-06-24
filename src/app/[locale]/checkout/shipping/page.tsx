@@ -452,6 +452,47 @@ export default function ShippingCheckoutPage() {
                     </Paper>
                   </Box>
 
+                  {/* お支払い方法・時期（改正特商法 最終確認画面の表示事項） */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                      {t('paymentMethodTitle')}
+                    </Typography>
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('paymentMethodLabel')}: {t('paymentMethodValue')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('paymentTimingLabel')}: {t('paymentTimingValue')}
+                      </Typography>
+                    </Paper>
+                  </Box>
+
+                  {/* 返品・キャンセルに関する事項（改正特商法12条の6 最終確認画面の表示事項） */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                      {t('returnPolicyTitle')}
+                    </Typography>
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ whiteSpace: 'pre-line', lineHeight: 1.7 }}
+                      >
+                        {t('returnPolicySummary')}
+                      </Typography>
+                      <Box sx={{ mt: 1.5 }}>
+                        <Link
+                          href="/legal/tokushoho"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: 'inherit', textDecoration: 'underline', fontSize: '0.875rem' }}
+                        >
+                          {t('viewTokushoho')}
+                        </Link>
+                      </Box>
+                    </Paper>
+                  </Box>
+
                   <Alert severity="info" sx={{ mb: 3 }}>{t('paymentNotice')}</Alert>
 
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
