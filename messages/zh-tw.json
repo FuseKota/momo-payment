@@ -64,8 +64,19 @@
     "yen": "¥{price}",
     "requiredFieldsError": "請填寫必填欄位",
     "unexpectedError": "發生了意外的錯誤",
+    "errors": {
+      "networkError": "連線失敗。請確認您的網路連線後再試一次。",
+      "offline": "無法連線至網際網路。請確認您的網路後再試一次。",
+      "rateLimited": "目前存取量過大，請稍候片刻後再試一次。",
+      "forbidden": "無法完成操作。請重新整理頁面後再試一次。",
+      "sessionExpired": "登入已逾期，請重新登入。",
+      "serverError": "伺服器發生問題，請稍後再試。",
+      "loadFailed": "資料載入失敗。請確認網路連線後重新整理。",
+      "somethingWrong": "顯示頁面時發生問題。請重新整理或稍後再試。"
+    },
     "taiwanNightMarket": "台灣夜市",
-    "news": "最新消息"
+    "news": "最新消息",
+    "retry": "重試"
   },
   "home": {
     "heroTitle": "歡迎來到\n福島桃娘商品網站",
@@ -87,10 +98,12 @@
     "aboutShipping": "關於配送",
     "shippingFeeInfo": "• 運費：840日圓〜880日圓（依配送地區而異・含稅）",
     "shippingDeliveryInfo": "• 配送天數：自下單起最快3〜5天（依地區而異）。可指定希望配送日期與時段。",
-    "addedToCart": "已將{name}加入購物車"
+    "addedToCart": "已將{name}加入購物車",
+    "loadError": "商品載入失敗。請確認網路連線後重新整理頁面。"
   },
   "productDetail": {
     "notFound": "找不到商品",
+    "loadError": "無法載入商品資訊。請稍後再試，或從商品列表中尋找。",
     "backToList": "返回商品列表",
     "breadcrumbHome": "首頁",
     "breadcrumbShop": "宅配訂購",
@@ -123,7 +136,12 @@
     "orderSummary": "訂單摘要",
     "proceedToOrder": "前往訂購",
     "proceedToCheckout": "前往結帳",
-    "shippingFeeVaries": "依配送地區而定"
+    "shippingFeeVaries": "依配送地區而定",
+    "paymentCanceledNotice": "尚未完成付款。若要確認訂單，請再次點選「前往結帳」。購物車內容已為您保留。",
+    "errors": {
+      "saveFailed": "購物車儲存失敗。請確認瀏覽器設定（無痕模式或儲存空間）。您仍可繼續結帳。",
+      "restoreFailed": "無法載入先前儲存的購物車資訊，已重設購物車。請重新將商品加入購物車。"
+    }
   },
   "checkoutShipping": {
     "backToCart": "返回購物車",
@@ -176,7 +194,9 @@
       "orderFailed": "訂單建立失敗",
       "checkoutUrlFailed": "無法取得付款連結",
       "unsupportedRegion": "很抱歉，此地區目前無法配送。",
-      "invalidDeliveryDate": "希望配送日期超出可選範圍。"
+      "invalidDeliveryDate": "希望配送日期超出可選範圍。",
+      "outOfStock": "很抱歉，您訂購的商品庫存不足。請確認購物車並調整數量後再試一次。",
+      "paymentSessionFailed": "準備付款頁面時發生錯誤。尚未對您收取任何費用。請稍候再試一次。"
     },
     "validation": {
       "nameRequired": "請輸入姓名",
@@ -249,10 +269,12 @@
     "passwordTooShort": "密碼需要8個字元以上。",
     "nameRequired": "請輸入姓名。",
     "emailRequired": "請輸入電子信箱。",
-    "signupFailed": "註冊失敗。請嘗試其他電子信箱。",
+    "signupFailed": "註冊失敗。請稍候再試一次。若問題持續發生，請與我們聯絡。",
     "signupDuplicate": "此電子信箱已被註冊。請直接登入。",
     "passwordWeak": "此密碼容易被猜測或已知遭外洩，無法使用。請設定其他密碼。",
-    "signupSuccess": "註冊完成。請確認驗證信件。"
+    "signupSuccess": "註冊完成。請確認驗證信件。",
+    "emailNotConfirmed": "您的電子信箱尚未完成驗證。請先點擊註冊時寄送的驗證信連結，再進行登入。",
+    "emailInvalid": "電子信箱格式不正確。"
   },
   "mypage": {
     "title": "我的頁面",
@@ -278,7 +300,13 @@
     "shippingStatus": "配送狀態",
     "carrier": "物流業者：{carrier}",
     "trackingNo": "追蹤編號：{trackingNo}",
-    "shippedAt": "出貨日期：{date}"
+    "shippedAt": "出貨日期：{date}",
+    "errors": {
+      "fetchOrdersFailed": "無法載入訂單記錄。請確認網路連線後重新整理頁面。若問題持續，請重新登入後再試一次。",
+      "fetchOrderFailed": "無法載入訂單明細。請確認網路連線後重新整理頁面。若問題持續，請重新登入後再試一次。",
+      "orderNotFound": "找不到您指定的訂單，請從訂單記錄重新選擇。",
+      "sessionExpired": "登入已逾期，請重新登入。"
+    }
   },
   "addresses": {
     "title": "配送地址",
@@ -367,7 +395,8 @@
     "heading": "最新消息",
     "noItems": "目前沒有最新消息",
     "backToList": "返回消息列表",
-    "noContent": "暫無內容"
+    "noContent": "暫無內容",
+    "loadError": "無法載入最新消息。請稍後重新整理頁面再試一次。"
   },
   "footer": {
     "brand": "福島桃娘",
@@ -439,7 +468,8 @@
     "search": "搜尋",
     "notFound": "找不到對應的地址",
     "rateLimited": "請稍後再試",
-    "lookupFailed": "地址搜尋失敗，請手動輸入"
+    "lookupFailed": "地址搜尋失敗，請手動輸入",
+    "invalidFormat": "郵遞區號格式不正確，請輸入半形數字（日本: 7碼 / 台灣: 3〜6碼）。"
   },
   "languageSwitcher": {
     "ja": "日本語",
@@ -503,7 +533,8 @@
       "legendNight": "夜間場",
       "legendStage": "福島桃娘🍑舞台",
       "disclaimer": "※也可能有臨時休園日，敬請見諒 m(_ _)m",
-      "noEvents": "此月份的活動資訊尚未公開"
+      "noEvents": "此月份的活動資訊尚未公開",
+      "loadError": "無法載入行事曆。請確認網路連線後，試著切換月份或重新整理頁面。"
     }
   }
 }
