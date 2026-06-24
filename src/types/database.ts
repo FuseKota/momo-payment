@@ -281,15 +281,18 @@ export interface AdminOrderListResponse {
   offset: number;
 }
 
+// 注文に埋め込まれる配送先住所（PostgREST one-to-one 埋め込みの返却形状）
+export type EmbeddedShippingAddress = Pick<
+  ShippingAddress,
+  'postal_code' | 'pref' | 'city' | 'address1' | 'address2' | 'recipient_name' | 'recipient_phone'
+>;
+
 // CSV エクスポート用の結合行（payment_status 列はDBに無いため payments[0].status で導出）
+// shipping_addresses は UNIQUE FK のため PostgREST が「単一オブジェクト」で返す（配列ではない）。
+// 旧バージョンや手組みデータとの互換のため配列も許容し、firstShippingAddress() で正規化する。
 export interface AdminOrderExportRow extends Order {
   order_items: Pick<OrderItem, 'product_name' | 'qty'>[];
-  shipping_addresses:
-    | Pick<
-        ShippingAddress,
-        'postal_code' | 'pref' | 'city' | 'address1' | 'address2' | 'recipient_name' | 'recipient_phone'
-      >[]
-    | null;
+  shipping_addresses: EmbeddedShippingAddress | EmbeddedShippingAddress[] | null;
   payments: Pick<Payment, 'status'>[] | null;
 }
 
