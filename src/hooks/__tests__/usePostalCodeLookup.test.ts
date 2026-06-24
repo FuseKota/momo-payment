@@ -85,7 +85,22 @@ describe('usePostalCodeLookup', () => {
     expect(result.current.error).toBe('LOOKUP_FAILED');
   });
 
-  it('sets LOOKUP_FAILED for INVALID_PARAMS', async () => {
+  it('sets INVALID_FORMAT for INVALID_FORMAT (形式不正は障害と区別)', async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: 'INVALID_FORMAT' }),
+    } as Response);
+
+    const { result } = renderHook(() => usePostalCodeLookup());
+
+    await act(async () => {
+      await result.current.lookup('abc');
+    });
+
+    expect(result.current.error).toBe('INVALID_FORMAT');
+  });
+
+  it('maps legacy INVALID_PARAMS to INVALID_FORMAT (後方互換)', async () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
       json: () => Promise.resolve({ error: 'INVALID_PARAMS' }),
@@ -97,7 +112,7 @@ describe('usePostalCodeLookup', () => {
       await result.current.lookup('abc');
     });
 
-    expect(result.current.error).toBe('LOOKUP_FAILED');
+    expect(result.current.error).toBe('INVALID_FORMAT');
   });
 
   it('clearError clears the error', async () => {
