@@ -21,6 +21,7 @@ import { Layout } from '@/components/common';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
+import { isSessionExpired, networkErrorKey } from '@/lib/api/client-errors';
 import type { OrderWithItems } from '@/types/database';
 
 export default function MyPage() {
@@ -45,18 +46,27 @@ export default function MyPage() {
     const fetchOrders = async () => {
       try {
         const res = await fetch('/api/mypage/orders');
-        if (!res.ok) throw new Error(tc('unexpectedError'));
+        if (!res.ok) {
+          // セッション切れはログインへ誘導。それ以外は取得失敗の専用文言（生コードは出さない）。
+          if (isSessionExpired(res.status)) {
+            router.push('/login');
+            return;
+          }
+          setError(t('errors.fetchOrdersFailed'));
+          return;
+        }
         const data = await res.json();
         setOrders(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : tc('unexpectedError'));
+      } catch {
+        // fetch 自体の失敗（オフライン/通信断）。生の例外メッセージは表示しない。
+        setError(tc(networkErrorKey()));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchOrders();
-  }, [user, tc]);
+  }, [user, t, tc, router]);
 
   if (authLoading || (!user && !authLoading)) {
     return (

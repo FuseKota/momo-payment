@@ -25,18 +25,13 @@ import { Layout } from '@/components/common';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { statusLabels } from '@/lib/utils/constants';
-import type { OrderWithItems } from '@/types/database';
+import { firstShippingAddress } from '@/lib/api/shipping-address';
+import { isSessionExpired, networkErrorKey } from '@/lib/api/client-errors';
+import type { EmbeddedShippingAddress, OrderWithItems } from '@/types/database';
 
 interface OrderDetailData extends OrderWithItems {
-  shipping_addresses?: Array<{
-    postal_code: string;
-    pref: string;
-    city: string;
-    address1: string;
-    address2: string | null;
-    recipient_name: string;
-    recipient_phone: string;
-  }>;
+  // UNIQUE FK のため PostgREST は単一オブジェクトで返す。配列も互換のため許容。
+  shipping_addresses?: EmbeddedShippingAddress | EmbeddedShippingAddress[] | null;
   shipments?: Array<{
     carrier: string | null;
     tracking_no: string | null;
@@ -68,22 +63,32 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     const fetchOrder = async () => {
       try {
         const res = await fetch(`/api/mypage/orders/${id}`);
-        if (res.status === 404) {
-          setError(tc('unexpectedError'));
+        if (!res.ok) {
+          // 404 は注文が存在しない専用文言、401 はログインへ誘導、
+          // それ以外は取得失敗の汎用文言（API の生コードは出さない）。
+          if (res.status === 404) {
+            setError(t('errors.orderNotFound'));
+            return;
+          }
+          if (isSessionExpired(res.status)) {
+            router.push('/login');
+            return;
+          }
+          setError(t('errors.fetchOrderFailed'));
           return;
         }
-        if (!res.ok) throw new Error(tc('unexpectedError'));
         const data = await res.json();
         setOrder(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : tc('unexpectedError'));
+      } catch {
+        // fetch 自体の失敗（オフライン/通信断）。生の例外メッセージは表示しない。
+        setError(tc(networkErrorKey()));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchOrder();
-  }, [user, id, tc]);
+  }, [user, id, t, tc, router]);
 
   if (authLoading) {
     return (
@@ -209,11 +214,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </Paper>
 
             {/* 配送先 */}
-            {order.shipping_addresses && order.shipping_addresses.length > 0 && (
-              <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>{t('shippingAddress')}</Typography>
-                {order.shipping_addresses.map((addr, i) => (
-                  <Box key={i}>
+            {(() => {
+              const addr = firstShippingAddress(order.shipping_addresses);
+              if (!addr) return null;
+              return (
+                <Paper sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>{t('shippingAddress')}</Typography>
+                  <Box>
                     <Typography>{addr.recipient_name}</Typography>
                     <Typography variant="body2" color="text.secondary">
                       〒{addr.postal_code}
@@ -226,9 +233,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       {addr.recipient_phone}
                     </Typography>
                   </Box>
-                ))}
-              </Paper>
-            )}
+                </Paper>
+              );
+            })()}
 
             {/* 配送情報 */}
             {order.shipments && order.shipments.length > 0 && (

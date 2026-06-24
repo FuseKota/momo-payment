@@ -28,6 +28,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import { Layout, PostalCodeField } from '@/components/common';
 import { useAuth } from '@/contexts/AuthContext';
+import { commonErrorKeyForStatus, networkErrorKey } from '@/lib/api/client-errors';
 import type { CustomerAddress } from '@/types/database';
 
 interface AddressForm {
@@ -77,15 +78,24 @@ export default function AddressesPage() {
   const fetchAddresses = useCallback(async () => {
     try {
       const res = await fetch('/api/mypage/addresses');
-      if (!res.ok) throw new Error(t('fetchError'));
+      if (!res.ok) {
+        // セッション切れはログイン画面へ誘導（生のエラーは表示しない）
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
+        setError(t('fetchError'));
+        return;
+      }
       const data = await res.json();
       setAddresses(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tc('unexpectedError'));
+    } catch {
+      // fetch 自体の失敗（オフライン/通信断）。生の例外メッセージは表示しない。
+      setError(tc(networkErrorKey()));
     } finally {
       setIsLoading(false);
     }
-  }, [t, tc]);
+  }, [t, tc, router]);
 
   useEffect(() => {
     if (user) fetchAddresses();
@@ -111,6 +121,27 @@ export default function AddressesPage() {
     });
     setEditingId(addr.id);
     setDialogOpen(true);
+  };
+
+  // API の validation_error.details（フィールド名→生メッセージ）を、フィールド名から
+  // 既存の addresses.validation.* 文言へ変換する。最初に該当したフィールドのみ表示。
+  // 生のサーバーメッセージ（ロケール非対応）は表示しない。該当キーが無ければ null。
+  const validationMessage = (details: unknown): string | null => {
+    if (!details || typeof details !== 'object') return null;
+    const fieldToKey: Record<string, string> = {
+      recipientName: 'recipientNameRequired',
+      recipientPhone: 'phoneInvalid',
+      postalCode: 'postalCodeInvalid',
+      pref: 'prefRequired',
+      city: 'cityRequired',
+      address1: 'address1Required',
+    };
+    for (const field of Object.keys(fieldToKey)) {
+      if (field in details) {
+        return t(`validation.${fieldToKey[field]}`);
+      }
+    }
+    return null;
   };
 
   const handleSave = async () => {
@@ -140,14 +171,32 @@ export default function AddressesPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || t('saveFailed'));
+        // セッション切れはログイン画面へ誘導（生のエラーは表示しない）
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
+        const data = await res.json().catch(() => null);
+        // 横断ステータス(403/429/5xx)は共通文言へ。API の生エラーコードは表示しない。
+        const commonKey = commonErrorKeyForStatus(res.status);
+        if (commonKey) {
+          setError(tc(commonKey));
+          return;
+        }
+        // 400 バリデーションエラーは details からフィールド別の検証文言を出す（無理なら汎用）。
+        if (data?.error === 'validation_error') {
+          setError(validationMessage(data.details) ?? t('saveFailed'));
+          return;
+        }
+        setError(t('saveFailed'));
+        return;
       }
 
       setDialogOpen(false);
       await fetchAddresses();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('saveFailed'));
+    } catch {
+      // fetch 自体の失敗（オフライン/通信断）。生の例外メッセージは表示しない。
+      setError(tc(networkErrorKey()));
     } finally {
       setSaving(false);
     }
@@ -158,10 +207,19 @@ export default function AddressesPage() {
 
     try {
       const res = await fetch(`/api/mypage/addresses/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(t('deleteFailed'));
+      if (!res.ok) {
+        // セッション切れはログイン画面へ誘導（生のエラーは表示しない）
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
+        setError(t('deleteFailed'));
+        return;
+      }
       await fetchAddresses();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('deleteFailed'));
+    } catch {
+      // fetch 自体の失敗（オフライン/通信断）。生の例外メッセージは表示しない。
+      setError(tc(networkErrorKey()));
     }
   };
 
