@@ -10,6 +10,8 @@ import {
   qtySchema,
   uuidSchema,
   shippingOrderSchema,
+  adminProductCreateSchema,
+  adminNewsCreateSchema,
 } from '../schemas';
 
 describe('validation schemas', () => {
@@ -190,6 +192,71 @@ describe('validation schemas', () => {
         deliveryDate: '2026/06/10',
       };
       expect(shippingOrderSchema.safeParse(order).success).toBe(false);
+    });
+  });
+
+  describe('image_url の許容（相対パス・空文字）', () => {
+    const baseProduct = {
+      name: 'タオル',
+      slug: 'momo-towel',
+      kind: 'GOODS' as const,
+      price_yen: 3800,
+    };
+    const baseNews = { title: 'お知らせ', slug: 'news-1' };
+
+    it('商品: / 始まりの相対パスを受け入れる', () => {
+      const r = adminProductCreateSchema.safeParse({
+        ...baseProduct,
+        image_url: '/images/towel.jpg',
+      });
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.image_url).toBe('/images/towel.jpg');
+    });
+
+    it('商品: 絶対URLを受け入れる', () => {
+      expect(
+        adminProductCreateSchema.safeParse({
+          ...baseProduct,
+          image_url: 'https://example.com/a.jpg',
+        }).success
+      ).toBe(true);
+    });
+
+    it('商品: 空文字は null に正規化される', () => {
+      const r = adminProductCreateSchema.safeParse({ ...baseProduct, image_url: '' });
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.image_url).toBeNull();
+    });
+
+    it('商品: URLでも / 始まりでもない値を拒否する', () => {
+      expect(
+        adminProductCreateSchema.safeParse({
+          ...baseProduct,
+          image_url: 'images/towel.jpg',
+        }).success
+      ).toBe(false);
+    });
+
+    it('商品: images 配列は相対パス・絶対URLを受け入れる', () => {
+      expect(
+        adminProductCreateSchema.safeParse({
+          ...baseProduct,
+          images: ['/images/a.jpg', 'https://x.com/b.jpg'],
+        }).success
+      ).toBe(true);
+    });
+
+    it('ニュース: 空文字（画像未設定）を受け入れ null に正規化する', () => {
+      const r = adminNewsCreateSchema.safeParse({ ...baseNews, image_url: '' });
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.image_url).toBeNull();
+    });
+
+    it('ニュース: / 始まりの相対パスを受け入れる', () => {
+      expect(
+        adminNewsCreateSchema.safeParse({ ...baseNews, image_url: '/images/news.jpg' })
+          .success
+      ).toBe(true);
     });
   });
 });

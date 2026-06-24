@@ -259,7 +259,10 @@ export async function POST(request: NextRequest) {
     });
 
     const successUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/complete?orderNo=${orderRow.order_no}&token=${orderRow.lookup_token ?? ''}`);
-    const cancelUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/checkout/shipping?canceled=true`);
+    // Stripe ホスト型 Checkout の戻る矢印（←）は cancel_url へ遷移する。
+    // 戻ったらカート（商品は CartContext に保持）から再開できるよう /cart へ送る。
+    // キャンセル注文のクリーンアップは Stripe Webhook(checkout.session.expired)が担う。
+    const cancelUrl = localeUrl(env.NEXT_PUBLIC_APP_URL, locale, `/cart`);
 
     let session;
     try {
