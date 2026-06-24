@@ -23,6 +23,24 @@ const foodLabelSchema = z.object({
 }).nullable().optional();
 
 /**
+ * 画像URLスキーマ
+ * 絶対URL（https://... ＝ アップロード画像）と / 始まりの相対パス（public配下のシード画像）の
+ * 両方を許可する。空文字（画像未設定）は null に正規化する。
+ */
+const isImageRef = (v: string) => /^https?:\/\//.test(v) || v.startsWith('/');
+
+const imageUrlSchema = z
+  .string()
+  .refine((v) => v === '' || isImageRef(v), 'URLまたは / から始まるパスを指定してください')
+  .transform((v) => (v === '' ? null : v))
+  .nullable()
+  .optional();
+
+const imageRefSchema = z
+  .string()
+  .refine(isImageRef, 'URLまたは / から始まるパスを指定してください');
+
+/**
  * 日本の電話番号バリデーション
  * 形式: 090-1234-5678, 09012345678, 03-1234-5678 等
  */
@@ -178,8 +196,8 @@ export const adminProductCreateSchema = z.object({
   price_yen: z.number().int().min(0).max(1000000),
   can_ship: z.boolean().optional(),
   is_active: z.boolean().optional(),
-  image_url: z.string().url().nullable().optional(),
-  images: z.array(z.string().url()).optional(),
+  image_url: imageUrlSchema,
+  images: z.array(imageRefSchema).optional(),
   stock_qty: z.number().int().min(0).nullable().optional(),
   sort_order: z.number().int().optional(),
   has_variants: z.boolean().optional(),
@@ -218,7 +236,7 @@ export const adminNewsCreateSchema = z.object({
   content: z.string().max(50000).nullable().optional(),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.string().max(100).optional(),
-  image_url: z.string().url().nullable().optional(),
+  image_url: imageUrlSchema,
   title_zh_tw: z.string().max(200).nullable().optional(),
   excerpt_zh_tw: z.string().max(500).nullable().optional(),
   content_zh_tw: z.string().max(50000).nullable().optional(),
