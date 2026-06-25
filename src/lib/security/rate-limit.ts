@@ -113,19 +113,3 @@ export function getClientIP(request: Request): string {
 
   return 'unknown';
 }
-
-/**
- * テスト用: rate_limit_buckets を直接リセット
- */
-export async function resetRateLimit(identifier?: string): Promise<void> {
-  try {
-    const supabase = getSupabaseAdmin();
-    if (identifier) {
-      await supabase.from('rate_limit_buckets').delete().eq('identifier', identifier);
-    } else {
-      await supabase.from('rate_limit_buckets').delete().neq('identifier', '');
-    }
-  } catch {
-    // ignore in tests
-  }
-}

@@ -266,7 +266,6 @@ npm run start            # 本番サーバー起動
 npm run lint             # ESLint実行
 
 # DB
-npm run seed             # シードデータ投入
 npm run create-admin     # 管理者アカウント作成
 
 # テスト

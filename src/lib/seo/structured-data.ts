@@ -171,7 +171,7 @@ export function breadcrumbSchema(appUrl: string, locale: string, trail: Trail) {
 }
 
 /** 在庫判定（ProductDetailClient と同じ規約: stock_qty === null は無制限=在庫あり） */
-export function isInStock(product: Pick<Product, 'has_variants' | 'stock_qty'> & {
+function isInStock(product: Pick<Product, 'has_variants' | 'stock_qty'> & {
   variants?: ProductVariantStock[];
 }): boolean {
   if (product.has_variants && Array.isArray(product.variants) && product.variants.length > 0) {

@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "test": "vitest run"
   },
@@ -20,7 +19,6 @@
     "@mui/material-nextjs": "^7.3.6",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
-    "date-fns": "^4.1.0",
     "google-auth-library": "^10.6.2",
     "next": "^15.5.19",
     "next-intl": "^4.13.0",
@@ -37,7 +35,6 @@
   "devDependencies": {
     "@netlify/plugin-nextjs": "^5.15.9",
     "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^19",

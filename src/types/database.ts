@@ -148,11 +148,6 @@ export interface Payment {
   provider: string; // 'stripe'
   status: PaymentStatus;
   amount_yen: number;
-  // Square関連（レガシー）
-  square_payment_link_id: string | null;
-  square_order_id: string | null;
-  square_payment_id: string | null;
-  square_environment: string | null;
   // Stripe関連
   stripe_session_id: string | null;
   stripe_payment_intent_id: string | null;
@@ -165,13 +160,6 @@ export interface Payment {
   raw_webhook: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface SquareWebhookEvent {
-  event_id: string;
-  event_type: string;
-  received_at: string;
-  payload: Record<string, unknown>;
 }
 
 export interface StripeWebhookEvent {
@@ -209,6 +197,21 @@ export interface CustomerAddress {
   recipient_phone: string;
   is_default: boolean;
   created_at: string;
+}
+
+/**
+ * 管理画面：顧客マスタ一覧の1行（RPC admin_list_customers の返却）。
+ * order_count / total_spent_yen は有効注文（PAID 以降）で集計した値。
+ */
+export interface AdminCustomerListItem {
+  user_id: string;
+  display_name: string | null;
+  email: string | null;
+  phone: string | null;
+  registered_at: string;
+  order_count: number;
+  total_spent_yen: number;
+  last_order_at: string | null;
 }
 
 // Extended types with relations

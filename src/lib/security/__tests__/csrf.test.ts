@@ -100,7 +100,6 @@ describe('csrf', () => {
   describe('requiresCsrfCheck', () => {
     it('Webhookエンドポイントは除外される', () => {
       expect(requiresCsrfCheck('/api/webhooks/stripe')).toBe(false);
-      expect(requiresCsrfCheck('/api/webhooks/square')).toBe(false);
     });
 
     it('通常のAPIエンドポイントはチェック対象', () => {

@@ -200,15 +200,9 @@ npm run create-admin
 # scripts/create-admin.ts が対話的に管理者を作成
 ```
 
-新規 Supabase プロジェクトへ移行する場合は `scripts/create-admin-on-new.ts` を利用します。
+### 4.8 （任意）検証用データの投入
 
-### 4.8 （任意）シードデータ投入
-
-検証用の商品データ等を投入する場合：
-
-```bash
-npm run seed
-```
+検証用の商品・在庫データは管理画面（`/admin/products`）から登録します。
 
 > **本番環境では原則シード不要**です。実データは管理画面から登録します。
 

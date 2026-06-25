@@ -5,7 +5,6 @@ import crypto from 'crypto';
 const BUCKET_NAME = 'product-images';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'] as const;
 
 type AllowedMime = (typeof ALLOWED_TYPES)[number];
 
@@ -192,41 +191,5 @@ export async function deleteProductImage(path: string): Promise<boolean> {
   } catch (error) {
     secureLog('error', 'Storage delete exception', safeErrorLog(error));
     return false;
-  }
-}
-
-export async function listProductImages(productSlug: string): Promise<string[]> {
-  if (!/^[a-z0-9-]+$/.test(productSlug)) {
-    return [];
-  }
-
-  const supabase = getSupabaseAdmin();
-
-  try {
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .list(productSlug);
-
-    if (error) {
-      secureLog('error', 'Storage list error', safeErrorLog(error));
-      return [];
-    }
-
-    const ALLOWED_EXT_SET: readonly string[] = ALLOWED_EXTENSIONS;
-    return data
-      .filter((file) => file.name !== '.emptyFolderPlaceholder')
-      .filter((file) => {
-        const ext = file.name.split('.').pop()?.toLowerCase();
-        return ext ? ALLOWED_EXT_SET.includes(ext) : false;
-      })
-      .map((file) => {
-        const { data: urlData } = supabase.storage
-          .from(BUCKET_NAME)
-          .getPublicUrl(`${productSlug}/${file.name}`);
-        return urlData.publicUrl;
-      });
-  } catch (error) {
-    secureLog('error', 'Storage list exception', safeErrorLog(error));
-    return [];
   }
 }

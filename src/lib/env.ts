@@ -47,6 +47,9 @@ const envSchema = z.object({
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_CALENDAR_TIMEZONE: z.string().default('Asia/Tokyo'),
 
+  // Google Search Console 所有権確認（HTMLメタ方式）。未設定可。
+  GOOGLE_SITE_VERIFICATION: z.string().optional(),
+
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === 'production') {
@@ -112,5 +115,3 @@ function getEnv() {
 }
 
 export const env = getEnv();
-
-export type Env = z.infer<typeof envSchema>;

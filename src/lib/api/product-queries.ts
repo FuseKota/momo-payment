@@ -27,15 +27,6 @@ export async function getShippingProductsResult(): Promise<{
 }
 
 /**
- * 配送対象の公開商品一覧を取得する（取得失敗時も空配列）。
- * 取得失敗と0件を区別する必要がない用途向けの薄いラッパー。
- */
-export async function getShippingProducts(): Promise<Product[]> {
-  const { products } = await getShippingProductsResult();
-  return products;
-}
-
-/**
  * slug 単一商品を variants 付きでサーバー側取得する。
  * （クライアントからの `/api/products?slug=` フェッチを置き換える）
  *
@@ -87,16 +78,4 @@ export async function getProductBySlugResult(
   }
 
   return { product, error: false };
-}
-
-/**
- * slug 単一商品を variants 付きでサーバー側取得する。
- * 見つからない場合・取得失敗時いずれも null を返す薄いラッパー。
- * （取得失敗と404を区別する必要がない用途向け）
- */
-export async function getProductBySlug(
-  slug: string
-): Promise<ProductWithVariants | null> {
-  const { product } = await getProductBySlugResult(slug);
-  return product;
 }

@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# momo-payment
 
-## Getting Started
+「もも娘」オンライン注文システム。冷凍食品・グッズをオンライン決済（Stripe）で配送する EC サイト。
 
-First, run the development server:
+## 主な機能
+
+- **配送EC（SHIPPING）**: 冷凍食品・グッズを Stripe オンライン決済で配送
+- **ニュース**: お知らせ一覧・詳細（Markdown）
+- **マイページ**: 注文履歴・配送先住所管理
+- **管理画面**: 商品・在庫・注文・ニュース・売上ダッシュボード・監査ログ
+- **多言語対応**: 日本語 / 繁体字中文 / 英語（next-intl）
+
+## 技術スタック
+
+- Next.js 15 (App Router) / TypeScript
+- MUI (Material UI v7) + Tailwind CSS
+- Supabase (PostgreSQL + Auth)
+- Stripe SDK v20（決済）/ Resend（メール通知）
+- next-intl v4（i18n / ja・zh-tw・en）
+- Vitest（テスト）
+- ホスティング: Netlify
+
+## セットアップ
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # 各種キーを設定（詳細は .env.example 参照）
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## よく使うコマンド
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev           # 開発サーバー起動
+npm run build         # 本番ビルド
+npm run start         # 本番サーバー起動
+npm run lint          # ESLint
+npm run test          # テスト（Vitest）
+npm run create-admin  # 管理者アカウント作成
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Stripe ローカルテスト
 
-## Learn More
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
 
-To learn more about Next.js, take a look at the following resources:
+## ドキュメント
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+詳細は `docs/` を参照してください。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| ファイル | 内容 |
+|---------|------|
+| `docs/REQUIREMENTS.md` | 要件定義（API・画面遷移・DB スキーマ） |
+| `docs/SYSTEM_ARCHITECTURE.md` | システム構成 |
+| `docs/DATABASE_DESIGN.md` | データベース設計 |
+| `docs/TECHNICAL.md` | 技術詳細 |
+| `docs/SCREEN_DESIGN.md` | 画面設計 |
+| `docs/FEATURE_LIST.md` | 機能一覧 |
+| `docs/DEPLOYMENT_SELF_HOSTED.md` | デプロイ手順 |
+| `docs/OPERATIONS_MANUAL.md` | 運用マニュアル |
