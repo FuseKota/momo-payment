@@ -39,6 +39,13 @@ const TOKEN_MESSAGES: Record<string, string> = {
   upload_failed: '画像のアップロードに失敗しました。時間をおいて再度お試しください。',
   no_file: 'ファイルが選択されていません。',
   invalid_slug: 'スラッグの形式が正しくありません。',
+  // 管理者アカウント管理（/api/admin/admins, /api/admin/account/password）
+  email_exists: 'このメールアドレスは既に登録されています。別のメールアドレスをお試しください。',
+  invalid_current_password: '現在のパスワードが正しくありません。',
+  cannot_delete_self: '自分自身を管理者から削除することはできません。',
+  cannot_delete_last_admin: '管理者が0人になるため、最後の1人は削除できません。',
+  not_found: '対象が見つかりませんでした。すでに削除されている可能性があります。',
+  invalid_id: '対象の指定が正しくありません。',
   // Google Calendar 連携
   calendar_fetch_failed:
     'Googleカレンダーの読み込みに失敗しました。連携状態をご確認のうえ、しばらくして再度お試しください。',

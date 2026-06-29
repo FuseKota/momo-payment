@@ -389,12 +389,48 @@ export const adminAuditLogQuerySchema = z.object({
       'order.email_resend',
       'calendar.event_create',
       'calendar.event_delete',
+      'admin.create',
+      'admin.delete',
+      'admin.password_change',
     ])
     .optional(),
-  targetType: z.enum(['product', 'news', 'order', 'calendar']).optional(),
+  targetType: z.enum(['product', 'news', 'order', 'calendar', 'admin']).optional(),
   page: z.coerce.number().int().min(0).default(0),
   perPage: z.coerce.number().int().min(1).max(100).default(50),
 });
+
+/**
+ * パスワードバリデーション
+ * Supabase Auth のデフォルト（6文字以上）より厳しめに 8文字以上を要求する。
+ * 上限は bcrypt の 72byte 制限に余裕を持たせ 128文字までとする。
+ */
+export const passwordSchema = z
+  .string()
+  .min(8, 'パスワードは8文字以上で入力してください')
+  .max(128, 'パスワードは128文字以内で入力してください');
+
+/**
+ * 管理者：新規管理者アカウント作成スキーマ（POST /api/admin/admins）
+ * email + 初期パスワードを指定して即作成する。
+ */
+export const adminCreateSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+/**
+ * 管理者：自分のパスワード変更スキーマ（POST /api/admin/account/password）
+ * 現在のパスワードで本人確認したうえで新しいパスワードへ変更する。
+ */
+export const adminPasswordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, '現在のパスワードを入力してください'),
+    newPassword: passwordSchema,
+  })
+  .refine((v) => v.currentPassword !== v.newPassword, {
+    message: '新しいパスワードは現在のパスワードと異なるものにしてください',
+    path: ['newPassword'],
+  });
 
 /**
  * 住所保存スキーマ（mypage用）
