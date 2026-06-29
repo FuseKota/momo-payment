@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
@@ -92,12 +93,13 @@ export async function POST(request: NextRequest) {
       // 既存メールの重複は専用トークンで返す（status / code いずれでも検知）
       const code = (createError as { code?: string; status?: number } | null)?.code;
       const status = (createError as { code?: string; status?: number } | null)?.status;
-      if (
+      const isDuplicate =
         code === 'email_exists' ||
         status === 422 ||
-        (createError && /already|exist|registered/i.test(createError.message))
-      ) {
-        return NextResponse.json({ error: 'email_exists' }, { status: 409 });
+        (createError && /already|exist|registered/i.test(createError.message));
+      if (isDuplicate) {
+        // 既存 auth アカウント（過去に権限剥奪された管理者など）を管理者として復活させる
+        return await reactivateExistingAdmin(request, supabase, guard.userId, email, password);
       }
       secureLog('error', 'Admin create: auth user creation failed', safeErrorLog(createError));
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -106,9 +108,11 @@ export async function POST(request: NextRequest) {
     const newUserId = created.user.id;
 
     // admin_users へ登録（失敗時は作成済み auth ユーザーを削除してロールバック）
-    const { error: insertError } = await supabase
+    const { data: adminRow, error: insertError } = await supabase
       .from('admin_users')
-      .insert({ user_id: newUserId });
+      .insert({ user_id: newUserId })
+      .select('created_at')
+      .single();
 
     if (insertError) {
       await supabase.auth.admin.deleteUser(newUserId).catch(() => {
@@ -133,7 +137,7 @@ export async function POST(request: NextRequest) {
         user_id: newUserId,
         email,
         role: 'admin',
-        created_at: created.user.created_at,
+        created_at: adminRow.created_at,
       },
       { status: 201 }
     );
@@ -141,4 +145,100 @@ export async function POST(request: NextRequest) {
     secureLog('error', 'Admin create exception', safeErrorLog(error));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+/**
+ * email から auth ユーザーを探す。
+ * supabase-js の admin API は email 検索を直接サポートしないため listUsers をページングする。
+ * 管理者追加は低頻度操作のため、上限ページまで走査する。
+ */
+async function findAuthUserByEmail(
+  supabase: SupabaseClient,
+  email: string
+): Promise<User | null> {
+  const target = email.toLowerCase();
+  const perPage = 1000;
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      secureLog('error', 'Admin reactivate: listUsers failed', safeErrorLog(error));
+      return null;
+    }
+    const users = data?.users ?? [];
+    const found = users.find((u) => u.email?.toLowerCase() === target);
+    if (found) return found;
+    if (users.length < perPage) break;
+  }
+  return null;
+}
+
+/**
+ * createUser がメール重複で失敗した場合の復活処理。
+ * 既存の auth ユーザー（過去に権限剥奪された管理者など）を再び管理者として登録し、
+ * 入力された初期パスワードへ更新する。すでに管理者の場合は重複として 409 を返す。
+ */
+async function reactivateExistingAdmin(
+  request: NextRequest,
+  supabase: SupabaseClient,
+  actorId: string,
+  email: string,
+  password: string
+): Promise<NextResponse> {
+  const existing = await findAuthUserByEmail(supabase, email);
+  if (!existing) {
+    // 衝突しているのに該当ユーザーを特定できない稀ケース
+    secureLog('error', 'Admin reactivate: existing user not found by email');
+    return NextResponse.json({ error: 'email_exists' }, { status: 409 });
+  }
+
+  // すでに管理者なら本当の重複
+  const { data: alreadyAdmin } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', existing.id)
+    .maybeSingle();
+  if (alreadyAdmin) {
+    return NextResponse.json({ error: 'already_admin' }, { status: 409 });
+  }
+
+  // 初期パスワードへ更新（メール未確認なら確認済みにする）
+  const { error: updateError } = await supabase.auth.admin.updateUserById(existing.id, {
+    password,
+    email_confirm: true,
+  });
+  if (updateError) {
+    secureLog('error', 'Admin reactivate: password update failed', safeErrorLog(updateError));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+
+  // admin_users へ登録（管理者として復活）
+  const { data: adminRow, error: insertError } = await supabase
+    .from('admin_users')
+    .insert({ user_id: existing.id })
+    .select('created_at')
+    .single();
+  if (insertError) {
+    secureLog('error', 'Admin reactivate: admin_users insert failed', safeErrorLog(insertError));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+
+  await writeAuditLog({
+    request,
+    actorId,
+    action: 'admin.create',
+    targetType: 'admin',
+    targetId: existing.id,
+    metadata: { email, reactivated: true },
+  });
+
+  return NextResponse.json(
+    {
+      user_id: existing.id,
+      email,
+      role: 'admin',
+      created_at: adminRow.created_at,
+      reactivated: true,
+    },
+    { status: 201 }
+  );
 }
