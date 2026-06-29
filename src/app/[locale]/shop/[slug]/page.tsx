@@ -19,7 +19,8 @@ export async function generateStaticParams() {
     const { data } = await supabase
       .from('products')
       .select('slug')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .is('deleted_at', null);
     return (data || []).map((p) => ({ slug: p.slug }));
   } catch {
     return [];
@@ -40,6 +41,7 @@ export async function generateMetadata({
       .from('products')
       .select('name, name_zh_tw, name_en, description, description_zh_tw, description_en, image_url')
       .eq('slug', slug)
+      .is('deleted_at', null)
       .single();
 
     if (!product) return {};

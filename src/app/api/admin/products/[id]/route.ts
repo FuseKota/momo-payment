@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth/require-admin';
 import { adminProductUpdateSchema, formatValidationErrors, uuidSchema } from '@/lib/validation/schemas';
 import { adminWriteGuard } from '@/lib/api/admin-guards';
 import { writeAuditLog } from '@/lib/logging/audit-log';
+import { secureLog, safeErrorLog } from '@/lib/logging/secure-logger';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -105,12 +106,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const supabase = getSupabaseAdmin();
 
   try {
+    // 物理削除はしない。order_items.product_id の外部キー制約（RESTRICT）で
+    // 注文済み商品は物理削除できず、また注文履歴を保全する必要があるため、
+    // deleted_at をセットして論理削除（アーカイブ）し、is_active も false にして
+    // 公開・管理一覧の両方から除外する。
     const { error } = await supabase
       .from('products')
-      .delete()
+      .update({ deleted_at: new Date().toISOString(), is_active: false })
       .eq('id', id);
 
     if (error) {
+      secureLog('error', 'Admin product delete (archive) error', safeErrorLog(error));
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
@@ -124,7 +130,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    secureLog('error', 'Admin product delete (archive) exception', safeErrorLog(error));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -59,6 +59,7 @@ export interface Product {
   is_active: boolean;
   sort_order: number;
   has_variants: boolean; // When true, inventory is tracked per variant
+  deleted_at: string | null; // 非NULL = 論理削除（アーカイブ）済み
   created_at: string;
   updated_at: string;
 }

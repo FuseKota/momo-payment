@@ -20,6 +20,7 @@ export async function getShippingProductsResult(): Promise<{
     .select('*')
     .eq('is_active', true)
     .eq('can_ship', true)
+    .is('deleted_at', null)
     .order('sort_order');
 
   if (error || !data) return { products: [], error: true };
@@ -60,6 +61,7 @@ export async function getProductBySlugResult(
     `)
     .eq('slug', slug)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .single();
 
   if (error) {

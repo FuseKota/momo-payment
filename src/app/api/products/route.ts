@@ -30,6 +30,7 @@ export async function GET(request: Request) {
         `)
         .eq('slug', slug)
         .eq('is_active', true)
+        .is('deleted_at', null)
         .single();
 
       if (error) {
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
       .from('products')
       .select('*')
       .eq('is_active', true)
+      .is('deleted_at', null)
       .order('sort_order');
 
     if (kind) {
