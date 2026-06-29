@@ -316,9 +316,12 @@ export type AuditAction =
   | 'order.refund'
   | 'order.email_resend'
   | 'calendar.event_create'
-  | 'calendar.event_delete';
+  | 'calendar.event_delete'
+  | 'admin.create'
+  | 'admin.delete'
+  | 'admin.password_change';
 
-export type AuditTargetType = 'product' | 'news' | 'order' | 'calendar';
+export type AuditTargetType = 'product' | 'news' | 'order' | 'calendar' | 'admin';
 
 export interface AuditLog {
   id: string;

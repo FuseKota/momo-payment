@@ -42,6 +42,9 @@ const ACTION_LABELS: Record<string, string> = {
   'order.email_resend': 'メール再送',
   'calendar.event_create': 'カレンダー予定作成',
   'calendar.event_delete': 'カレンダー予定削除',
+  'admin.create': '管理者追加',
+  'admin.delete': '管理者削除',
+  'admin.password_change': 'パスワード変更',
 };
 
 const TARGET_TYPE_LABELS: Record<string, string> = {
@@ -49,6 +52,7 @@ const TARGET_TYPE_LABELS: Record<string, string> = {
   news: 'ニュース',
   order: '注文',
   calendar: 'カレンダー',
+  admin: '管理者',
 };
 
 const ACTION_OPTIONS = Object.keys(ACTION_LABELS);

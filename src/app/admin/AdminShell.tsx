@@ -26,6 +26,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import HistoryIcon from '@mui/icons-material/History';
+import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -39,6 +40,7 @@ const menuItems = [
   { text: 'ニュース管理', icon: <ArticleIcon />, href: '/admin/news' },
   { text: '台湾夜市カレンダー', icon: <CalendarMonthIcon />, href: '/admin/iitate-calendar' },
   { text: '監査ログ', icon: <HistoryIcon />, href: '/admin/audit-logs' },
+  { text: '設定', icon: <SettingsIcon />, href: '/admin/settings' },
 ];
 
 export default function AdminShell({
