@@ -41,6 +41,7 @@ const TOKEN_MESSAGES: Record<string, string> = {
   invalid_slug: 'スラッグの形式が正しくありません。',
   // 管理者アカウント管理（/api/admin/admins, /api/admin/account/password）
   email_exists: 'このメールアドレスは既に登録されています。別のメールアドレスをお試しください。',
+  already_admin: 'このメールアドレスは既に管理者として登録されています。',
   invalid_current_password: '現在のパスワードが正しくありません。',
   cannot_delete_self: '自分自身を管理者から削除することはできません。',
   cannot_delete_last_admin: '管理者が0人になるため、最後の1人は削除できません。',
