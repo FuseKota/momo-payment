@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  *
  * - GET    : requireAdmin（詳細）  select('*').eq('id').single()
  * - PATCH  : adminWriteGuard（更新）update(...).eq('id').select().single()
- * - DELETE : adminWriteGuard（削除）delete().eq('id') を await
+ * - DELETE : adminWriteGuard（論理削除）update({ deleted_at, is_active:false }).eq('id') を await
  *
  * uuidSchema / adminProductUpdateSchema / formatValidationErrors は実物を使う。
  */
@@ -25,7 +25,6 @@ const state: {
 };
 
 const mockUpdate = vi.fn();
-const mockDelete = vi.fn();
 
 const mockFrom = vi.fn(() => ({
   select: () => ({
@@ -35,18 +34,20 @@ const mockFrom = vi.fn(() => ({
   }),
   update: (...args: unknown[]) => {
     mockUpdate(...args);
+    // update().eq() は2通りで使われる:
+    //   PATCH        : .eq().select().single() → updateResult
+    //   DELETE(論理削除): await .eq() を直接   → deleteResult
+    // そのため eq() は select を持ちつつ PromiseLike（then あり）にする。
     return {
       eq: () => ({
         select: () => ({
           single: () => Promise.resolve(state.updateResult),
         }),
+        then: (
+          onFulfilled: (v: { error: unknown }) => unknown,
+          onRejected?: (e: unknown) => unknown
+        ) => Promise.resolve(state.deleteResult).then(onFulfilled, onRejected),
       }),
-    };
-  },
-  delete: () => {
-    mockDelete();
-    return {
-      eq: () => Promise.resolve(state.deleteResult),
     };
   },
 }));
@@ -244,7 +245,7 @@ describe('DELETE /api/admin/products/[id]', () => {
 
     expect(res.status).toBe(429);
     expect(data.error).toBe('rate_limit_exceeded');
-    expect(mockDelete).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it('不正なID は 400 invalid_id', async () => {
@@ -253,16 +254,19 @@ describe('DELETE /api/admin/products/[id]', () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toBe('invalid_id');
-    expect(mockDelete).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it('正常系: 削除して success を返し、監査ログを記録する', async () => {
+  it('正常系: 論理削除（deleted_at + is_active:false）して success を返し、監査ログを記録する', async () => {
     const res = await DELETE(makeDeleteRequest(), makeParams());
     const data = await res.json();
 
     expect(res.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    // 物理削除ではなく deleted_at セット + 非公開化であることを検証
+    expect(mockUpdate.mock.calls[0][0]).toMatchObject({ is_active: false });
+    expect(mockUpdate.mock.calls[0][0].deleted_at).toEqual(expect.any(String));
     expect(mockWriteAuditLog).toHaveBeenCalledTimes(1);
     expect(mockWriteAuditLog.mock.calls[0][0]).toMatchObject({
       actorId: 'admin-1',

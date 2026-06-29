@@ -16,6 +16,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .is('deleted_at', null)
       .order('sort_order');
 
     if (error) {

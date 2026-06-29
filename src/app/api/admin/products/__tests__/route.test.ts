@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * - POST  : adminWriteGuard（作成）
  *
  * getSupabaseAdmin().from('products') のクエリチェーンをモックする:
- * - select('*').order('sort_order')             → 一覧（await で { data, error }）
+ * - select('*').is('deleted_at', null).order('sort_order') → 一覧（await で { data, error }）
  * - insert(...).select().single()               → 作成（{ data, error }）
  * adminProductCreateSchema / formatValidationErrors は実物を使う。
  */
@@ -29,7 +29,9 @@ const mockOrder = vi.fn(() => Promise.resolve(state.listResult));
 
 const mockFrom = vi.fn(() => ({
   select: () => ({
-    order: (...args: unknown[]) => mockOrder(...args),
+    is: () => ({
+      order: (...args: unknown[]) => mockOrder(...args),
+    }),
   }),
   insert: (...args: unknown[]) => {
     mockInsert(...args);

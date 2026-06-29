@@ -23,6 +23,7 @@ export default async function Image({
       .from('products')
       .select('name, name_zh_tw, name_en, description, description_zh_tw, description_en, image_url, price_yen')
       .eq('slug', slug)
+      .is('deleted_at', null)
       .single();
 
     if (product) {
